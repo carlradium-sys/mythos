@@ -1,0 +1,19 @@
+<<'EOF'
+# Go binaries
+/mythos
+*.exe
+*.out
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+
+# Editor / OS files
+.DS_Store
+.idea/
+.vscode/
+EOF
