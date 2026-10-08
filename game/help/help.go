@@ -24,6 +24,7 @@ BASIC LOOP
   score                Review your character.
   inventory             Review your equipment.
   map                  See your current position.
+  journal              See the current story thread without a forced quest path.
   rebirth              At level 10, cross the Styx and begin another life.
 
 There is no single correct way to play. The story gives you mysteries and
@@ -121,7 +122,16 @@ Life II opens the modern Greek world. Later lives will introduce new eras
 and new mechanics.
 
 The long-term goal is to make every life feel like a chapter of one soul's
-story rather than another unrelated character.`},
+story rather than another unrelated character.
+
+WORLD STRUCTURE
+Ancient Greece grows from Olympus and Delphi into Athens and the realms below.
+Olympus itself is a destination, not merely background scenery. The Underworld
+contains the Styx, Asphodel, judgment, Cerberus, and the road toward Tartarus.
+
+Life II changes the same mythology into modern Athens: museums, metro tunnels,
+rooftops, hidden temples, and a modern Styx. Later lives will open additional
+eras rather than forcing every player through the same third life.`},
 	"journal": {"journal", `THE FATEWALKER JOURNAL
 
 Your journal tracks the story without turning the world into a checklist.
