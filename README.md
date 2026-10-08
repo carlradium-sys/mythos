@@ -20,6 +20,8 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Mana and divine progression
 - Death recovery through the Styx
 - First reincarnation into modern Athens
+- Persistent soul relics with once-per-encounter defensive and offensive effects
+- Choice-linked relic rewards and a Delphi exploration reward
 - Inventory and equipment foundation
 
 ## Commands
