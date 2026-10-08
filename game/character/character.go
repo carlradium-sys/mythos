@@ -2,6 +2,7 @@ package character
 
 import (
 	"fatewalker/game/power"
+	"fatewalker/game/item"
 	"fatewalker/game/progression"
 )
 
@@ -22,6 +23,7 @@ type Character struct {
 	Domain     power.Domain
 	Divinity   int
 	Weapon     string
+	Inventory  []item.Item
 }
 
 func New(name string) *Character {
@@ -30,6 +32,7 @@ func New(name string) *Character {
 		Mana: 30, MaxMana: 30, RoomID: "olympus_gates",
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
 		Weapon: "bronze sword",
+		Inventory: []item.Item{{Name:"bronze sword", Tier:item.Common, Damage:10, Kind:"sword"}},
 	}
 }
 
