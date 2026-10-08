@@ -314,6 +314,20 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 }
 
 
+func TestDelphiTrialsGrantPersistentLaurelRelic(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "delphi_sanctum"
+	s.applyRoomDiscoveries()
+	if !s.Character.HasStoryFlag("delphi_trials_complete") {
+		t.Fatal("Delphi trials should record a persistent story flag")
+	}
+	count := 0
+	for _, owned := range s.Character.Inventory { if owned.Relic && owned.Name == "Laurel of the Seer" { count++ } }
+	if count != 1 { t.Fatalf("Laurel of the Seer count = %d, want 1", count) }
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	if !s.Character.HasStoryFlag("delphi_trials_complete") { t.Fatal("Delphi trial flag did not persist across rebirth") }
+}
+
 func TestSoulRelicSummaryReportsKnownEffect(t *testing.T) {
 	inventory := []item.Item{
 		{Name: "bronze sword", Kind: "sword"},
