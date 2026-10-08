@@ -101,7 +101,11 @@ Soul relics are marked in your inventory and persist through rebirth. The
 Styxglass Shard is the first relic: recover it by completing The River of
 Memory at the Styx. Once per encounter, its river-ward absorbs up to 8 damage.
 The ward refreshes when a new enemy encounter begins. Repeating a reward
-cannot create a second copy.`},
+cannot create a second copy.
+An Oracle's Thread from the trust branch absorbs up to 4 damage once per
+encounter. The defiance branch grants an Unwritten Ember, adding 6 damage to
+your first successful weapon strike each encounter. Defensive relics do not
+stack; the strongest available ward is used.`},
 	"story": {"story", `STORY & SANDBOX
 
 Fatewalker is built around two promises:
