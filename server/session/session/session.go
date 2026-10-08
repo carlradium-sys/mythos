@@ -247,6 +247,11 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.Echoes = append(s.Character.Echoes, "A future that was never foretold burns at the edge of memory.")
 		s.grantSoulRelic(item.Item{Name: "Unwritten Ember", Tier: item.Epic, Kind: "relic", Relic: true})
 		s.WriteLine("A coal of impossible fire settles in your palm, warm but never consumed.")
+	case "gate_of_three":
+		s.Character.SetStoryFlag("cerberus_defeated")
+		s.Character.Favors = append(s.Character.Favors, "Cerberus Oath")
+		s.grantSoulRelic(item.Item{Name: "Cerberus Oath", Tier: item.Legendary, Kind: "relic", Relic: true})
+		s.WriteLine("The guardian falls silent. A new oath settles into your soul.")
 	case "delphi_trials":
 		s.Character.SetStoryFlag("delphi_trials_complete")
 		s.Character.Favors = append(s.Character.Favors, "Pythia's Favor")
