@@ -219,7 +219,7 @@ func (s *Session) awardExperience(amount int) {
 	oldLevel := s.Character.Level
 	s.Character.AddExperience(amount)
 	if s.Character.Level > oldLevel {
-		s.WriteLine("\\x1b[1;35mYour soul surges — Level %d reached!\\x1b[0m", s.Character.Level)
+		s.WriteLine("\x1b[1;35mYour soul surges — Level %d reached!\x1b[0m", s.Character.Level)
 		s.WriteLine("Your strength and divine reserves have been restored.")
 	}
 }
