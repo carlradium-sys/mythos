@@ -71,10 +71,7 @@ to inspect logs.
 
 ### First-life progression
 
-Use `help`, `look`, `map`, `quests`, `journal`, `score`, `inventory`,
-`talk choices`, and `soul` as you explore. At level 3, awaken one domain;
-at level 10, use `rebirth` to enter modern Athens. Your account and character
-are saved automatically when you issue commands and disconnect cleanly.
+Use `help`, `look`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
 
 ## Commands
 
