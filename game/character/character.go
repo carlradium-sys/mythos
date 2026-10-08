@@ -35,6 +35,8 @@ type Character struct {
 	Echoes     []string
 	Quests     map[string]int
 	StoryFlags map[string]bool
+	LifeGift string
+	LifeGiftUsed bool
 }
 
 func New(name string) *Character {
@@ -47,6 +49,7 @@ func New(name string) *Character {
 		StoryFlags: map[string]bool{},
 		Reputation: map[string]int{"olympians":0,"delphi":0,"underworld":0},
 		Gold: 50,
+		LifeGift: "Thread Sense",
 		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}, item.StarterArmor()},
 	}
 }
@@ -117,8 +120,34 @@ func (c *Character) RebirthTo(era, room string) {
 	c.Attack, c.Defense = 12, 3
 	c.Era = era
 	c.RoomID = room
+	c.LifeGift = lifeGiftFor(era, room)
+	c.LifeGiftUsed = false
 	c.Divinity++
 	c.Memories = append(c.Memories, "You remember crossing the Styx and hearing the Fates whisper your name.")
 	c.Echoes = append(c.Echoes, "A black thread survives another death.")
 
+}
+
+
+// lifeGiftFor assigns a distinct once-per-life manifestation based on the
+// era or destination reached after crossing the Styx.
+func lifeGiftFor(era, room string) string {
+	switch room {
+	case "future_moon":
+		return "Moon's Shelter"
+	case "far_era":
+		return "Fateweaver's Knot"
+	case "future_city", "future_skyway":
+		return "Chronal Pulse"
+	}
+	switch era {
+	case "modern":
+		return "Echo Sight"
+	case "future":
+		return "Chronal Pulse"
+	case "far":
+		return "Fateweaver's Knot"
+	default:
+		return "Thread Sense"
+	}
 }
