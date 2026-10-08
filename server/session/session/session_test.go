@@ -475,3 +475,33 @@ func TestLifeGiftCanOnlyBeUsedOncePerLife(t *testing.T) {
 		t.Fatal("life-gift should refresh after rebirth")
 	}
 }
+
+
+func TestAwardExperienceLevelsCharacterAndRestoresResources(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Experience = 55
+	s.Character.HP = 20
+	s.Character.Mana = 2
+	s.awardExperience(10)
+	if s.Character.Level != 2 {
+		t.Fatalf("level after XP award = %d, want 2", s.Character.Level)
+	}
+	if s.Character.HP != s.Character.MaxHP || s.Character.Mana != s.Character.MaxMana {
+		t.Fatalf("level-up resources = HP %d/%d Mana %d/%d, want fully restored", s.Character.HP, s.Character.MaxHP, s.Character.Mana, s.Character.MaxMana)
+	}
+}
+
+func TestStrongestOffensiveSoulRelicWinsRegardlessOfInventoryOrder(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Inventory = append(s.Character.Inventory,
+		item.Item{Name: "Laurel of the Seer", Kind: "relic", Relic: true},
+		item.Item{Name: "Unwritten Ember", Kind: "relic", Relic: true},
+	)
+	damage, bonus := s.applySoulRelicStrike(14)
+	if damage != 20 || bonus != 6 {
+		t.Fatalf("strongest relic strike = damage %d, bonus %d; want 20 and 6", damage, bonus)
+	}
+	if got := s.soulRelicStrikeName(); got != "Unwritten Ember" {
+		t.Fatalf("announced relic = %q, want Unwritten Ember", got)
+	}
+}
