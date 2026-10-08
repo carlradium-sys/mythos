@@ -151,10 +151,7 @@ explore elsewhere, hunt for equipment, or pursue another mystery. The story
 will wait—and sometimes the world will change while you are away.
 
 `},
-	"quests": {"talk","Speak with NPCs using talk <topic>, such as talk thread or talk rebirth."},
-	{"shop","Inspect a merchant's wares. Use buy <item> to purchase equipment."},
-	{"buy","Purchase an item from the merchant in the current room. You need enough gold."},
-	{"quests", `QUESTS
+	"quests": {"quests", `QUESTS
 
 Story quests are persistent parts of your character. Progress is saved automatically.
 
@@ -162,6 +159,32 @@ Story quests are persistent parts of your character. Progress is saved automatic
   journal   Show the broader story direction.
 
 Quests reward exploration and combat without forcing a linear path.`},
+	"talk": {"talk", `NPC DIALOGUE
+
+Use:
+  talk
+  talk thread
+  talk fate
+  talk rebirth
+
+NPCs respond to different topics. The world may reveal lore, warnings,
+choices, or clues through conversation.`},
+	"shop": {"shop", `MERCHANTS
+
+Some NPCs sell equipment.
+
+  shop             Show the current merchant's wares.
+  buy <item>       Purchase an item.
+
+Gold persists with your character. Equipment purchased in one life remains
+part of that character's inventory unless a future soul system changes it.`},
+	"buy": {"buy", `BUYING
+
+Stand near a merchant and use:
+  shop
+  buy <item>
+
+Purchased equipment is added to your inventory and can be equipped normally.`},
 	"tutorial": {"tutorial", `THE FIRST THREAD — STORY TUTORIAL
 
 The tutorial is part of the world, not a separate training room.
