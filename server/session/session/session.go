@@ -8,6 +8,7 @@ import (
 
 	"fatewalker/game/character"
 	"fatewalker/game/combat"
+	"fatewalker/game/help"
 	"fatewalker/game/item"
 	"fatewalker/game/power"
 	"fatewalker/game/progression"
@@ -19,6 +20,7 @@ type Session struct {
 	Conn net.Conn
 	World *world.World
 	Enemy *combat.Enemy
+	TutorialStep int
 }
 
 func New(c *character.Character, conn net.Conn, w *world.World) *Session {
@@ -33,15 +35,19 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("\x1b[1;36m        FATEWALKER: BEYOND THE STYX\x1b[0m")
 	s.WriteLine("\x1b[1;35m========================================\x1b[0m")
 	s.WriteLine("")
-	s.WriteLine("Welcome, mortal.")
-	s.WriteLine("Your first life begins in Ancient Greece.")
-	s.WriteLine("Somewhere beyond death, the Fates are already writing your next name.")
+	s.WriteLine("\x1b[1;33mTHE FIRST THREAD\x1b[0m")
+	s.WriteLine("Welcome, mortal. Your first life begins beneath the shadow of Olympus.")
+	s.WriteLine("You remember waking. You do not remember dying.")
+	s.WriteLine("A bronze sword rests beside you. A black thread is tied around its hilt.")
 	s.WriteLine("")
-	s.WriteLine("Type 'help' for commands.")
+	s.WriteLine("A voice whispers from beyond the gates: \"Walk. The story will find you.\"")
+	s.WriteLine("")
+	s.WriteLine("Type 'help' for commands, or 'help tutorial' to understand the first chapter.")
 	s.WriteLine("What is your name?")
 	if !scanner.Scan(){return}
 	if name:=strings.TrimSpace(scanner.Text()); name!="" { s.Character.Name=name }
 	s.look()
+	s.tutorialHint()
 	for {
 		s.WriteLine("")
 		s.WriteLine("%s",s.prompt())
@@ -58,39 +64,78 @@ func (s *Session) handleCommand(input string) bool {
 	parts:=strings.Fields(strings.ToLower(input))
 	if len(parts)==0{return true}
 	switch parts[0] {
-	case "quit","exit": s.WriteLine("Farewell, %s.",s.Character.Name); return false
-	case "help","?": s.help()
-	case "look","l": s.look()
-	case "map": s.WriteLine(s.World.MapText(s.Character.RoomID))
-	case "north","south","east","west","up","down","n","s","e","w","u","d": s.move(parts[0])
-	case "who": s.WriteLine("You are the first known traveler on this shard.")
-	case "score","stats": s.score()
-	case "inventory","i": s.inventory()
-	case "attack","kill","hit": s.attack()
-	case "cast": s.cast(parts[1:])
-	case "powers","power": s.powers()
-	case "awaken": s.awaken(parts[1:])
-	case "flee": s.flee()
-	case "rebirth": s.rebirth()
-	default: s.WriteLine("Unknown command. Type 'help' for help.")
+	case "quit","exit":
+		s.WriteLine("Farewell, %s.",s.Character.Name)
+		return false
+	case "help","?":
+		s.help(parts[1:])
+	case "look","l":
+		s.look()
+		s.advanceTutorial(1)
+	case "map":
+		s.WriteLine(s.World.MapText(s.Character.RoomID))
+	case "north","south","east","west","up","down","n","s","e","w","u","d":
+		s.move(parts[0])
+	case "who":
+		s.WriteLine("You are the first known traveler on this shard.")
+	case "score","stats":
+		s.score()
+	case "inventory","i":
+		s.inventory()
+	case "attack","kill","hit":
+		s.attack()
+	case "cast":
+		s.cast(parts[1:])
+	case "powers","power":
+		s.powers()
+	case "awaken":
+		s.awaken(parts[1:])
+	case "flee":
+		s.flee()
+	case "rebirth":
+		s.rebirth()
+	default:
+		s.WriteLine("Unknown command. Type 'help' for help.")
 	}
 	return true
 }
 
-func (s *Session) help() {
-	s.WriteLine("\x1b[1;33mCommands\x1b[0m")
-	s.WriteLine("  look/l          Examine your surroundings")
-	s.WriteLine("  map             Show the living world map")
-	s.WriteLine("  north/south...  Travel")
-	s.WriteLine("  attack          Attack a nearby enemy")
-	s.WriteLine("  cast <power>    Invoke an awakened divine power")
-	s.WriteLine("  powers          List powers and unlocks")
-	s.WriteLine("  awaken <domain> Choose Storm, Tide, Ember, or Aegis at level 3")
-	s.WriteLine("  flee            Leave combat")
-	s.WriteLine("  inventory/i     Show your gear")
-	s.WriteLine("  score/stats     Character and divinity")
-	s.WriteLine("  rebirth         Cross the Styx when eligible")
-	s.WriteLine("  quit            Leave Fatewalker")
+func (s *Session) help(args []string) {
+	topic := "start"
+	if len(args)>0 { topic=strings.Join(args," ") }
+	if topic=="list" {
+		s.WriteLine("\x1b[1;33mHELP TOPICS\x1b[0m")
+		s.WriteLine("  %s",strings.Join(help.Names(),", "))
+		s.WriteLine("Use: help <topic>")
+		return
+	}
+	t,ok:=help.Get(topic)
+	if !ok {
+		s.WriteLine("No help file exists for '%s'. Try 'help list'.",topic)
+		return
+	}
+	s.WriteLine("\x1b[1;33m[%s]\x1b[0m",strings.ToUpper(t.Name))
+	for _,line:=range strings.Split(t.Text,"\n") { s.WriteLine("%s",line) }
+}
+
+func (s *Session) tutorialHint() {
+	switch s.TutorialStep {
+	case 0:
+		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m Type 'look' to study the place where your story begins.")
+	case 1:
+		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m The black thread pulls north. Try 'north' when you are ready.")
+	case 2:
+		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m A creature has noticed you. Try 'attack'.")
+	case 3:
+		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m You survived. Check 'inventory' and 'score', then continue exploring.")
+	}
+}
+
+func (s *Session) advanceTutorial(step int) {
+	if step>s.TutorialStep {
+		s.TutorialStep=step
+		s.tutorialHint()
+	}
 }
 
 func (s *Session) look() {
@@ -101,9 +146,7 @@ func (s *Session) look() {
 	exits:=make([]string,0,len(r.Exits))
 	for direction:=range r.Exits {exits=append(exits,direction)}
 	if len(exits)>0{s.WriteLine("Exits: %s",strings.Join(exits,", "))}
-	if s.Enemy==nil {
-		s.spawnEnemy()
-	}
+	if s.Enemy==nil { s.spawnEnemy() }
 }
 
 func (s *Session) spawnEnemy() {
@@ -119,6 +162,7 @@ func (s *Session) spawnEnemy() {
 	}
 	s.WriteLine("\x1b[1;31mA %s appears!\x1b[0m",s.Enemy.Name)
 	s.WriteLine("%s",s.Enemy.Description)
+	s.advanceTutorial(2)
 }
 
 func (s *Session) move(direction string) {
@@ -131,6 +175,7 @@ func (s *Session) move(direction string) {
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
 	s.Character.RoomID=next
 	s.look()
+	if s.Character.RoomID=="olympus_foothills" { s.advanceTutorial(2) }
 }
 
 func (s *Session) attack() {
@@ -138,13 +183,14 @@ func (s *Session) attack() {
 	w:=s.currentWeapon()
 	result:=combat.Attack(s.Character.Name,w,s.Enemy,s.Character.AttackPower())
 	s.WriteLine("%s",result.Text)
+	s.advanceTutorial(3)
 	if result.Killed {
 		s.Character.AddExperience(s.Enemy.XP)
 		s.WriteLine("\x1b[1;32mVictory! +%d XP.\x1b[0m",s.Enemy.XP)
 		if s.Enemy.Name=="Manticore" && s.Character.Level>=5 && len(s.Character.Inventory)==1 {
 			drop:=item.Item{Name:"manticore fang",Tier:item.Rare,Damage:18,Kind:"sword"}
 			s.Character.Inventory=append(s.Character.Inventory,drop)
-			s.WriteLine("%sYou recover a %s%s.",s.color(drop.TierColor()),drop.TierName(),s.color("0"))
+			s.WriteLine("%sYou recover a %s %s%s.",s.color(drop.TierColor()),drop.TierName(),drop.Name,s.color("0"))
 			s.WriteLine("The weapon hums faintly, as if it remembers the creature.")
 		}
 		s.Enemy=nil
@@ -186,42 +232,38 @@ func (s *Session) enemyTurn() {
 	}
 	s.WriteLine("%s",result.Text)
 	if s.Character.HP==0 {
-		s.WriteLine("\x1b[1;31mYour mortal life ends here. The Styx waits.\x1b[0m")
+		s.WriteLine("\x1b[1;31mYour mortal life ends here. The Styx waits. But something is wrong...\x1b[0m")
 		s.Character.Restore()
 		s.Character.RoomID="olympus_gates"
 		s.Enemy=nil
 		s.WriteLine("You awaken at the Gates of Olympus, restored but shaken.")
+		s.WriteLine("The black thread around your sword is still there. It has not forgotten you.")
 	}
 }
 
 func (s *Session) flee() {
 	if s.Enemy==nil || s.Enemy.HP<=0 {s.WriteLine("You are not in combat.");return}
 	s.Enemy=nil
-	s.WriteLine("You break away from the battle and retreat.")
+	s.WriteLine("You break away from the battle and retreat. Sometimes survival is the wiser path.")
 }
 
 func (s *Session) currentWeapon() item.Item {
 	if len(s.Character.Inventory)==0{return item.Item{Name:"fists",Tier:item.Common,Damage:3,Kind:"fist"}}
-	for _,w:=range s.Character.Inventory {
-		if strings.EqualFold(w.Name,s.Character.Weapon){return w}
-	}
+	for _,w:=range s.Character.Inventory { if strings.EqualFold(w.Name,s.Character.Weapon){return w} }
 	return s.Character.Inventory[0]
 }
 
 func (s *Session) inventory() {
 	if len(s.Character.Inventory)==0{s.WriteLine("Your inventory is empty.");return}
 	s.WriteLine("\x1b[1;33mInventory\x1b[0m")
-	for _,i:=range s.Character.Inventory {
-		s.WriteLine("%s%s %s(+%d)%s",s.color(i.TierColor()),i.TierName(),i.Name,i.Damage,s.color("0"))
-	}
+	for _,i:=range s.Character.Inventory { s.WriteLine("%s%s %s(+%d)%s",s.color(i.TierColor()),i.TierName(),i.Name,i.Damage,s.color("0")) }
 }
 
 func (s *Session) powers() {
 	if s.Character.Domain=="" {s.WriteLine("Divinity: dormant. Awaken a domain at level 3.");return}
 	s.WriteLine("\x1b[1;35m%s Domain — Divinity %d\x1b[0m",s.Character.Domain,s.Character.Divinity)
 	for _,p:=range power.ForDomain(s.Character.Domain) {
-		status:="LOCKED"
-		if s.Character.Level>=p.UnlockLevel {status="UNLOCKED"}
+		status:="LOCKED"; if s.Character.Level>=p.UnlockLevel {status="UNLOCKED"}
 		s.WriteLine("  %s — level %d — %s",p.Name,p.UnlockLevel,status)
 	}
 }
