@@ -250,8 +250,7 @@ func (s *Session) completeQuest(q quest.Quest) {
 	case "gate_of_three":
 		s.Character.SetStoryFlag("cerberus_defeated")
 		s.Character.Favors = append(s.Character.Favors, "Cerberus Oath")
-		s.grantSoulRelic(item.Item{Name: "Cerberus Oath", Tier: item.Legendary, Kind: "relic", Relic: true})
-		s.WriteLine("The guardian falls silent. A new oath settles into your soul.")
+		s.WriteLine("The guardian falls silent. A new favor settles into your soul.")
 	case "delphi_trials":
 		s.Character.SetStoryFlag("delphi_trials_complete")
 		s.Character.Favors = append(s.Character.Favors, "Pythia's Favor")
