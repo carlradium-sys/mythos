@@ -191,6 +191,16 @@ func (s *Session) spawnEnemy() {
 	s.advanceTutorial(2)
 }
 
+func (s *Session) canEnter(id string) bool {
+	c:=s.Character
+	if strings.HasPrefix(id,"modern_") && c.Life<2 { s.WriteLine("The world beyond the Styx has not opened to you. This is a road for another life."); return false }
+	if strings.HasPrefix(id,"future_") || id=="far_era" { s.WriteLine("That horizon belongs to a later chapter of your soul."); return false }
+	if id=="olympus_road" && c.Level<6 { s.WriteLine("The path into Olympus is veiled by divine law. Become stronger before attempting the ascent."); return false }
+	if id=="styx_shore" && c.Level<7 { s.WriteLine("The black river calls, but you are not yet strong enough to cross its threshold."); return false }
+	if id=="cerberus_gate" && c.Level<9 { s.WriteLine("A presence beyond the gate warns you away. The guardian is not yet your battle."); return false }
+	return true
+}
+
 func (s *Session) move(direction string) {
 	aliases:=map[string]string{"n":"north","s":"south","e":"east","w":"west","u":"up","d":"down"}
 	if v,ok:=aliases[direction];ok{direction=v}
@@ -199,6 +209,7 @@ func (s *Session) move(direction string) {
 	next,ok:=r.Exits[direction]
 	if !ok {s.WriteLine("You cannot go that way.");return}
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
+	if !s.canEnter(next) { return }
 	s.Character.RoomID=next
 	s.look()
 	if s.Character.RoomID=="olympus_foothills" { s.advanceTutorial(2) }
