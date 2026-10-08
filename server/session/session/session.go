@@ -233,6 +233,11 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.Echoes = append(s.Character.Echoes, "A future that was never foretold burns at the edge of memory.")
 		s.grantSoulRelic(item.Item{Name: "Unwritten Ember", Tier: item.Epic, Kind: "relic", Relic: true})
 		s.WriteLine("A coal of impossible fire settles in your palm, warm but never consumed.")
+	case "delphi_trials":
+		s.Character.SetStoryFlag("delphi_trials_complete")
+		s.Character.Favors = append(s.Character.Favors, "Pythia's Favor")
+		s.grantSoulRelic(item.Item{Name: "Laurel of the Seer", Tier: item.Rare, Kind: "relic", Relic: true})
+		s.WriteLine("A living laurel wreath takes root in your memory. The next life will not begin blind.")
 	}
 	faction, change := questReputationReward(q.ID)
 	if faction != "" && change != 0 {
@@ -258,6 +263,8 @@ func questReputationReward(id string) (string, int) {
 		return "delphi", 1
 	case "unwritten_path":
 		return "underworld", 1
+	case "delphi_trials":
+		return "delphi", 1
 	default:
 		return "", 0
 	}
@@ -369,6 +376,7 @@ func (s *Session) advanceTutorial(step int) {
 }
 
 func (s *Session) look() {
+	s.applyRoomDiscoveries()
 	r:=s.World.GetRoom(s.Character.RoomID)
 	if r==nil {s.WriteLine("You are nowhere. The world has lost track of you.");return}
 	s.WriteLine("\x1b[1;33m%s\x1b[0m",r.Name)
@@ -378,6 +386,23 @@ func (s *Session) look() {
 	if len(exits)>0{s.WriteLine("Exits: %s",strings.Join(exits,", "))}
 	if npcs:=s.World.NPCs[s.Character.RoomID];len(npcs)>0{for _,n:=range npcs{s.WriteLine("\x1b[1;36m%s\x1b[0m — %s",n.Name,n.Description)};s.WriteLine("You can talk <topic> or shop.")}
 	if s.Enemy==nil { s.spawnEnemy() }
+}
+
+func (s *Session) applyRoomDiscoveries() {
+	c := s.Character
+	if c == nil { return }
+	if c.RoomID == "delphi_sanctum" && !c.HasStoryFlag("delphi_trials_complete") {
+		if c.Quests == nil { c.Quests = map[string]int{} }
+		c.Quests["delphi_trials"] = 1
+		s.completeQuest(quest.Quest{ID:"delphi_trials",Name:"Trials of the Seer",RewardXP:90})
+		s.WriteLine("\x1b[1;32mQuest complete! +90 XP.\x1b[0m")
+	}
+	if c.RoomID == "ancient_athens" && c.HasStoryFlag("oracle_defied") && !c.HasStoryFlag("quest_completed_unwritten_path") {
+		if c.Quests == nil { c.Quests = map[string]int{} }
+		c.Quests["unwritten_path"] = 1
+		s.completeQuest(quest.Quest{ID:"unwritten_path",Name:"The Unwritten Path",RewardXP:180})
+		s.WriteLine("\x1b[1;32mQuest complete! +180 XP.\x1b[0m")
+	}
 }
 
 func (s *Session) spawnEnemy() {
@@ -541,6 +566,10 @@ func (s *Session) applySoulRelicStrike(damage int) (int, int) {
 			s.RelicStrikeSpent = true
 			return damage + 6, 6
 		}
+		if owned.Relic && strings.EqualFold(owned.Name, "Laurel of the Seer") {
+			s.RelicStrikeSpent = true
+			return damage + 3, 3
+		}
 	}
 	return damage, 0
 }
@@ -649,6 +678,8 @@ func soulRelicEffect(name string) string {
 		return "once per encounter, absorbs up to 4 incoming damage"
 	case "unwritten ember":
 		return "adds 6 damage to the first successful weapon strike each encounter"
+	case "laurel of the seer":
+		return "adds 3 damage to the first successful weapon strike each encounter"
 	default:
 		return "its deeper purpose is still unknown"
 	}
