@@ -167,7 +167,7 @@ func (s *Session) selectCharacter(scanner *bufio.Scanner) bool {
    s.Account.Characters=append(s.Account.Characters[:n-1],s.Account.Characters[n:]...);s.persist();s.WriteLine("Character deleted.")
   default:
    n,err:=strconv.Atoi(p[0]);if err!=nil||n<1||n>len(s.Account.Characters){s.WriteLine("Choose a character number.");continue}
-   s.Character=s.Account.Characters[n-1].Character;s.WriteLine("Welcome back, %s.",s.Character.Name);return true
+   s.Character=s.Account.Characters[n-1].Character;s.Character.EnsureLifeGift();s.WriteLine("Welcome back, %s.",s.Character.Name);return true
   }
  }
 }
@@ -594,6 +594,7 @@ func (s *Session) soul() {
 
 func (s *Session) invokeGift() {
 	c := s.Character
+	c.EnsureLifeGift()
 	if c.LifeGift == "" {
 		s.WriteLine("Your soul has no manifested life-gift yet.")
 		return
