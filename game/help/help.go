@@ -162,6 +162,12 @@ Story quests are persistent parts of your character. Progress is saved automatic
 Some quests only appear after a pivotal choice. Trusting Pythia and defying
 her prophecy open different paths, and those consequences remain after rebirth.
 
+QUEST CHAINS ACROSS LIVES
+  The Oracle's Whisper must be completed before The River of Memory can
+  resolve. Recovering the Styx memory records a permanent soul flag and echo.
+  After rebirth, that memory unlocks Echoes in Glass at the modern Styx.
+  Myrto may recognize what you did in an earlier life.
+
 Quests reward exploration and combat without forcing a linear path.`},
 	"talk": {"talk", `NPC DIALOGUE
 
