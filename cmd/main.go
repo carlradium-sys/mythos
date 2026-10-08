@@ -14,7 +14,7 @@ func main() {
 	}
 	defer listener.Close()
 
-	fmt.Println("Mythos MUD server listening on 127.0.0.1:4000")
+	fmt.Println("Fatewalker MUD server listening on 127.0.0.1:4000")
 
 	for {
 		conn, err := listener.Accept()
@@ -32,7 +32,7 @@ func handleConnection(conn net.Conn) {
 
 	conn.Write([]byte("\r\n"))
 	conn.Write([]byte("========================================\r\n"))
-	conn.Write([]byte("          MYTHOS: AGE OF GODS\r\n"))
+	conn.Write([]byte("          FATEWALKER: BEYOND THE STYX\r\n"))
 	conn.Write([]byte("========================================\r\n"))
 	conn.Write([]byte("\r\n"))
 	conn.Write([]byte("Welcome, mortal.\r\n"))
