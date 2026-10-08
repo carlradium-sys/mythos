@@ -151,7 +151,10 @@ explore elsewhere, hunt for equipment, or pursue another mystery. The story
 will wait—and sometimes the world will change while you are away.
 
 `},
-	"quests": {"quests", `QUESTS
+	"quests": {"talk","Speak with NPCs using talk <topic>, such as talk thread or talk rebirth."},
+	{"shop","Inspect a merchant's wares. Use buy <item> to purchase equipment."},
+	{"buy","Purchase an item from the merchant in the current room. You need enough gold."},
+	{"quests", `QUESTS
 
 Story quests are persistent parts of your character. Progress is saved automatically.
 
