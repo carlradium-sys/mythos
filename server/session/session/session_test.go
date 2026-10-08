@@ -180,3 +180,48 @@ func TestRoomQuestCompletesOnArrival(t *testing.T) {
 		t.Fatalf("experience = %d, want 120", s.Character.Experience)
 	}
 }
+
+
+func TestQuestRewardsFactionReputation(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.advanceQuestKill("Harpy")
+	if got := s.Character.Reputation["olympians"]; got != 1 {
+		t.Fatalf("Olympian reputation after Black Thread = %d, want 1", got)
+	}
+
+	s.Character.SetStoryFlag("oracle_trust")
+	s.Character.RoomID = "temple_dawn"
+	s.updateQuests()
+	if got := s.Character.Reputation["delphi"]; got != 1 {
+		t.Fatalf("Delphi reputation after oath quest = %d, want 1", got)
+	}
+}
+
+func TestFactionStandingChangesMerchantPrice(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	n := s.currentNPC()
+	if got := s.merchantPrice(n, n.Shop[0]); got != 75 {
+		t.Fatalf("neutral merchant price = %d, want 75", got)
+	}
+	s.Character.Reputation["olympians"] = 3
+	if got := s.merchantPrice(n, n.Shop[0]); got != 67 {
+		t.Fatalf("friendly merchant price = %d, want 67 (10%% discount rounded down)", got)
+	}
+	s.Character.Reputation["olympians"] = -2
+	if got := s.merchantPrice(n, n.Shop[0]); got != 83 {
+		t.Fatalf("hostile merchant price = %d, want 83 (10%% surcharge rounded up)", got)
+	}
+}
+
+func TestDialogueMatchesLongerNaturalLanguageTopics(t *testing.T) {
+	w := world.NewWorld()
+	pythia := w.NPCs["oracle_path"][0]
+	if got := pythia.DialogueFor("can you tell me about rebirth please"); got == "" {
+		t.Fatal("longer natural-language topic should match rebirth dialogue")
+	}
+	if got := pythia.DialogueFor("WHAT DO YOU KNOW ABOUT THE THREAD?"); got == "" {
+		t.Fatal("dialogue matching should ignore case and punctuation around keywords")
+	}
+}
