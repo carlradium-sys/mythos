@@ -75,8 +75,7 @@ Rest restores health and mana when no enemy is actively fighting you.
 Some battles are meant to be escaped. Survival is part of the sandbox.
 
 VICTORY
-Defeated enemies grant XP. Stronger enemies can also reveal rare equipment
-and story clues.`},
+Defeated enemies grant XP and gold. Use gold in shops for gear.`},
 	"powers": {"powers", `DIVINE POWERS
 
 At level 3, use:
