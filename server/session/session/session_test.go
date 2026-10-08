@@ -769,3 +769,12 @@ func TestMuseumQuestPersistsItsRewards(t *testing.T) {
 	if !s.Character.HasStoryFlag("museum_echo_uncovered") { t.Fatal("museum flag missing") }
 	if len(s.Character.Memories) == 0 { t.Fatal("memory reward missing") }
 }
+
+
+func TestMyrtoAnswersAboutMuseumEcho(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "modern_crossroads"
+	s.Character.SetStoryFlag("museum_echo_uncovered")
+	got := s.persistentNPCGreeting(s.currentNPC(), "museum")
+	if !strings.Contains(got, "behind glass") { t.Fatalf("museum response = %q", got) }
+}
