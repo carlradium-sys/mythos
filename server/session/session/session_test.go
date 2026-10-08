@@ -295,3 +295,26 @@ func TestMyrtoRecognizesPersistentStyxMemory(t *testing.T) {
 		t.Fatal("expected persistent Styx memory")
 	}
 }
+
+
+func TestLifeGiftCanOnlyBeUsedOncePerLife(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.LifeGift = "Echo Sight"
+	s.Character.Mana = 0
+	s.invokeGift()
+	if s.Character.Mana != 12 {
+		t.Fatalf("Echo Sight mana = %d, want 12", s.Character.Mana)
+	}
+	if !s.Character.LifeGiftUsed {
+		t.Fatal("using life-gift should mark it spent")
+	}
+	s.Character.Mana = 0
+	s.invokeGift()
+	if s.Character.Mana != 0 {
+		t.Fatalf("second Echo Sight use restored mana to %d, want 0", s.Character.Mana)
+	}
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	if s.Character.LifeGiftUsed {
+		t.Fatal("life-gift should refresh after rebirth")
+	}
+}
