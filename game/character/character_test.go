@@ -33,3 +33,17 @@ func TestSetStoryFlagInitializesLegacyNilMap(t *testing.T) {
 		t.Fatal("SetStoryFlag should initialize a nil map")
 	}
 }
+
+func TestStoryFlagsSurviveRebirth(t *testing.T) {
+	c := New("Threadbound")
+	c.SetStoryFlag("oracle_choice_made")
+	c.SetStoryFlag("oracle_trust")
+	c.RebirthTo("modern", "modern_crossroads")
+
+	if !c.HasStoryFlag("oracle_choice_made") || !c.HasStoryFlag("oracle_trust") {
+		t.Fatal("story choices should remain part of the soul after rebirth")
+	}
+	if c.Life != 2 || c.Era != "modern" {
+		t.Fatalf("rebirth state = life %d, era %q; want life 2, modern", c.Life, c.Era)
+	}
+}
