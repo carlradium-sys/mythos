@@ -85,6 +85,12 @@ func (s *Session) handleCommand(input string) bool {
 		s.inventory()
 	case "equip":
 		s.equip(parts[1:])
+	case "talk", "say":
+		s.talk(parts[1:])
+	case "shop", "wares":
+		s.shop()
+	case "buy":
+		s.buy(parts[1:])
 	case "attack","kill","hit":
 		s.attack()
 	case "cast":
@@ -271,6 +277,7 @@ func (s *Session) look() {
 	exits:=make([]string,0,len(r.Exits))
 	for direction:=range r.Exits {exits=append(exits,direction)}
 	if len(exits)>0{s.WriteLine("Exits: %s",strings.Join(exits,", "))}
+	if npcs:=s.World.NPCs[s.Character.RoomID];len(npcs)>0{for _,n:=range npcs{s.WriteLine("\x1b[1;36m%s\x1b[0m — %s",n.Name,n.Description)};s.WriteLine("You can talk <topic> or shop.")}
 	if s.Enemy==nil { s.spawnEnemy() }
 }
 
@@ -436,7 +443,7 @@ func (s *Session) score() {
 	s.WriteLine("Level: %d   Life: %d   Rebirths: %d",c.Level,c.Life,c.Rebirths)
 	s.WriteLine("Era: %s   HP: %d/%d   Mana: %d/%d",c.Era,c.HP,c.MaxHP,c.Mana,c.MaxMana)
 	s.WriteLine("XP: %d   Next level: %d",c.Experience,progression.XPToNextLevel(c.Level,c.Experience))
-	s.WriteLine("Attack: %d   Defense: %d   Armor: %d   Divinity: %d   Domain: %s",c.AttackPower(),c.DefensePower(),c.ArmorPower(),c.Divinity,c.Domain)
+	s.WriteLine("Attack: %d   Defense: %d   Armor: %d   Divinity: %d   Domain: %s   Gold: %d",c.AttackPower(),c.DefensePower(),c.ArmorPower(),c.Divinity,c.Domain,c.Gold)
 	s.WriteLine("Soul legacy: %d memories | %d scars | %d oaths | %d favors | %d curses | %d echoes",len(c.Memories),len(c.Scars),len(c.Oaths),len(c.Favors),len(c.Curses),len(c.Echoes))
 }
 
@@ -488,3 +495,8 @@ func (s *Session) rebirth(args []string) {
 }
 
 func (s *Session) color(code string) string { return "\x1b["+code+"m" }
+
+func(s *Session) currentNPC()*world.NPC{n:=s.World.NPCs[s.Character.RoomID];if len(n)==0{return nil};return n[0]}
+func(s *Session) talk(args []string){n:=s.currentNPC();if n==nil{s.WriteLine("There is no one here willing to speak with you.");return};topic:="hello";if len(args)>0{topic=strings.Join(args," ")};if t:=n.DialogueFor(topic);t!=""{s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t);return};s.WriteLine("\x1b[1;36m%s:\x1b[0m "Ask me about the things that matter here."",n.Name)}
+func(s *Session) shop(){n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};s.WriteLine("\x1b[1;33m%s's WARES\x1b[0m — You have %d gold",n.Name,s.Character.Gold);for _,i:=range n.Shop{s.WriteLine("  %s%s %s — %d gold",s.color(i.TierColor()),i.TierName(),i.Name,i.Price)};s.WriteLine("Use: buy <item>")}
+func(s *Session) buy(args []string){if len(args)==0{s.WriteLine("Buy what? Try 'shop'.");return};n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};name:=strings.Join(args," ");for _,o:=range n.Shop{if strings.EqualFold(o.Name,name){if s.Character.Gold<o.Price{s.WriteLine("You need %d more gold.",o.Price-s.Character.Gold);return};for _,owned:=range s.Character.Inventory{if strings.EqualFold(owned.Name,o.Name){s.WriteLine("You already possess that item.");return}};s.Character.Gold-=o.Price;s.Character.Inventory=append(s.Character.Inventory,o);s.WriteLine("\x1b[1;32mPurchased %s for %d gold.\x1b[0m",o.Name,o.Price);return}};s.WriteLine("That item is not for sale here.")}
