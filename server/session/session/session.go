@@ -194,6 +194,44 @@ func (s *Session) help(args []string) {
 	for _,line:=range strings.Split(t.Text,"\n") { s.WriteLine("%s",line) }
 }
 
+func (s *Session) completeQuest(q quest.Quest) {
+	s.Character.AddExperience(q.RewardXP)
+	faction, change := questReputationReward(q.ID)
+	if faction != "" && change != 0 {
+		if s.Character.Reputation == nil {
+			s.Character.Reputation = map[string]int{}
+		}
+		s.Character.Reputation[faction] += change
+		direction := "increased"
+		if change < 0 {
+			direction = "decreased"
+		}
+		s.WriteLine("Your standing with %s has %s by %d.", faction, direction, abs(change))
+	}
+}
+
+func questReputationReward(id string) (string, int) {
+	switch id {
+	case "black_thread":
+		return "olympians", 1
+	case "river_of_memory":
+		return "underworld", 1
+	case "oath_across_the_river":
+		return "delphi", 1
+	case "unwritten_path":
+		return "underworld", 1
+	default:
+		return "", 0
+	}
+}
+
+func abs(value int) int {
+	if value < 0 {
+		return -value
+	}
+	return value
+}
+
 func (s *Session) ensureQuests() {
  if s.Character.Quests==nil {s.Character.Quests=map[string]int{}}
 }
@@ -205,7 +243,7 @@ func (s *Session) updateQuests() {
   if q.TargetRoom!="" && q.TargetEnemy=="" && s.Character.RoomID==q.TargetRoom {
    old:=s.Character.Quests[q.ID];s.Character.Quests[q.ID]=q.Required
    if old<q.Required {s.WriteLine("\x1b[1;33mQuest advanced: %s\x1b[0m",q.Name)}
-   if q.RewardXP>0 {s.Character.AddExperience(q.RewardXP);s.WriteLine("\x1b[1;32mQuest complete! +%d XP.\x1b[0m",q.RewardXP)}
+   if q.RewardXP>0 {s.completeQuest(q);s.WriteLine("\x1b[1;32mQuest complete! +%d XP.\x1b[0m",q.RewardXP)}
   }
  }
 }
@@ -215,7 +253,7 @@ func (s *Session) advanceQuestKill(enemy string) {
   if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {continue}
   if q.TargetEnemy!="" && strings.EqualFold(q.TargetEnemy,enemy) && (q.TargetRoom=="" || q.TargetRoom==s.Character.RoomID) && s.Character.Quests[q.ID]<q.Required {
    s.Character.Quests[q.ID]++
-   if s.Character.Quests[q.ID]>=q.Required {s.WriteLine("\x1b[1;33mQuest complete: %s\x1b[0m",q.Name);s.Character.AddExperience(q.RewardXP);s.WriteLine("\x1b[1;32m+%d XP.\x1b[0m",q.RewardXP)}
+   if s.Character.Quests[q.ID]>=q.Required {s.WriteLine("\x1b[1;33mQuest complete: %s\x1b[0m",q.Name);s.completeQuest(q);s.WriteLine("\x1b[1;32m+%d XP.\x1b[0m",q.RewardXP)}
   }
  }
 }
@@ -650,5 +688,22 @@ func (s *Session) choose(args []string) {
 		s.WriteLine("Pythia waits. Choose 'trust' or 'defy'.")
 	}
 }
-func(s *Session) shop(){n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};s.WriteLine("\x1b[1;33m%s's WARES\x1b[0m — You have %d gold",n.Name,s.Character.Gold);for _,i:=range n.Shop{s.WriteLine("  %s%s %s — %d gold",s.color(i.TierColor()),i.TierName(),i.Name,i.Price)};s.WriteLine("Use: buy <item>")}
-func(s *Session) buy(args []string){if len(args)==0{s.WriteLine("Buy what? Try 'shop'.");return};n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};name:=strings.Join(args," ");for _,o:=range n.Shop{if strings.EqualFold(o.Name,name){if s.Character.Gold<o.Price{s.WriteLine("You need %d more gold.",o.Price-s.Character.Gold);return};for _,owned:=range s.Character.Inventory{if strings.EqualFold(owned.Name,o.Name){s.WriteLine("You already possess that item.");return}};s.Character.Gold-=o.Price;s.Character.Inventory=append(s.Character.Inventory,o);s.WriteLine("\x1b[1;32mPurchased %s for %d gold.\x1b[0m",o.Name,o.Price);return}};s.WriteLine("That item is not for sale here.")}
+func (s *Session) merchantPrice(n *world.NPC, item item.Item) int {
+	price := item.Price
+	if n == nil || n.Faction == "" || s.Character.Reputation == nil {
+		return price
+	}
+	switch standing := s.Character.Reputation[n.Faction]; {
+	case standing >= 3:
+		price = price * 90 / 100
+	case standing <= -2:
+		price = (price*110 + 99) / 100
+	}
+	if price < 1 && item.Price > 0 {
+		price = 1
+	}
+	return price
+}
+
+func(s *Session) shop(){n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};s.WriteLine("\x1b[1;33m%s's WARES\x1b[0m — You have %d gold",n.Name,s.Character.Gold);for _,i:=range n.Shop{price:=s.merchantPrice(n,i);note:="";if price<i.Price{note=" (faction discount)"}else if price>i.Price{note=" (faction surcharge)"};s.WriteLine("  %s%s %s — %d gold%s",s.color(i.TierColor()),i.TierName(),i.Name,price,note)};s.WriteLine("Use: buy <item>")}
+func(s *Session) buy(args []string){if len(args)==0{s.WriteLine("Buy what? Try 'shop'.");return};n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};name:=strings.Join(args," ");for _,o:=range n.Shop{if strings.EqualFold(o.Name,name){price:=s.merchantPrice(n,o);if s.Character.Gold<price{s.WriteLine("You need %d more gold.",price-s.Character.Gold);return};for _,owned:=range s.Character.Inventory{if strings.EqualFold(owned.Name,o.Name){s.WriteLine("You already possess that item.");return}};s.Character.Gold-=price;s.Character.Inventory=append(s.Character.Inventory,o);s.WriteLine("\x1b[1;32mPurchased %s for %d gold.\x1b[0m",o.Name,price);return}};s.WriteLine("That item is not for sale here.")}
