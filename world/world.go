@@ -1,5 +1,7 @@
 package world
 
+import "fatewalker/game/item"
+
 type World struct {
 	Rooms map[string]*Room
 	NPCs map[string][]*NPC
