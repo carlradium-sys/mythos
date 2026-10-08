@@ -28,6 +28,7 @@ BASIC LOOP
   journal              See the current story thread without a forced quest path.
   quests               Review active, completed, and choice-locked quests.
   soul                 Review memories, oaths, scars, echoes, and faction standing.
+  invoke               Use your once-per-life manifestation.
   rebirth              At level 10, cross the Styx and begin another life.
 
 There is no single correct way to play. The story gives you mysteries and
@@ -124,6 +125,14 @@ curses, relics, bloodlines, and divine resonance.
 Life II opens the modern Greek world. Later lives will introduce new eras
 and new mechanics.
 
+Each life also manifests a once-per-life gift. Use 'invoke' to call on it:
+  Thread Sense       — sense paths and available story threads.
+  Echo Sight         — recall a soul-memory and recover mana.
+  Chronal Pulse      — recover health by bending time.
+  Moon's Shelter     — recover health and mana beneath lunar protection.
+  Fateweaver's Knot  — sever a curse or receive a lasting favor.
+
+The gift changes with the destination of rebirth and resets for each new life.
 The long-term goal is to make every life feel like a chapter of one soul's
 story rather than another unrelated character.
 
@@ -241,5 +250,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","soul","shop","buy","tutorial"}
+	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","soul","invoke","shop","buy","tutorial"}
 }
