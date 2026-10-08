@@ -150,16 +150,6 @@ explore elsewhere, hunt for equipment, or pursue another mystery. The story
 will wait—and sometimes the world will change while you are away.
 
 `},
-	"save": {"save", `SAVING & LOADING
-
-Your character can be persisted on the game server.
-
-  save <slot>
-  load <slot>
-
-Slots use a safe name such as hero1 or athena_run. Save data includes your
-level, life, rebirth count, era, XP, divine domain, inventory, and other
-character state. Combat encounters are not saved; loading clears active combat.`},
 	"quests": {"quests", `QUESTS
 
 Story quests are persistent parts of your character. Progress is saved automatically.
