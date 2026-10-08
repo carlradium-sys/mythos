@@ -68,6 +68,10 @@ Divine powers cost mana and unlock as you grow.
 FLEE
   flee
 
+REST
+  rest
+
+Rest restores health and mana when no enemy is actively fighting you.
 Some battles are meant to be escaped. Survival is part of the sandbox.
 
 VICTORY
