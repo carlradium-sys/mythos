@@ -18,6 +18,7 @@ type Item struct {
 	Armor  int
 	Kind   string
 	Price  int
+	Relic  bool
 }
 
 func (i Item) TierName() string {
