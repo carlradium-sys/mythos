@@ -1,9 +1,80 @@
 package combat
-import("fmt";"math/rand";"time";"fatewalker/game/item")
-type Enemy struct{Name string;Level,HP,MaxHP,Defense,Damage,XP int;CanSever,TailSevered bool}
-type Result struct{Damage int;Text string;Killed bool}
-var rng=rand.New(rand.NewSource(time.Now().UnixNano()))
-func NewManticore()*Enemy{return&Enemy{"Manticore",4,170,170,7,18,180,true,false}}
-func Attack(name string,w item.Item,e *Enemy,attack int)Result{if e.HP<=0{return Result{Text:"The "+e.Name+" is already dead."}};if rng.Intn(20)+1+attack<e.Defense+10{return Result{Text:fmt.Sprintf("%s lunges, but your %s misses its opening.",name,w.Name)}};d:=w.Damage+rng.Intn(7);crit:=rng.Intn(100)<12;if crit{d+=d/2};loc:=[]string{"wing","side","shoulder","foreleg","rib cage","neck"};if e.CanSever&&!e.TailSevered{loc=append(loc,"tail")};where:=loc[rng.Intn(len(loc))];e.HP-=d;if e.HP<0{e.HP=0};v:="strikes";if w.Kind=="bow"{v="pierces"}else if w.Kind=="sword"{v="slashes"};t:=fmt.Sprintf("Your %s %s the %s's %s for %d damage.",w.Name,v,e.Name,where,d);if crit{t+=" The impact is devastating."};if where=="tail"&&rng.Intn(100)<18{e.TailSevered=true;t+=" The blade bites all the way through—the manticore's tail is severed!"};if e.HP==0{t+=" The "+e.Name+" collapses."};return Result{d,t,e.HP==0}}
-func Cast(caster string,dmg int,domain string,e *Enemy)Result{dmg+=rng.Intn(10);e.HP-=dmg;if e.HP<0{e.HP=0};var t string;switch domain{case"Storm":t=fmt.Sprintf("Lightning leaps across the room, lighting the chamber, then plunges through the chest of the %s and erupts from its back in an explosion of white fire.",e.Name);case"Tide":t=fmt.Sprintf("A roaring wall of water coils from %s's hands and hammers the %s into stone.",caster,e.Name);case"Ember":t=fmt.Sprintf("A star of living fire tears across the room and punches into the %s, leaving a molten wound.",e.Name);default:t=fmt.Sprintf("Divine force erupts from %s and crashes into the %s.",caster,e.Name)};if e.HP==0{t+=" The creature falls."};return Result{dmg,t,e.HP==0}}
-func EnemyAttack(e *Enemy,def int)Result{if rng.Intn(20)+1+e.Level<def+8{return Result{Text:"The "+e.Name+" snaps at you, but you evade its attack."}};d:=e.Damage/2+rng.Intn(e.Damage/2+1);return Result{d,fmt.Sprintf("The %s tears into you for %d damage.",e.Name,d),false}}
+
+import (
+	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+
+	"fatewalker/game/item"
+)
+
+type Enemy struct {
+	Name, Description string
+	Level, HP, MaxHP, Defense, Damage, XP int
+	CanSever, TailSevered bool
+}
+
+type Result struct {
+	Damage int
+	Text string
+	Killed bool
+}
+
+var (
+	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+	rngMu sync.Mutex
+)
+
+func roll(n int) int {
+	rngMu.Lock()
+	defer rngMu.Unlock()
+	return rng.Intn(n)
+}
+
+func NewManticore() *Enemy {
+	return &Enemy{Name:"Manticore", Description:"A lion-bodied horror watches you with a humanlike face. A crown of venomous spines ripples along its tail.", Level:4, HP:170, MaxHP:170, Defense:7, Damage:18, XP:180, CanSever:true}
+}
+
+func Attack(name string, w item.Item, e *Enemy, attack int) Result {
+	if e.HP <= 0 { return Result{Text:"The "+e.Name+" is already defeated."} }
+	if roll(20)+1+attack < e.Defense+10 { return Result{Text:fmt.Sprintf("Your %s misses; the %s twists away from the blow.", w.Name, e.Name)} }
+	damage := w.Damage + roll(7)
+	critical := roll(100) < 12
+	if critical { damage += damage/2 }
+	locations := []string{"wing","side","shoulder","foreleg","rib cage","neck"}
+	if e.CanSever && !e.TailSevered { locations=append(locations,"tail") }
+	where := locations[roll(len(locations))]
+	e.HP -= damage
+	if e.HP < 0 { e.HP=0 }
+	verb := "strikes"
+	if w.Kind=="bow" { verb="pierces" } else if w.Kind=="sword" { verb="slashes" } else if w.Kind=="spear" { verb="drives into" }
+	text := fmt.Sprintf("Your %s %s the %s's %s for %d damage.", w.Name,verb,e.Name,where,damage)
+	if critical { text+=" The impact is devastating." }
+	if where=="tail" && roll(100)<18 { e.TailSevered=true; text+=" The blade cuts through—the manticore's tail is severed!" }
+	if e.HP==0 { text+=" The "+e.Name+" collapses." }
+	return Result{Damage:damage,Text:text,Killed:e.HP==0}
+}
+
+func Cast(caster,pName string,dmg int,domain string,e *Enemy) Result {
+	damage:=dmg+roll(10)
+	e.HP-=damage
+	if e.HP<0 { e.HP=0 }
+	var text string
+	switch domain {
+	case "Storm": text=fmt.Sprintf("Lightning leaps across the room, lighting the chamber, then passes through the %s and bursts into sparks behind it.",e.Name)
+	case "Tide": text=fmt.Sprintf("A roaring wall of water coils from %s's hands and hammers the %s backward.",caster,e.Name)
+	case "Ember": text=fmt.Sprintf("A star of living fire crosses the room and strikes the %s in a flash of heat.",e.Name)
+	case "Aegis": text=fmt.Sprintf("%s releases a shockwave of divine force that buckles the air around the %s.",caster,e.Name)
+	default: text=fmt.Sprintf("%s unleashes %s against the %s.",caster,pName,e.Name)
+	}
+	text+=fmt.Sprintf(" (%d damage)",damage)
+	if e.HP==0 { text+=" The creature falls." }
+	return Result{Damage:damage,Text:text,Killed:e.HP==0}
+}
+
+func EnemyAttack(e *Enemy,defense int) Result {
+	if roll(20)+1+e.Level < defense+8 { return Result{Text:"The "+e.Name+" attacks, but you evade it."} }
+	damage:=e.Damage/2+roll(e.Damage/2+1)
+	return Result{Damage:damage,Text:fmt.Sprintf("The %s strikes you for %d damage.",e.Name,damage)}
+}
