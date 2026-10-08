@@ -605,3 +605,12 @@ func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
 	s.rest()
 	if s.Character.HP != s.Character.MaxHP || s.Character.Mana != s.Character.MaxMana { t.Fatal("rest did not restore health and mana") }
 }
+
+
+func TestCombatVictoryAwardsDrachmae(t *testing.T) {
+	s := newChoiceTestSession(t)
+	before := s.Character.Gold
+	s.Enemy = &combat.Enemy{Name: "Harpy", Level: 2, HP: 0, XP: 0}
+	s.defeatEnemy(false)
+	if got := s.Character.Gold - before; got != 15 { t.Fatalf("gold reward = %d, want 15", got) }
+}
