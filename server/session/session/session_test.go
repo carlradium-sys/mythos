@@ -3,6 +3,7 @@ package session
 import (
 	"io"
 	"net"
+	"strings"
 	"testing"
 
 	"fatewalker/game/character"
@@ -290,9 +291,23 @@ func TestMyrtoRecognizesPersistentStyxMemory(t *testing.T) {
 	if n == nil || n.ID != "athens_vendor" {
 		t.Fatal("expected Myrto in modern crossroads")
 	}
-	// The special greeting is selected by the talk command's persistent-memory branch.
-	if !s.Character.HasStoryFlag("styx_memory_recovered") {
-		t.Fatal("expected persistent Styx memory")
+	greeting := s.persistentNPCGreeting(n, "hello")
+	if greeting == "" || !strings.Contains(greeting, "river beneath the old world") {
+		t.Fatalf("Myrto greeting = %q, want her to recognize the Styx memory", greeting)
+	}
+	if got := s.persistentNPCGreeting(n, "wares"); got != "" {
+		t.Fatalf("non-greeting topic returned special dialogue %q", got)
+	}
+}
+
+func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "modern_crossroads"
+	s.Character.SetStoryFlag("quest_completed_oracle_whisper")
+	n := s.currentNPC()
+	greeting := s.persistentNPCGreeting(n, "greeting")
+	if greeting == "" || !strings.Contains(greeting, "old prophecy") {
+		t.Fatalf("Myrto greeting = %q, want her to recognize the Oracle prophecy", greeting)
 	}
 }
 
