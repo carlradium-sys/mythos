@@ -24,6 +24,12 @@ type Character struct {
 	Divinity   int
 	Weapon     string
 	Inventory  []item.Item
+	Memories   []string
+	Scars      []string
+	Oaths      []string
+	Favors     []string
+	Curses     []string
+	Echoes     []string
 }
 
 func New(name string) *Character {
@@ -89,4 +95,7 @@ func (c *Character) RebirthTo(era, room string) {
 	c.Era = era
 	c.RoomID = room
 	c.Divinity++
+	c.Memories = append(c.Memories, "You remember crossing the Styx and hearing the Fates whisper your name.")
+	c.Echoes = append(c.Echoes, "A black thread survives another death.")
+
 }
