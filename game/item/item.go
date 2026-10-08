@@ -17,6 +17,7 @@ type Item struct {
 	Damage int
 	Armor  int
 	Kind   string
+	Price  int
 }
 
 func (i Item) TierName() string {
