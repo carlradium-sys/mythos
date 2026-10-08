@@ -527,3 +527,36 @@ func TestMyrtoGreetingReflectsOracleDefiance(t *testing.T) {
 		t.Fatalf("unexpected modern greeting: %q", got)
 	}
 }
+
+
+func TestLevelTenRebirthOpensModernAthensAndPreservesSoul(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("oracle_trust")
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name: "Styxglass Shard", Kind: "relic", Relic: true})
+	s.awardExperience(4860)
+	if s.Character.Level != 10 {
+		t.Fatalf("level after reaching first rebirth threshold = %d, want 10", s.Character.Level)
+	}
+	s.rebirth(nil)
+	if s.Character.Life != 2 || s.Character.Era != "modern" || s.Character.RoomID != "modern_crossroads" {
+		t.Fatalf("rebirth destination = life %d, era %q, room %q", s.Character.Life, s.Character.Era, s.Character.RoomID)
+	}
+	if s.Character.Level != 1 || s.Character.Experience != 0 {
+		t.Fatalf("new life progression = level %d, XP %d; want level 1 and 0 XP", s.Character.Level, s.Character.Experience)
+	}
+	if !s.Character.HasStoryFlag("oracle_trust") {
+		t.Fatal("Oracle choice did not survive rebirth")
+	}
+	foundRelic := false
+	for _, owned := range s.Character.Inventory {
+		if owned.Relic && owned.Name == "Styxglass Shard" {
+			foundRelic = true
+		}
+	}
+	if !foundRelic {
+		t.Fatal("soul relic did not survive rebirth")
+	}
+	if s.Character.LifeGift != "Echo Sight" || s.Character.LifeGiftUsed {
+		t.Fatalf("new life gift = %q, used=%v; want unused Echo Sight", s.Character.LifeGift, s.Character.LifeGiftUsed)
+	}
+}
