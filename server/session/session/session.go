@@ -196,6 +196,20 @@ func (s *Session) help(args []string) {
 	for _,line:=range strings.Split(t.Text,"\n") { s.WriteLine("%s",line) }
 }
 
+func (s *Session) grantSoulRelic(relic item.Item) bool {
+	if !relic.Relic {
+		return false
+	}
+	for _, owned := range s.Character.Inventory {
+		if owned.Relic && strings.EqualFold(owned.Name, relic.Name) {
+			return false
+		}
+	}
+	s.Character.Inventory = append(s.Character.Inventory, relic)
+	s.WriteLine("\x1b[1;35mSoul relic gained: %s. It will endure beyond this life.\x1b[0m", relic.Name)
+	return true
+}
+
 func (s *Session) completeQuest(q quest.Quest) {
 	s.Character.AddExperience(q.RewardXP)
 	s.Character.SetStoryFlag("quest_completed_" + q.ID)
@@ -207,6 +221,7 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.SetStoryFlag("styx_memory_recovered")
 		s.Character.Memories = append(s.Character.Memories, "At the Styx, you recovered a memory the river could not swallow.")
 		s.Character.Echoes = append(s.Character.Echoes, "Black water runs beneath the city of glass, waiting for your return.")
+		s.grantSoulRelic(item.Item{Name: "Styxglass Shard", Tier: item.Epic, Kind: "relic", Relic: true})
 		s.WriteLine("The river leaves an echo inside you. It may answer in a life yet to come.")
 	}
 	faction, change := questReputationReward(q.ID)
@@ -507,7 +522,7 @@ func (s *Session) equip(args []string) {
 func (s *Session) inventory() {
 	if len(s.Character.Inventory)==0{s.WriteLine("Your inventory is empty.");return}
 	s.WriteLine("\x1b[1;33mInventory\x1b[0m")
-	for _,i:=range s.Character.Inventory { equipped:=""; if strings.EqualFold(i.Name,s.Character.Weapon)||strings.EqualFold(i.Name,s.Character.Armor){equipped=" [equipped]"}; s.WriteLine("%s%s %s(+%d armor/%d damage)%s%s",s.color(i.TierColor()),i.TierName(),i.Name,i.Armor,i.Damage,equipped,s.color("0")) }
+	for _,i:=range s.Character.Inventory { equipped:=""; if strings.EqualFold(i.Name,s.Character.Weapon)||strings.EqualFold(i.Name,s.Character.Armor){equipped=" [equipped]"}; relic:=""; if i.Relic { relic=" [soul relic]" }; s.WriteLine("%s%s %s(+%d armor/%d damage)%s%s%s",s.color(i.TierColor()),i.TierName(),i.Name,i.Armor,i.Damage,equipped,relic,s.color("0")) }
 }
 
 func (s *Session) powers() {
