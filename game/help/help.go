@@ -25,9 +25,8 @@ BASIC LOOP
   inventory             Review your equipment.
   map                  See your current position.
   journal              See the current story thread without a forced quest path.
+  quests               Review persistent story quest progress.
   rebirth              At level 10, cross the Styx and begin another life.
-  save <slot>          Persist your soul to a server-side save slot.
-  load <slot>          Restore a saved soul.
 
 There is no single correct way to play. The story gives you mysteries and
 consequences; the sandbox gives you room to decide what they mean.`},
@@ -161,6 +160,14 @@ Your character can be persisted on the game server.
 Slots use a safe name such as hero1 or athena_run. Save data includes your
 level, life, rebirth count, era, XP, divine domain, inventory, and other
 character state. Combat encounters are not saved; loading clears active combat.`},
+	"quests": {"quests", `QUESTS
+
+Story quests are persistent parts of your character. Progress is saved automatically.
+
+  quests    Show active and completed story quests.
+  journal   Show the broader story direction.
+
+Quests reward exploration and combat without forcing a linear path.`},
 	"tutorial": {"tutorial", `THE FIRST THREAD — STORY TUTORIAL
 
 The tutorial is part of the world, not a separate training room.
@@ -189,5 +196,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","items","story","journal","rebirth","save","tutorial"}
+	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","tutorial"}
 }
