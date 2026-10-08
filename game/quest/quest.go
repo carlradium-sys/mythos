@@ -21,6 +21,7 @@ var all=[]Quest{
  {ID:"unwritten_path",Name:"The Unwritten Path",Description:"You rejected prophecy. Prove that your own choices can shape the road ahead.",Goal:"Reach Ancient Athens without the Oracle’s blessing.",TargetRoom:"ancient_athens",Required:1,RewardXP:180,RequiredFlag:"oracle_defied"},
  {ID:"echoes_in_glass",Name:"Echoes in Glass",Description:"The Styx has left a memory in your soul. Find where the modern river hides beneath Athens.",Goal:"Find the modern Styx in Athens after rebirth.",TargetRoom:"modern_styx",Required:1,RewardXP:260,RequiredFlag:"styx_memory_recovered"},
  {ID:"delphi_trials",Name:"Trials of the Seer",Description:"Pythia tests whether you can hear the truth beneath a prophecy.",Goal:"Explore the Delphi Sanctum and listen to what remains.",TargetRoom:"delphi_sanctum",Required:1,RewardXP:90},
+ {ID:"gate_of_three",Name:"The Gate of Three",Description:"Defeat the guardian beneath the river.",Goal:"Defeat Cerberus.",TargetRoom:"cerberus_gate",TargetEnemy:"Cerberus",Required:1,RewardXP:400,RequiredFlag:"styx_memory_recovered"},
 }
 
 func All() []Quest { return append([]Quest(nil),all...) }
