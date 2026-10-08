@@ -99,7 +99,9 @@ Item tiers:
 Inventory shows each item's tier, damage, and armor. Use equip <item> to change your weapon or armor.
 Soul relics are marked in your inventory and persist through rebirth. The
 Styxglass Shard is the first relic: recover it by completing The River of
-Memory at the Styx. Repeating a reward cannot create a second copy.`},
+Memory at the Styx. Once per encounter, its river-ward absorbs up to 8 damage.
+The ward refreshes when a new enemy encounter begins. Repeating a reward
+cannot create a second copy.`},
 	"story": {"story", `STORY & SANDBOX
 
 Fatewalker is built around two promises:
