@@ -247,6 +247,11 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.Echoes = append(s.Character.Echoes, "A future that was never foretold burns at the edge of memory.")
 		s.grantSoulRelic(item.Item{Name: "Unwritten Ember", Tier: item.Epic, Kind: "relic", Relic: true})
 		s.WriteLine("A coal of impossible fire settles in your palm, warm but never consumed.")
+	case "museum_echo":
+		s.Character.SetStoryFlag("museum_echo_uncovered")
+		s.Character.Memories = append(s.Character.Memories, "A museum artifact remembered you before you remembered it.")
+		s.Character.Echoes = append(s.Character.Echoes, "Behind glass, an ancient face wears your eyes.")
+		s.WriteLine("The artifact warms beneath the glass. A memory crosses the distance between lives.")
 	case "gate_of_three":
 		s.Character.SetStoryFlag("cerberus_defeated")
 		s.Character.Favors = append(s.Character.Favors, "Cerberus Oath")
