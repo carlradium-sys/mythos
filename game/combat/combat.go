@@ -95,6 +95,22 @@ func enemyAttackNarration(name string) (string, string) {
 		return "The Satyr plants its hooves and whips its rune-carved staff around.", "The staff crashes into you with a burst of green sparks"
 	case "Manticore":
 		return "The Manticore's tail arches over its shoulder, spines hissing through the air.", "Venomous spines punch into you as the Manticore's tail snaps back"
+	case "Street Shade":
+		return "The Street Shade stretches unnaturally across the pavement.", "Cold shadow claws rake across you as the Street Shade flickers past"
+	case "Echo Hound":
+		return "The Echo Hound lunges from the dark train window, trailing broken voices.", "Spectral jaws close around you before the Hound dissolves into static"
+	case "Styx Wraith":
+		return "The Styx Wraith lifts a dripping hand, and the air turns bitterly cold.", "Black water lashes across you as the Wraith's veil sweeps forward"
+	case "Bronze Sentinel":
+		return "The Bronze Sentinel's chest opens with a furnace-bright glow.", "A bronze fist slams into you with the force of a temple bell"
+	case "Chronal Warden":
+		return "The Chronal Warden moves before its own shadow catches up.", "A fractured second snaps shut around you as the Warden strikes"
+	case "Storm Automaton":
+		return "The Storm Automaton's shoulder coils spark with celestial lightning.", "A thunder-charged blow crashes into you from the machine's bronze arm"
+	case "Moonshade":
+		return "The Moonshade reaches out, and the stars seem to dim around its fingers.", "A chill passes through your memories as the Moonshade's touch lands"
+	case "Last Shore Titan":
+		return "The Last Shore Titan drags a wave of black seawater toward you.", "A tide-heavy fist crashes down, carrying the weight of the drowned world"
 	default:
 		return "The " + name + " lunges for an opening.", "The " + name + " lands a heavy blow"
 	}
