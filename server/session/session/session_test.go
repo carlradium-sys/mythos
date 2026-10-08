@@ -641,3 +641,15 @@ func TestModernAndFutureRoomsSpawnEnemies(t *testing.T) {
 		if s.Enemy == nil || s.Enemy.Name != tc.name || s.Enemy.XP <= 0 { t.Errorf("unexpected enemy for %s: %#v", tc.room, s.Enemy) }
 	}
 }
+
+
+func TestCerberusAndTartarusSpawnInTheirRooms(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Level = 9
+	for _, tc := range []struct{ room, name string }{{"cerberus_gate", "Cerberus"}, {"tartarus_edge", "Tartarus Brute"}} {
+		s.Character.RoomID = tc.room
+		s.Enemy = nil
+		s.spawnEnemy()
+		if s.Enemy == nil || s.Enemy.Name != tc.name { t.Errorf("room %s spawned %#v", tc.room, s.Enemy) }
+	}
+}
