@@ -560,3 +560,15 @@ func TestLevelTenRebirthOpensModernAthensAndPreservesSoul(t *testing.T) {
 		t.Fatalf("new life gift = %q, used=%v; want unused Echo Sight", s.Character.LifeGift, s.Character.LifeGiftUsed)
 	}
 }
+
+
+func TestStyxRecoveryRestoresCharacterAtGates(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = 1
+	s.Enemy = &combat.Enemy{Name: "Test Colossus", Level: 99, Damage: 1000, HP: 500, MaxHP: 500}
+	s.enemyTurn()
+	if s.Character.HP != s.Character.MaxHP || s.Character.Mana != s.Character.MaxMana { t.Fatal("recovery did not restore resources") }
+	if s.Character.RoomID != "olympus_gates" || s.Enemy != nil { t.Fatalf("recovery state = room %q, enemy %#v", s.Character.RoomID, s.Enemy) }
+	if s.Character.Life != 1 { t.Fatalf("life = %d, want 1", s.Character.Life) }
+	if s.RelicWardSpent || s.RelicStrikeSpent { t.Fatal("relic encounter state was not reset") }
+}
