@@ -73,6 +73,18 @@ to inspect logs.
 
 Use `help`, `look`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
 
+### Suggested first-life route
+
+- Start at the Gates of Olympus and travel north to the foothills.
+- Defeat the Harpy, then continue north to the Oracle Path.
+- Defeat the Satyr before speaking with Pythia. Use `talk choices`, then choose `trust` or `defy`.
+- Continue north to the Delphi Sanctum, then east to the Temple of the First Dawn.
+- Grow stronger and explore the Underworld. The Styx opens at level 7 and Cerberus at level 9.
+- At level 10, use `rebirth` to begin Life II in modern Athens. Your soul flags, memories, and relics persist.
+
+You can use `journal` for a suggested next quest and `quests` for progress,
+requirements, and XP rewards. First-time room visits also grant exploration XP.
+
 ## Commands
 
 `look`, `map`, movement commands, `attack`, `cast <power>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help`, `quit`.
