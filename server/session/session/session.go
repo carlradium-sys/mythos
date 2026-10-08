@@ -43,6 +43,7 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("Your soul is persistent. The server remembers your account, characters, lives, and history.")
 	s.WriteLine("")
 	if !s.login(scanner) { return }
+	defer s.persist()
 	if !s.selectCharacter(scanner) { return }
 	s.look()
 	s.tutorialHint()
