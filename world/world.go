@@ -21,6 +21,8 @@ func NewWorld() *World {
 	return &World{Rooms:map[string]*Room{
 		gates.ID:gates, foothills.ID:foothills, oracle.ID:oracle, den.ID:den, crossroads.ID:crossroads,
 	}}
+	expandWorld(w.Rooms)
+	return w
 }
 
 func (w *World) GetRoom(id string) *Room { return w.Rooms[id] }
