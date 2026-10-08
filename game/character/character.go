@@ -23,6 +23,7 @@ type Character struct {
 	Domain     power.Domain
 	Divinity   int
 	Weapon     string
+	Armor      string
 	Inventory  []item.Item
 	Memories   []string
 	Scars      []string
@@ -38,14 +39,15 @@ func New(name string) *Character {
 		Name: name, Level: 1, HP: 100, MaxHP: 100,
 		Mana: 30, MaxMana: 30, RoomID: "olympus_gates",
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
-		Weapon: "bronze sword",
+		Weapon: "bronze sword", Armor: "linen cuirass",
 		Quests: map[string]int{},
-		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}},
+		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}, item.StarterArmor()},
 	}
 }
 
 func (c *Character) AttackPower() int { return c.Attack + c.Level*2 }
-func (c *Character) DefensePower() int { return c.Defense + c.Level }
+func (c *Character) DefensePower() int { return c.Defense + c.Level + c.ArmorPower() }
+func (c *Character) ArmorPower() int { for _,i:=range c.Inventory { if i.Name==c.Armor { return i.Armor } }; return 0 }
 func (c *Character) CanRebirth() bool { return c.Level >= 10 }
 
 func (c *Character) AddExperience(amount int) bool {
