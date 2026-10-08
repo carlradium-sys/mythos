@@ -18,6 +18,8 @@ type Character struct {
 	Rebirths   int
 	Era        string
 	Experience int
+	Gold int
+	Reputation map[string]int
 	Attack     int
 	Defense    int
 	Domain     power.Domain
@@ -41,6 +43,8 @@ func New(name string) *Character {
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
 		Weapon: "bronze sword", Armor: "linen cuirass",
 		Quests: map[string]int{},
+		Reputation: map[string]int{"olympians":0,"delphi":0,"underworld":0},
+		Gold: 50,
 		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}, item.StarterArmor()},
 	}
 }
