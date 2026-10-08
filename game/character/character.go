@@ -30,6 +30,7 @@ type Character struct {
 	Favors     []string
 	Curses     []string
 	Echoes     []string
+	Quests     map[string]int
 }
 
 func New(name string) *Character {
@@ -38,6 +39,7 @@ func New(name string) *Character {
 		Mana: 30, MaxMana: 30, RoomID: "olympus_gates",
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
 		Weapon: "bronze sword",
+		Quests: map[string]int{},
 		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}},
 	}
 }
