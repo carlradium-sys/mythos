@@ -317,7 +317,7 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 func TestDelphiTrialsGrantPersistentLaurelRelic(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "delphi_sanctum"
-	s.applyRoomDiscoveries()
+	s.updateQuests()
 	if !s.Character.HasStoryFlag("delphi_trials_complete") {
 		t.Fatal("Delphi trials should record a persistent story flag")
 	}
