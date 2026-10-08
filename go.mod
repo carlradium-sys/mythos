@@ -1,3 +1,3 @@
-module mythos
+module fatewalker
 
 go 1.26.4
