@@ -516,3 +516,14 @@ func TestMyrtoGreetingReflectsOracleTrust(t *testing.T) {
 		t.Fatalf("unexpected modern greeting: %q", got)
 	}
 }
+
+
+func TestMyrtoGreetingReflectsOracleDefiance(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("oracle_defied")
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	got := s.persistentNPCGreeting(s.currentNPC(), "hello")
+	if !strings.Contains(got, "mistake prophecy for permission") {
+		t.Fatalf("unexpected modern greeting: %q", got)
+	}
+}
