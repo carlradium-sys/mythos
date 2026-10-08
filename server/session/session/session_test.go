@@ -758,3 +758,14 @@ func TestRebirthWaitsForCombatToEnd(t *testing.T) {
 	s.rebirth(nil)
 	if s.Character.Life != 2 { t.Fatal("rebirth did not work after combat") }
 }
+
+
+func TestMuseumQuestPersistsItsRewards(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Life = 2
+	s.Character.RoomID = "modern_museum"
+	s.Character.SetStoryFlag("styx_memory_recovered")
+	s.updateQuests()
+	if !s.Character.HasStoryFlag("museum_echo_uncovered") { t.Fatal("museum flag missing") }
+	if len(s.Character.Memories) == 0 { t.Fatal("memory reward missing") }
+}
