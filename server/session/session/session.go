@@ -117,7 +117,7 @@ func (s *Session) login(scanner *bufio.Scanner) bool {
   var err error
   if strings.EqualFold(p[0],"register") {
    err=s.Accounts.Register(p[1],p[2])
-   if err==nil {s.Account,sErr:=s.Accounts.Login(p[1],p[2]);_ = sErr; s.Account=s; s.WriteLine("Account created.")}
+   if err==nil {s.Account,err=s.Accounts.Login(p[1],p[2]); if err==nil{s.WriteLine("Account created.")}}
   } else if strings.EqualFold(p[0],"login") {
    s.Account,err=s.Accounts.Login(p[1],p[2])
   } else {err=fmt.Errorf("unknown account command")}
@@ -137,7 +137,7 @@ func (s *Session) selectCharacter(scanner *bufio.Scanner) bool {
   if !scanner.Scan(){return false}
   p:=strings.Fields(scanner.Text());if len(p)==0{continue}
   switch strings.ToLower(p[0]) {
-  case "logout": return s.login(scanner)
+  case "logout": if !s.login(scanner){return false}; continue
   case "quit","exit": return false
   case "create":
    if len(p)<2{s.WriteLine("Create which character?");continue}
