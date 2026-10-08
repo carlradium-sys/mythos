@@ -212,8 +212,20 @@ func (s *Session) grantSoulRelic(relic item.Item) bool {
 	return true
 }
 
+func (s *Session) awardExperience(amount int) {
+	if amount <= 0 {
+		return
+	}
+	oldLevel := s.Character.Level
+	s.Character.AddExperience(amount)
+	if s.Character.Level > oldLevel {
+		s.WriteLine("\\x1b[1;35mYour soul surges — Level %d reached!\\x1b[0m", s.Character.Level)
+		s.WriteLine("Your strength and divine reserves have been restored.")
+	}
+}
+
 func (s *Session) completeQuest(q quest.Quest) {
-	s.Character.AddExperience(q.RewardXP)
+	s.awardExperience(q.RewardXP)
 	s.Character.SetStoryFlag("quest_completed_" + q.ID)
 	switch q.ID {
 	case "oracle_whisper":
@@ -446,7 +458,7 @@ func (s *Session) attack() {
 			}
 			result.Damage = totalDamage
 			result.Killed = s.Enemy.HP == 0
-			result.Text += fmt.Sprintf("\nThe Unwritten Ember flares, adding %d damage. (%d total damage)", bonus, totalDamage)
+			result.Text += fmt.Sprintf("\nThe %s answers your strike, adding %d damage. (%d total damage)", s.soulRelicStrikeName(), bonus, totalDamage)
 			if result.Killed {
 				result.Text += " The " + s.Enemy.Name + " collapses."
 			}
@@ -488,7 +500,7 @@ func (s *Session) defeatEnemy(divine bool) {
 	}
 	enemy := s.Enemy
 	s.advanceQuestKill(enemy.Name)
-	s.Character.AddExperience(enemy.XP)
+	s.awardExperience(enemy.XP)
 	if divine {
 		s.WriteLine("\x1b[1;32mDivine victory! +%d XP.\x1b[0m", enemy.XP)
 	} else {
@@ -539,21 +551,33 @@ func (s *Session) applySoulRelicWard(damage int) (int, int) {
 	return damage - absorbed, absorbed
 }
 
+func (s *Session) soulRelicStrikeName() string {
+	// Prefer the strongest offensive relic so inventory order never changes combat results.
+	for _, name := range []string{"Unwritten Ember", "Laurel of the Seer"} {
+		for _, owned := range s.Character.Inventory {
+			if owned.Relic && strings.EqualFold(owned.Name, name) {
+				return name
+			}
+		}
+	}
+	return "soul relic"
+}
+
 func (s *Session) applySoulRelicStrike(damage int) (int, int) {
 	if damage <= 0 || s.RelicStrikeSpent {
 		return damage, 0
 	}
-	for _, owned := range s.Character.Inventory {
-		if owned.Relic && strings.EqualFold(owned.Name, "Unwritten Ember") {
-			s.RelicStrikeSpent = true
-			return damage + 6, 6
-		}
-		if owned.Relic && strings.EqualFold(owned.Name, "Laurel of the Seer") {
-			s.RelicStrikeSpent = true
-			return damage + 3, 3
-		}
+	bonus := 0
+	if s.soulRelicStrikeName() == "Unwritten Ember" {
+		bonus = 6
+	} else if s.soulRelicStrikeName() == "Laurel of the Seer" {
+		bonus = 3
 	}
-	return damage, 0
+	if bonus == 0 {
+		return damage, 0
+	}
+	s.RelicStrikeSpent = true
+	return damage + bonus, bonus
 }
 
 func (s *Session) enemyTurn() {
