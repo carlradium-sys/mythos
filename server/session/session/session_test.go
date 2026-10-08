@@ -582,3 +582,13 @@ func TestRoomDiscoveryRewardIsOneTime(t *testing.T) {
 	if first != 110 || s.Character.Experience != first { t.Fatalf("XP after discovery/revisit = %d/%d, want 110/110", first, s.Character.Experience) }
 	if !s.Character.HasStoryFlag("room_discovered_delphi_sanctum") { t.Fatal("discovery flag missing") }
 }
+
+
+func TestJournalSelectsNextUnlockedQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	q, ok := s.nextAvailableQuest()
+	if !ok || q.ID != "black_thread" { t.Fatalf("first suggested quest = %q, found=%v", q.ID, ok) }
+	s.Character.Quests["black_thread"] = 1
+	q, ok = s.nextAvailableQuest()
+	if !ok || q.ID != "oracle_whisper" { t.Fatalf("next suggested quest = %q, found=%v", q.ID, ok) }
+}
