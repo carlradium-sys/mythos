@@ -26,6 +26,12 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 
 `look`, `map`, movement commands, `attack`, `cast <power>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help`, `quit`.
 
+## World vision
+
+Fatewalker is intended to become an all-encompassing mythological world. Ancient Greece is only the beginning: Olympus is explorable, Delphi and Ancient Athens have their own stories, and the road below leads to the Styx, Asphodel, judgment, Cerberus, and Tartarus. Life II reframes the same mythology through modern Athens, with hidden temples, museums, metro tunnels, rooftops, and a modern Styx. Later rebirths are not limited to a single third life; they can open new eras and branches, including future versions of Athens, new roads to Olympus, lunar prophecy, and distant mythic futures.
+
+The goal is familiarity without repetition. Places, gods, monsters, symbols, and consequences can return in new forms as history advances. A player should eventually be able to look at the same mountain, city, river, or divine figure across multiple lives and realize that it is both familiar and profoundly changed.
+
 ## Design direction
 
 The long-term goal is a living reincarnation game rather than a conventional fantasy MUD. Each life should add a new layer to the player's identity and abilities.
