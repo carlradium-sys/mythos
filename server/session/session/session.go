@@ -106,6 +106,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.awaken(parts[1:])
 	case "flee":
 		s.flee()
+	case "rest":
+		s.rest()
 	case "rebirth":
 		s.rebirth(parts[1:])
 	case "journal","quest","story":
@@ -644,6 +646,16 @@ func (s *Session) enemyTurn() {
 		s.WriteLine("You awaken at the Gates of Olympus, restored but shaken. This life continues.")
 		s.WriteLine("The black thread around your sword is still there. It has not forgotten you.")
 	}
+}
+
+func (s *Session) rest() {
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("You cannot rest while %s is still hunting you.", s.Enemy.Name)
+		return
+	}
+	oldHP, oldMana := s.Character.HP, s.Character.Mana
+	s.Character.Restore()
+	s.WriteLine("You take a moment to gather yourself. Restored %d health and %d mana.", s.Character.HP-oldHP, s.Character.Mana-oldMana)
 }
 
 func (s *Session) flee() {
