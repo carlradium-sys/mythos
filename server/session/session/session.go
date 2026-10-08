@@ -510,16 +510,16 @@ func (s *Session) applySoulRelicWard(damage int) (int, int) {
 	if damage <= 0 || s.RelicWardSpent {
 		return damage, 0
 	}
-	wardName, wardStrength := "", 0
+	wardStrength := 0
 	for _, owned := range s.Character.Inventory {
 		if !owned.Relic {
 			continue
 		}
 		switch strings.ToLower(owned.Name) {
 		case "styxglass shard":
-			if wardStrength < 8 { wardName, wardStrength = owned.Name, 8 }
+			if wardStrength < 8 { wardStrength = 8 }
 		case "oracle's thread":
-			if wardStrength < 4 { wardName, wardStrength = owned.Name, 4 }
+			if wardStrength < 4 { wardStrength = 4 }
 		}
 	}
 	if wardStrength == 0 {
@@ -551,7 +551,7 @@ func (s *Session) enemyTurn() {
 		finalDamage, absorbed := s.applySoulRelicWard(result.Damage)
 		if absorbed > 0 {
 			result.Damage = finalDamage
-			result.Text += fmt.Sprintf("\nThe Styxglass Shard flashes; its river-ward absorbs %d damage.", absorbed)
+			result.Text += fmt.Sprintf("\nA soul relic flashes; its ward absorbs %d damage.", absorbed)
 		}
 		s.Character.HP-=result.Damage
 		if s.Character.HP<0{s.Character.HP=0}
