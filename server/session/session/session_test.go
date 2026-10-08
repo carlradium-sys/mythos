@@ -713,3 +713,34 @@ func TestFirstLifeRouteCompletesCoreQuests(t *testing.T) {
 	s.rebirth(nil)
 	if s.Character.Life != 2 || s.Character.RoomID != "modern_crossroads" { t.Fatalf("rebirth destination: life %d room %q", s.Character.Life, s.Character.RoomID) }
 }
+
+
+func TestModernLifeUnlocksFutureLifeProgression(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Life = 2
+	s.Character.Era = "modern"
+	s.Character.RoomID = "modern_crossroads"
+	s.Character.Level = 10
+	s.Character.Experience = 3645
+	s.Character.SetStoryFlag("styx_memory_recovered")
+
+	s.move("north")
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	s.move("east")
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	s.move("east")
+	if !s.Character.HasStoryFlag("quest_completed_echoes_in_glass") {
+		t.Fatal("modern Styx quest did not complete")
+	}
+
+	s.rebirth([]string{"future"})
+	if s.Character.Life != 3 || s.Character.Era != "future" || s.Character.RoomID != "future_city" {
+		t.Fatalf("future rebirth = life %d era %q room %q", s.Character.Life, s.Character.Era, s.Character.RoomID)
+	}
+	s.look()
+	if s.Enemy == nil || s.Enemy.Name != "Chronal Warden" {
+		t.Fatalf("future starting encounter = %#v", s.Enemy)
+	}
+}
