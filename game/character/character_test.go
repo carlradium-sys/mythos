@@ -71,3 +71,19 @@ func TestRebirthGrantsDestinationSpecificLifeGift(t *testing.T) {
 		t.Fatalf("far life gift = %q, want Fateweaver's Knot", c.LifeGift)
 	}
 }
+
+
+func TestEnsureLifeGiftMigratesOlderCharacter(t *testing.T) {
+	c := New("LegacySoul")
+	c.Era = "modern"
+	c.RoomID = "modern_crossroads"
+	c.LifeGift = ""
+	c.LifeGiftUsed = true
+	c.EnsureLifeGift()
+	if c.LifeGift != "Echo Sight" {
+		t.Fatalf("migrated life gift = %q, want Echo Sight", c.LifeGift)
+	}
+	if c.LifeGiftUsed {
+		t.Fatal("newly migrated life-gift should be available")
+	}
+}
