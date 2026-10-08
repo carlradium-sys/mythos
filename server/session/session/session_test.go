@@ -734,6 +734,8 @@ func TestModernLifeUnlocksFutureLifeProgression(t *testing.T) {
 	if !s.Character.HasStoryFlag("quest_completed_echoes_in_glass") {
 		t.Fatal("modern Styx quest did not complete")
 	}
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
 
 	s.rebirth([]string{"future"})
 	if s.Character.Life != 3 || s.Character.Era != "future" || s.Character.RoomID != "future_city" {
