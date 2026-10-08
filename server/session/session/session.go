@@ -94,6 +94,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.flee()
 	case "rebirth":
 		s.rebirth()
+	case "journal","quest","story":
+		s.journal()
 	default:
 		s.WriteLine("Unknown command. Type 'help' for help.")
 	}
@@ -116,6 +118,30 @@ func (s *Session) help(args []string) {
 	}
 	s.WriteLine("\x1b[1;33m[%s]\x1b[0m",strings.ToUpper(t.Name))
 	for _,line:=range strings.Split(t.Text,"\n") { s.WriteLine("%s",line) }
+}
+
+func (s *Session) journal() {
+	s.WriteLine("\x1b[1;33mFATEWALKER JOURNAL\x1b[0m")
+	s.WriteLine("\x1b[1;36mThe First Thread\x1b[0m")
+	s.WriteLine("You awakened at the Gates of Olympus with no memory of your death.")
+	s.WriteLine("A black thread binds itself to your bronze sword.")
+	s.WriteLine("Something beyond the gates knows your name.")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;33mCurrent thread\x1b[0m")
+	switch {
+	case s.Character.Life == 1 && s.Character.Level < 3:
+		s.WriteLine("Explore the foothills. Discover why the creatures seem to recognize you.")
+	case s.Character.Life == 1 && s.Character.Level < 10:
+		s.WriteLine("Grow stronger, follow the Oracle's path, and uncover the meaning of the black thread.")
+	case s.Character.Life == 1:
+		s.WriteLine("The Styx is near. Decide what kind of soul you will carry into your next life.")
+	case s.Character.Life == 2:
+		s.WriteLine("Athens is familiar in ways it should not be. Find the place where the ancient world survived.")
+	default:
+		s.WriteLine("Your earlier lives are becoming a single story. Find the next thread.")
+	}
+	s.WriteLine("")
+	s.WriteLine("The journal offers direction, not a leash. You are free to wander.")
 }
 
 func (s *Session) tutorialHint() {
