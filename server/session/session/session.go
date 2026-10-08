@@ -431,6 +431,10 @@ func (s *Session) spawnEnemy() {
 		s.Enemy = combat.NewSatyr()
 	case "manticore_den":
 		s.Enemy = combat.NewManticore()
+	case "cerberus_gate":
+		s.Enemy = &combat.Enemy{Name: "Cerberus", Description: "Three enormous heads rise from the darkness. One snarls, one watches, and one whispers your name.", Level: 9, HP: 350, MaxHP: 350, Defense: 12, Damage: 28, XP: 450}
+	case "tartarus_edge":
+		s.Enemy = &combat.Enemy{Name: "Tartarus Brute", Description: "A colossal shape claws its way up from the abyss, dragging chains that were forged before the gods had names.", Level: 10, HP: 390, MaxHP: 390, Defense: 13, Damage: 31, XP: 520}
 	case "modern_plaka":
 		s.Enemy = &combat.Enemy{Name: "Street Shade", Description: "A human-shaped shadow slips between the neon signs, moving against the light.", Level: 2, HP: 80, MaxHP: 80, Defense: 5, Damage: 10, XP: 90}
 	case "modern_metro":
