@@ -355,6 +355,63 @@ func TestStyxglassWardCannotAbsorbMoreThanIncomingDamage(t *testing.T) {
 	}
 }
 
+func TestBranchQuestsGrantDistinctPersistentSoulRelics(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.completeQuest(quest.Quest{ID: "oath_across_the_river"})
+	s.completeQuest(quest.Quest{ID: "oath_across_the_river"})
+	s.completeQuest(quest.Quest{ID: "unwritten_path"})
+	s.completeQuest(quest.Quest{ID: "unwritten_path"})
+	counts := map[string]int{}
+	for _, owned := range s.Character.Inventory {
+		if owned.Relic { counts[owned.Name]++ }
+	}
+	if counts["Oracle's Thread"] != 1 || counts["Unwritten Ember"] != 1 {
+		t.Fatalf("branch relic counts = %#v, want one of each branch relic", counts)
+	}
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	for _, name := range []string{"Oracle's Thread", "Unwritten Ember"} {
+		found := false
+		for _, owned := range s.Character.Inventory {
+			if owned.Relic && owned.Name == name { found = true }
+		}
+		if !found { t.Fatalf("%s did not persist through rebirth", name) }
+	}
+}
+
+func TestOracleThreadWardAndStyxglassChooseStrongestWard(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Inventory = append(s.Character.Inventory,
+		item.Item{Name: "Oracle's Thread", Kind: "relic", Relic: true},
+		item.Item{Name: "Styxglass Shard", Kind: "relic", Relic: true},
+	)
+	remaining, absorbed := s.applySoulRelicWard(12)
+	if remaining != 4 || absorbed != 8 {
+		t.Fatalf("strongest ward = remaining %d, absorbed %d; want 4 and 8", remaining, absorbed)
+	}
+	s.RelicWardSpent = false
+	s.Character.Inventory = []item.Item{{Name: "Oracle's Thread", Kind: "relic", Relic: true}}
+	remaining, absorbed = s.applySoulRelicWard(3)
+	if remaining != 0 || absorbed != 3 {
+		t.Fatalf("Oracle's Thread ward = remaining %d, absorbed %d; want 0 and 3", remaining, absorbed)
+	}
+}
+
+func TestUnwrittenEmberAddsDamageOncePerEncounter(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name: "Unwritten Ember", Kind: "relic", Relic: true})
+	if damage, bonus := s.applySoulRelicStrike(0); damage != 0 || bonus != 0 || s.RelicStrikeSpent {
+		t.Fatal("zero-damage attempt should not spend the Unwritten Ember")
+	}
+	damage, bonus := s.applySoulRelicStrike(14)
+	if damage != 20 || bonus != 6 || !s.RelicStrikeSpent {
+		t.Fatalf("first strike = damage %d, bonus %d, spent %v; want 20, 6, true", damage, bonus, s.RelicStrikeSpent)
+	}
+	damage, bonus = s.applySoulRelicStrike(14)
+	if damage != 14 || bonus != 0 {
+		t.Fatalf("second strike = damage %d, bonus %d; want 14 and 0", damage, bonus)
+	}
+}
+
 func TestStyxglassSoulRelicPersistsAcrossRebirthWithoutDuplication(t *testing.T) {
 	s := newChoiceTestSession(t)
 	reward := quest.Quest{ID: "river_of_memory", RewardXP: 1}
