@@ -244,3 +244,54 @@ func TestFactionStandingChangesNPCGreeting(t *testing.T) {
 		t.Fatalf("neutral faction greeting = %q, want empty to use default dialogue", got)
 	}
 }
+
+
+func TestRiverQuestRequiresOracleProphecy(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "styx_shore"
+	s.updateQuests()
+	if got := s.Character.Quests["river_of_memory"]; got != 0 {
+		t.Fatalf("river quest progress before oracle prophecy = %d, want 0", got)
+	}
+	s.Character.Quests["oracle_whisper"] = 1
+	s.updateQuests()
+	if got := s.Character.Quests["river_of_memory"]; got != 1 {
+		t.Fatalf("river quest progress after oracle prophecy = %d, want 1", got)
+	}
+	if !s.Character.HasStoryFlag("styx_memory_recovered") {
+		t.Fatal("completing river quest should record its persistent soul discovery")
+	}
+}
+
+func TestRiverMemoryUnlocksModernEraQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "styx_shore"
+	s.Character.Quests["oracle_whisper"] = 1
+	s.updateQuests()
+	if !s.Character.HasStoryFlag("styx_memory_recovered") {
+		t.Fatal("river memory was not recorded")
+	}
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	s.Character.RoomID = "modern_styx"
+	s.updateQuests()
+	if got := s.Character.Quests["echoes_in_glass"]; got != 1 {
+		t.Fatalf("modern era quest progress = %d, want 1", got)
+	}
+	if !s.Character.HasStoryFlag("quest_completed_echoes_in_glass") {
+		t.Fatal("modern quest completion should be recorded on the soul")
+	}
+}
+
+func TestMyrtoRecognizesPersistentStyxMemory(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "modern_crossroads"
+	s.Character.SetStoryFlag("styx_memory_recovered")
+	n := s.currentNPC()
+	if n == nil || n.ID != "athens_vendor" {
+		t.Fatal("expected Myrto in modern crossroads")
+	}
+	// The special greeting is selected by the talk command's persistent-memory branch.
+	if !s.Character.HasStoryFlag("styx_memory_recovered") {
+		t.Fatal("expected persistent Styx memory")
+	}
+}
