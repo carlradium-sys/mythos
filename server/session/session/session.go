@@ -87,6 +87,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.equip(parts[1:])
 	case "talk", "say":
 		s.talk(parts[1:])
+	case "choose":
+		s.choose(parts[1:])
 	case "shop", "wares":
 		s.shop()
 	case "buy":
@@ -497,6 +499,75 @@ func (s *Session) rebirth(args []string) {
 func (s *Session) color(code string) string { return "\x1b["+code+"m" }
 
 func(s *Session) currentNPC()*world.NPC{n:=s.World.NPCs[s.Character.RoomID];if len(n)==0{return nil};return n[0]}
-func(s *Session) talk(args []string){n:=s.currentNPC();if n==nil{s.WriteLine("There is no one here willing to speak with you.");return};topic:="hello";if len(args)>0{topic=strings.Join(args," ")};if t:=n.DialogueFor(topic);t!=""{s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t);return};s.WriteLine("\x1b[1;36m%s:\x1b[0m "Ask me about the things that matter here."",n.Name)}
+func(s *Session) talk(args []string) {
+	n := s.currentNPC()
+	if n == nil {
+		s.WriteLine("There is no one here willing to speak with you.")
+		return
+	}
+	topic := "hello"
+	if len(args) > 0 {
+		topic = strings.Join(args, " ")
+	}
+	if topic == "choice" || topic == "choices" {
+		if n.ID == "pythia" {
+			if s.Character.HasStoryFlag("oracle_choice_made") {
+				s.WriteLine("Pythia studies you. \"The river has recorded your answer. You cannot make that choice unmade.\"")
+				return
+			}
+			s.WriteLine("Pythia's voice falls to a whisper: \"When the Fates offer a thread, will you trust the pattern or cut your own path?\"")
+			s.WriteLine("  choose trust — accept the Oracle's guidance and swear to remember it.")
+			s.WriteLine("  choose defy  — reject prophecy and bear the consequences alone.")
+			return
+		}
+	}
+	if t := n.DialogueFor(topic); t != "" {
+		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s", n.Name, t)
+		return
+	}
+	s.WriteLine("\x1b[1;36m%s:\x1b[0m \"Ask me about the things that matter here.\"", n.Name)
+}
+
+func (s *Session) choose(args []string) {
+	if len(args) == 0 {
+		s.WriteLine("Choose what? At the Oracle, try 'talk choices' first.")
+		return
+	}
+	n := s.currentNPC()
+	if n == nil || n.ID != "pythia" || s.Character.RoomID != "oracle_path" {
+		s.WriteLine("There is no choice here for you to make.")
+		return
+	}
+	if s.Character.HasStoryFlag("oracle_choice_made") {
+		s.WriteLine("Pythia shakes her head. \"The river has recorded your answer. The choice belongs to your soul now.\"")
+		return
+	}
+	if s.Character.StoryFlags == nil {
+		s.Character.StoryFlags = map[string]bool{}
+	}
+	if s.Character.Reputation == nil {
+		s.Character.Reputation = map[string]int{}
+	}
+	switch strings.ToLower(strings.Join(args, " ")) {
+	case "trust", "trust oracle", "accept":
+		s.Character.SetStoryFlag("oracle_choice_made")
+		s.Character.SetStoryFlag("oracle_trust")
+		s.Character.Reputation["delphi"] += 2
+		s.Character.Oaths = append(s.Character.Oaths, "I will remember the Oracle's warning when the Styx asks what I would surrender.")
+		s.Character.Memories = append(s.Character.Memories, "Pythia offered a path through uncertainty, and I chose to listen.")
+		s.WriteLine("\x1b[1;36mPythia lowers her head. \"Then carry my words beyond this life. Trust is not obedience; it is a promise to remember.\"\x1b[0m")
+		s.WriteLine("Delphi reputation +2. A new oath has taken root in your soul.")
+	case "defy", "defy oracle", "reject":
+		s.Character.SetStoryFlag("oracle_choice_made")
+		s.Character.SetStoryFlag("oracle_defied")
+		s.Character.Reputation["delphi"] -= 1
+		s.Character.Scars = append(s.Character.Scars, "I refused the Oracle's offered path; the future must answer to my own hand.")
+		s.Character.Echoes = append(s.Character.Echoes, "A prophecy ended at the moment I refused to hear its ending.")
+		s.WriteLine("\x1b[1;36mPythia's brazier gutters. \"Then walk without my blessing. Even defiance leaves a thread behind.\"\x1b[0m")
+		s.WriteLine("Delphi reputation -1. Your refusal leaves a scar that will follow you.")
+	default:
+		s.WriteLine("Pythia waits. Choose 'trust' or 'defy'.")
+	}
+}
 func(s *Session) shop(){n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};s.WriteLine("\x1b[1;33m%s's WARES\x1b[0m — You have %d gold",n.Name,s.Character.Gold);for _,i:=range n.Shop{s.WriteLine("  %s%s %s — %d gold",s.color(i.TierColor()),i.TierName(),i.Name,i.Price)};s.WriteLine("Use: buy <item>")}
 func(s *Session) buy(args []string){if len(args)==0{s.WriteLine("Buy what? Try 'shop'.");return};n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};name:=strings.Join(args," ");for _,o:=range n.Shop{if strings.EqualFold(o.Name,name){if s.Character.Gold<o.Price{s.WriteLine("You need %d more gold.",o.Price-s.Character.Gold);return};for _,owned:=range s.Character.Inventory{if strings.EqualFold(owned.Name,o.Name){s.WriteLine("You already possess that item.");return}};s.Character.Gold-=o.Price;s.Character.Inventory=append(s.Character.Inventory,o);s.WriteLine("\x1b[1;32mPurchased %s for %d gold.\x1b[0m",o.Name,o.Price);return}};s.WriteLine("That item is not for sale here.")}
