@@ -141,7 +141,7 @@ func (s *Session) attack() {
 	if result.Killed {
 		s.Character.AddExperience(s.Enemy.XP)
 		s.WriteLine("\x1b[1;32mVictory! +%d XP.\x1b[0m",s.Enemy.XP)
-		if s.Character.Level>=5 && len(s.Character.Inventory)==1 {
+		if s.Enemy.Name=="Manticore" && s.Character.Level>=5 && len(s.Character.Inventory)==1 {
 			drop:=item.Item{Name:"manticore fang",Tier:item.Rare,Damage:18,Kind:"sword"}
 			s.Character.Inventory=append(s.Character.Inventory,drop)
 			s.WriteLine("%sYou recover a %s%s.",s.color(drop.TierColor()),drop.TierName(),s.color("0"))
@@ -168,7 +168,6 @@ func (s *Session) cast(args []string) {
 	result:=combat.Cast(s.Character.Name,chosen.Name,chosen.Damage,string(chosen.Domain),s.Enemy)
 	s.WriteLine("\x1b[1;35m%s\x1b[0m",result.Text)
 	if result.Killed {
-		s.Character.AddExperience(s.Enemy.XP)
 		xp:=s.Enemy.XP
 		s.Character.AddExperience(xp)
 		s.WriteLine("\x1b[1;32mDivine victory! +%d XP.\x1b[0m",xp)
