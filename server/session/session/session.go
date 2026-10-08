@@ -27,6 +27,7 @@ type Session struct {
  World *world.World
  Enemy *combat.Enemy
  RelicWardSpent bool
+ RelicStrikeSpent bool
  TutorialStep int
 }
 
@@ -224,7 +225,14 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.Echoes = append(s.Character.Echoes, "Black water runs beneath the city of glass, waiting for your return.")
 		s.grantSoulRelic(item.Item{Name: "Styxglass Shard", Tier: item.Epic, Kind: "relic", Relic: true})
 		s.WriteLine("The river leaves an echo inside you. It may answer in a life yet to come.")
-	}
+	case "oath_across_the_river":
+		s.Character.Oaths = append(s.Character.Oaths, "I will carry Pythia's warning beyond the river.")
+		s.grantSoulRelic(item.Item{Name: "Oracle's Thread", Tier: item.Epic, Kind: "relic", Relic: true})
+		s.WriteLine("A silver thread knots itself around your wrist: the Oracle's warning now guards your soul.")
+	case "unwritten_path":
+		s.Character.Echoes = append(s.Character.Echoes, "A future that was never foretold burns at the edge of memory.")
+		s.grantSoulRelic(item.Item{Name: "Unwritten Ember", Tier: item.Epic, Kind: "relic", Relic: true})
+		s.WriteLine("A coal of impossible fire settles in your palm, warm but never consumed.")
 	faction, change := questReputationReward(q.ID)
 	if faction != "" && change != 0 {
 		if s.Character.Reputation == nil {
@@ -373,6 +381,7 @@ func (s *Session) look() {
 
 func (s *Session) spawnEnemy() {
 	s.RelicWardSpent = false
+	s.RelicStrikeSpent = false
 	switch s.Character.RoomID {
 	case "olympus_foothills":
 		s.Enemy=combat.NewHarpy()
@@ -420,6 +429,21 @@ func (s *Session) attack() {
 	}
 	w := s.currentWeapon()
 	result := combat.Attack(s.Character.Name, w, s.Enemy, s.Character.AttackPower())
+	if result.Damage > 0 {
+		totalDamage, bonus := s.applySoulRelicStrike(result.Damage)
+		if bonus > 0 {
+			s.Enemy.HP -= bonus
+			if s.Enemy.HP < 0 {
+				s.Enemy.HP = 0
+			}
+			result.Damage = totalDamage
+			result.Killed = s.Enemy.HP == 0
+			result.Text += fmt.Sprintf("\nThe Unwritten Ember flares, adding %d damage. (%d total damage)", bonus, totalDamage)
+			if result.Killed {
+				result.Text += " The " + s.Enemy.Name + " collapses."
+			}
+		}
+	}
 	s.WriteLine("%s", result.Text)
 	s.advanceTutorial(3)
 	if result.Killed {
@@ -478,20 +502,43 @@ func (s *Session) defeatEnemy(divine bool) {
 		}
 	}
 	s.Enemy = nil
+	s.RelicWardSpent = false
+	s.RelicStrikeSpent = false
 }
 
 func (s *Session) applySoulRelicWard(damage int) (int, int) {
 	if damage <= 0 || s.RelicWardSpent {
 		return damage, 0
 	}
+	wardName, wardStrength := "", 0
 	for _, owned := range s.Character.Inventory {
-		if owned.Relic && strings.EqualFold(owned.Name, "Styxglass Shard") {
-			absorbed := 8
-			if absorbed > damage {
-				absorbed = damage
-			}
-			s.RelicWardSpent = true
-			return damage - absorbed, absorbed
+		if !owned.Relic {
+			continue
+		}
+		switch strings.ToLower(owned.Name) {
+		case "styxglass shard":
+			if wardStrength < 8 { wardName, wardStrength = owned.Name, 8 }
+		case "oracle's thread":
+			if wardStrength < 4 { wardName, wardStrength = owned.Name, 4 }
+		}
+	}
+	if wardStrength == 0 {
+		return damage, 0
+	}
+	absorbed := wardStrength
+	if absorbed > damage { absorbed = damage }
+	s.RelicWardSpent = true
+	return damage - absorbed, absorbed
+}
+
+func (s *Session) applySoulRelicStrike(damage int) (int, int) {
+	if damage <= 0 || s.RelicStrikeSpent {
+		return damage, 0
+	}
+	for _, owned := range s.Character.Inventory {
+		if owned.Relic && strings.EqualFold(owned.Name, "Unwritten Ember") {
+			s.RelicStrikeSpent = true
+			return damage + 6, 6
 		}
 	}
 	return damage, 0
@@ -524,6 +571,7 @@ func (s *Session) flee() {
 	if s.Enemy==nil || s.Enemy.HP<=0 {s.WriteLine("You are not in combat.");return}
 	s.Enemy=nil
 	s.RelicWardSpent = false
+	s.RelicStrikeSpent = false
 	s.WriteLine("You break away from the battle and retreat. Sometimes survival is the wiser path.")
 }
 
@@ -596,6 +644,10 @@ func soulRelicEffect(name string) string {
 	switch strings.ToLower(name) {
 	case "styxglass shard":
 		return "once per encounter, absorbs up to 8 incoming damage"
+	case "oracle's thread":
+		return "once per encounter, absorbs up to 4 incoming damage"
+	case "unwritten ember":
+		return "adds 6 damage to the first successful weapon strike each encounter"
 	default:
 		return "its deeper purpose is still unknown"
 	}
