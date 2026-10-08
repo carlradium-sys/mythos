@@ -101,10 +101,8 @@ func (s *Session) look() {
 	exits:=make([]string,0,len(r.Exits))
 	for direction:=range r.Exits {exits=append(exits,direction)}
 	if len(exits)>0{s.WriteLine("Exits: %s",strings.Join(exits,", "))}
-	if s.Character.RoomID=="manticore_den" && s.Enemy==nil {
-		s.Enemy=combat.NewManticore()
-		s.WriteLine("\x1b[1;31mA MANTICORE EMERGES FROM THE SHADOWS!\x1b[0m")
-		s.WriteLine("%s",s.Enemy.Description)
+	if s.Enemy==nil {
+		s.spawnEnemy()
 	}
 }
 
@@ -160,8 +158,9 @@ func (s *Session) cast(args []string) {
 	if s.Character.Domain=="" {s.WriteLine("You have no awakened divine domain. Try 'awaken storm'.");return}
 	if len(args)==0 {s.WriteLine("Cast which power? Try 'powers'.");return}
 	var chosen *power.Power
+	powerName:=strings.Join(args," ")
 	for _,p:=range power.Unlocked(s.Character.Domain,s.Character.Level) {
-		if strings.EqualFold(p.Name,args[0]) || strings.EqualFold(strings.ReplaceAll(p.Name," ",""),args[0]) {q:=p;chosen=&q;break}
+		if strings.EqualFold(p.Name,powerName) || strings.EqualFold(strings.ReplaceAll(p.Name," ",""),strings.ReplaceAll(powerName," ","")) {q:=p;chosen=&q;break}
 	}
 	if chosen==nil {s.WriteLine("That power is not yet awakened.");return}
 	if s.Character.Mana<chosen.ManaCost {s.WriteLine("Your divine reserves are exhausted.");return}
@@ -170,7 +169,10 @@ func (s *Session) cast(args []string) {
 	s.WriteLine("\x1b[1;35m%s\x1b[0m",result.Text)
 	if result.Killed {
 		s.Character.AddExperience(s.Enemy.XP)
-		s.WriteLine("\x1b[1;32mDivine victory! +%d XP.\x1b[0m",s.Enemy.XP)
+		xp:=s.Enemy.XP
+		s.Character.AddExperience(xp)
+		s.WriteLine("\x1b[1;32mDivine victory! +%d XP.\x1b[0m",xp)
+		s.Enemy=nil
 		return
 	}
 	s.enemyTurn()
