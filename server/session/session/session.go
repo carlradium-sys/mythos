@@ -794,15 +794,15 @@ func (s *Session) soul() {
 	printLegacy("Curses", c.Curses)
 	printLegacy("Echoes", c.Echoes)
 	s.WriteLine("\x1b[1;33mStory choices\x1b[0m")
-	if len(c.StoryFlags) == 0 {
-		s.WriteLine("  No pivotal choices recorded yet.")
-		return
-	}
 	flags := make([]string, 0, len(c.StoryFlags))
 	for flag, chosen := range c.StoryFlags {
-		if chosen {
+		if chosen && !strings.HasPrefix(flag, "room_discovered_") {
 			flags = append(flags, flag)
 		}
+	}
+	if len(flags) == 0 {
+		s.WriteLine("  No pivotal choices recorded yet.")
+		return
 	}
 	sort.Strings(flags)
 	for _, flag := range flags {
