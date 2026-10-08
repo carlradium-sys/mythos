@@ -15,6 +15,7 @@ type Item struct {
 	Name   string
 	Tier   Tier
 	Damage int
+	Armor  int
 	Kind   string
 }
 
@@ -33,3 +34,6 @@ func (i Item) TierColor() string {
 	}
 	return "37"
 }
+
+func StarterArmor() Item { return Item{Name:"linen cuirass", Tier:Common, Armor:2, Kind:"armor"} }
+func IsWeapon(i Item) bool { return i.Kind=="sword" || i.Kind=="bow" || i.Kind=="spear" || i.Kind=="fist" }
