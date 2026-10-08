@@ -112,6 +112,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.questList()
 	case "soul","legacy":
 		s.soul()
+	case "invoke","gift":
+		s.invokeGift()
 	default:
 		s.WriteLine("Unknown command. Type 'help' for help.")
 	}
@@ -583,6 +585,88 @@ func (s *Session) soul() {
 	for _, flag := range flags {
 		s.WriteLine("  %s", strings.ReplaceAll(flag, "_", " "))
 	}
+}
+
+func (s *Session) invokeGift() {
+	c := s.Character
+	if c.LifeGift == "" {
+		s.WriteLine("Your soul has no manifested life-gift yet.")
+		return
+	}
+	if c.LifeGiftUsed {
+		s.WriteLine("%s has already answered you in this life. The gift will return after rebirth.", c.LifeGift)
+		return
+	}
+
+	switch c.LifeGift {
+	case "Thread Sense":
+		room := s.World.GetRoom(c.RoomID)
+		if room == nil {
+			s.WriteLine("The thread finds no stable place to reveal.")
+			return
+		}
+		exits := make([]string, 0, len(room.Exits))
+		for direction := range room.Exits {
+			exits = append(exits, direction)
+		}
+		sort.Strings(exits)
+		s.WriteLine("The black thread tightens. You sense %s.", room.Name)
+		if len(exits) > 0 {
+			s.WriteLine("Possible paths: %s.", strings.Join(exits, ", "))
+		}
+		active := 0
+		for _, q := range quest.All() {
+			if s.questUnlocked(q) && c.Quests[q.ID] < q.Required {
+				active++
+			}
+		}
+		s.WriteLine("You sense %d available story thread(s). Your choice of path remains yours.", active)
+	case "Echo Sight":
+		recovered := 0
+		if c.MaxMana > c.Mana {
+			recovered = 12
+			if c.Mana+recovered > c.MaxMana {
+				recovered = c.MaxMana - c.Mana
+			}
+			c.Mana += recovered
+		}
+		s.WriteLine("The modern world briefly overlays every life you have lived. You recover %d mana.", recovered)
+		if len(c.Memories) > 0 {
+			s.WriteLine("Memory: %s", c.Memories[len(c.Memories)-1])
+		}
+		if len(c.Echoes) > 0 {
+			s.WriteLine("Echo: %s", c.Echoes[len(c.Echoes)-1])
+		}
+	case "Chronal Pulse":
+		before := c.HP
+		c.HP += 25
+		if c.HP > c.MaxHP {
+			c.HP = c.MaxHP
+		}
+		s.WriteLine("Time folds around your wounds. You recover %d health.", c.HP-before)
+	case "Moon's Shelter":
+		oldHP, oldMana := c.HP, c.Mana
+		c.HP += 20
+		if c.HP > c.MaxHP { c.HP = c.MaxHP }
+		c.Mana += 10
+		if c.Mana > c.MaxMana { c.Mana = c.MaxMana }
+		s.WriteLine("Silver light gathers around you. You recover %d health and %d mana.", c.HP-oldHP, c.Mana-oldMana)
+	case "Fateweaver's Knot":
+		if len(c.Curses) > 0 {
+			curse := c.Curses[len(c.Curses)-1]
+			c.Curses = c.Curses[:len(c.Curses)-1]
+			s.WriteLine("You pull one strand loose from the Fates' knot. The curse fades: %s.", curse)
+		} else {
+			favor := "The Fates granted you a second chance at the Last Shore."
+			c.Favors = append(c.Favors, favor)
+			s.WriteLine("The knot loosens. With no curse to sever, the Fates leave you a favor.")
+		}
+	default:
+		s.WriteLine("Your life-gift has not yet learned how to answer.")
+		return
+	}
+	c.LifeGiftUsed = true
+	s.WriteLine("Life-gift used: %s. It will return after your next rebirth.", c.LifeGift)
 }
 
 func (s *Session) rebirth(args []string) {
