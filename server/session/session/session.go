@@ -440,13 +440,13 @@ func (s *Session) spawnEnemy() {
 	case "modern_sanctum":
 		s.Enemy = &combat.Enemy{Name: "Bronze Sentinel", Description: "A bronze guardian unfolds from the hidden temple wall, its eyes burning with borrowed starlight.", Level: 6, HP: 220, MaxHP: 220, Defense: 9, Damage: 20, XP: 280}
 	case "future_city":
-		s.Enemy = &combat.Enemy{Name: "Chronal Warden", Description: "A guardian of fractured seconds steps from a ripple in the air.", Level: 7, HP: 245, MaxHP: 245, Defense: 10, Damage: 22, XP: 320}
+		s.Enemy = &combat.Enemy{Name: "Chronal Warden", Description: "A guardian of fractured seconds steps from a ripple in the air.", Level: 2, HP: 95, MaxHP: 95, Defense: 5, Damage: 11, XP: 100}
 	case "future_skyway":
-		s.Enemy = &combat.Enemy{Name: "Storm Automaton", Description: "A machine of celestial bronze and lightning blocks the road above the clouds.", Level: 8, HP: 275, MaxHP: 275, Defense: 11, Damage: 25, XP: 370}
+		s.Enemy = &combat.Enemy{Name: "Storm Automaton", Description: "A machine of celestial bronze and lightning blocks the road above the clouds.", Level: 4, HP: 150, MaxHP: 150, Defense: 7, Damage: 15, XP: 180}
 	case "future_moon":
-		s.Enemy = &combat.Enemy{Name: "Moonshade", Description: "A pale shadow detaches itself from the lunar sanctuary's wall and reaches for your memories.", Level: 9, HP: 305, MaxHP: 305, Defense: 12, Damage: 27, XP: 420}
+		s.Enemy = &combat.Enemy{Name: "Moonshade", Description: "A pale shadow detaches itself from the lunar sanctuary's wall and reaches for your memories.", Level: 4, HP: 145, MaxHP: 145, Defense: 7, Damage: 14, XP: 180}
 	case "far_era":
-		s.Enemy = &combat.Enemy{Name: "Last Shore Titan", Description: "The drowned world's final guardian rises from the surf, carrying the weight of vanished centuries.", Level: 10, HP: 360, MaxHP: 360, Defense: 13, Damage: 30, XP: 500}
+		s.Enemy = &combat.Enemy{Name: "Last Shore Titan", Description: "The drowned world's final guardian rises from the surf, carrying the weight of vanished centuries.", Level: 5, HP: 180, MaxHP: 180, Defense: 8, Damage: 18, XP: 220}
 	default:
 		return
 	}
