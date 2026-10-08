@@ -376,7 +376,6 @@ func (s *Session) advanceTutorial(step int) {
 }
 
 func (s *Session) look() {
-	s.applyRoomDiscoveries()
 	r:=s.World.GetRoom(s.Character.RoomID)
 	if r==nil {s.WriteLine("You are nowhere. The world has lost track of you.");return}
 	s.WriteLine("\x1b[1;33m%s\x1b[0m",r.Name)
@@ -386,23 +385,6 @@ func (s *Session) look() {
 	if len(exits)>0{s.WriteLine("Exits: %s",strings.Join(exits,", "))}
 	if npcs:=s.World.NPCs[s.Character.RoomID];len(npcs)>0{for _,n:=range npcs{s.WriteLine("\x1b[1;36m%s\x1b[0m — %s",n.Name,n.Description)};s.WriteLine("You can talk <topic> or shop.")}
 	if s.Enemy==nil { s.spawnEnemy() }
-}
-
-func (s *Session) applyRoomDiscoveries() {
-	c := s.Character
-	if c == nil { return }
-	if c.RoomID == "delphi_sanctum" && !c.HasStoryFlag("delphi_trials_complete") {
-		if c.Quests == nil { c.Quests = map[string]int{} }
-		c.Quests["delphi_trials"] = 1
-		s.completeQuest(quest.Quest{ID:"delphi_trials",Name:"Trials of the Seer",RewardXP:90})
-		s.WriteLine("\x1b[1;32mQuest complete! +90 XP.\x1b[0m")
-	}
-	if c.RoomID == "ancient_athens" && c.HasStoryFlag("oracle_defied") && !c.HasStoryFlag("quest_completed_unwritten_path") {
-		if c.Quests == nil { c.Quests = map[string]int{} }
-		c.Quests["unwritten_path"] = 1
-		s.completeQuest(quest.Quest{ID:"unwritten_path",Name:"The Unwritten Path",RewardXP:180})
-		s.WriteLine("\x1b[1;32mQuest complete! +180 XP.\x1b[0m")
-	}
 }
 
 func (s *Session) spawnEnemy() {
