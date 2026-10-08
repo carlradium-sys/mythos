@@ -690,3 +690,25 @@ func TestOracleChoiceWaitsUntilCombatEnds(t *testing.T) {
 	s.choose([]string{"trust"})
 	if !s.Character.HasStoryFlag("oracle_trust") { t.Fatal("choice was not accepted after combat") }
 }
+
+
+func TestFirstLifeRouteCompletesCoreQuests(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Level = 10
+	s.Character.Experience = 3645
+	s.move("north")
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	s.move("north")
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	s.choose([]string{"trust"})
+	s.move("north")
+	if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") || !s.Character.HasStoryFlag("delphi_trials_complete") { t.Fatal("Delphi quests missing") }
+	s.move("east")
+	if !s.Character.HasStoryFlag("quest_completed_oath_across_the_river") { t.Fatal("trust quest missing") }
+	s.move("down")
+	if !s.Character.HasStoryFlag("styx_memory_recovered") { t.Fatal("Styx quest missing") }
+	s.rebirth(nil)
+	if s.Character.Life != 2 || s.Character.RoomID != "modern_crossroads" { t.Fatalf("rebirth destination: life %d room %q", s.Character.Life, s.Character.RoomID) }
+}
