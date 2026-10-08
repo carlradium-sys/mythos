@@ -196,6 +196,17 @@ func (s *Session) help(args []string) {
 
 func (s *Session) completeQuest(q quest.Quest) {
 	s.Character.AddExperience(q.RewardXP)
+	s.Character.SetStoryFlag("quest_completed_" + q.ID)
+	switch q.ID {
+	case "oracle_whisper":
+		s.Character.Memories = append(s.Character.Memories, "Pythia spoke a prophecy meant for a soul that has already crossed the Styx.")
+		s.WriteLine("A memory settles into your soul. The Oracle's words will follow you beyond this life.")
+	case "river_of_memory":
+		s.Character.SetStoryFlag("styx_memory_recovered")
+		s.Character.Memories = append(s.Character.Memories, "At the Styx, you recovered a memory the river could not swallow.")
+		s.Character.Echoes = append(s.Character.Echoes, "Black water runs beneath the city of glass, waiting for your return.")
+		s.WriteLine("The river leaves an echo inside you. It may answer in a life yet to come.")
+	}
 	faction, change := questReputationReward(q.ID)
 	if faction != "" && change != 0 {
 		if s.Character.Reputation == nil {
@@ -235,10 +246,20 @@ func abs(value int) int {
 func (s *Session) ensureQuests() {
  if s.Character.Quests==nil {s.Character.Quests=map[string]int{}}
 }
+func (s *Session) questUnlocked(q quest.Quest) bool {
+	if q.RequiredFlag != "" && !s.Character.HasStoryFlag(q.RequiredFlag) {
+		return false
+	}
+	if q.RequiredQuest != "" && s.Character.Quests[q.RequiredQuest] < 1 {
+		return false
+	}
+	return true
+}
+
 func (s *Session) updateQuests() {
  s.ensureQuests()
  for _,q:=range quest.All() {
-  if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {continue}
+  if !s.questUnlocked(q) {continue}
   if s.Character.Quests[q.ID]>=q.Required {continue}
   if q.TargetRoom!="" && q.TargetEnemy=="" && s.Character.RoomID==q.TargetRoom {
    old:=s.Character.Quests[q.ID];s.Character.Quests[q.ID]=q.Required
@@ -250,7 +271,7 @@ func (s *Session) updateQuests() {
 func (s *Session) advanceQuestKill(enemy string) {
  s.ensureQuests()
  for _,q:=range quest.All() {
-  if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {continue}
+  if !s.questUnlocked(q) {continue}
   if q.TargetEnemy!="" && strings.EqualFold(q.TargetEnemy,enemy) && (q.TargetRoom=="" || q.TargetRoom==s.Character.RoomID) && s.Character.Quests[q.ID]<q.Required {
    s.Character.Quests[q.ID]++
    if s.Character.Quests[q.ID]>=q.Required {s.WriteLine("\x1b[1;33mQuest complete: %s\x1b[0m",q.Name);s.completeQuest(q);s.WriteLine("\x1b[1;32m+%d XP.\x1b[0m",q.RewardXP)}
@@ -263,10 +284,16 @@ func (s *Session) questList() {
  for _,q:=range quest.All() {
   p:=s.Character.Quests[q.ID];if p>q.Required{p=q.Required}
   status:="active"
-  if p>=q.Required {status="complete"} else if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {status="locked"}
+  if p>=q.Required {status="complete"} else if !s.questUnlocked(q) {status="locked"}
   s.WriteLine("  [%s] %s — %d/%d",status,q.Name,p,q.Required)
   s.WriteLine("      %s",q.Goal)
-  if status=="locked" {s.WriteLine("      Unlock condition: %s",strings.ReplaceAll(q.RequiredFlag,"_"," "))}
+  if status=="locked" {
+   if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {
+    s.WriteLine("      Unlock condition: discover %s",strings.ReplaceAll(q.RequiredFlag,"_"," "))
+   } else if q.RequiredQuest!="" {
+    if prerequisite,ok:=quest.Get(q.RequiredQuest);ok {s.WriteLine("      Unlock condition: complete %s",prerequisite.Name)}
+   }
+  }
  }
 }
 
@@ -631,6 +658,16 @@ func(s *Session) talk(args []string) {
 	topic := "hello"
 	if len(args) > 0 {
 		topic = strings.Join(args, " ")
+	}
+	if n.ID == "athens_vendor" && (topic == "hello" || topic == "greeting") {
+		if s.Character.HasStoryFlag("styx_memory_recovered") {
+			s.WriteLine("Myrto's smile fades as she studies you. \"You found the river beneath the old world. I wondered when it would recognize you here.\"")
+			return
+		}
+		if s.Character.HasStoryFlag("quest_completed_oracle_whisper") {
+			s.WriteLine("Myrto tilts her head. \"You carry an old prophecy. In this city, old words have a way of becoming new trouble.\"")
+			return
+		}
 	}
 	if topic == "hello" || topic == "greeting" {
 		if greeting := s.factionGreeting(n); greeting != "" {
