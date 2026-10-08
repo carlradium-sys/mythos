@@ -111,6 +111,10 @@ func enemyAttackNarration(name string) (string, string) {
 		return "The Moonshade reaches out, and the stars seem to dim around its fingers.", "A chill passes through your memories as the Moonshade's touch lands"
 	case "Last Shore Titan":
 		return "The Last Shore Titan drags a wave of black seawater toward you.", "A tide-heavy fist crashes down, carrying the weight of the drowned world"
+	case "Cerberus":
+		return "Cerberus attacks from three directions at once: fangs, claws, and a storm of black breath.", "One of Cerberus's heads catches you in a crushing bite"
+	case "Tartarus Brute":
+		return "The Tartarus Brute swings a chain thick as a ship's mast.", "The ancient chain crashes into you and shakes the ground"
 	default:
 		return "The " + name + " lunges for an opening.", "The " + name + " lands a heavy blow"
 	}
