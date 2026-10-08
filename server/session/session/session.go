@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"fatewalker/game/character"
@@ -12,20 +13,22 @@ import (
 	"fatewalker/game/item"
 	"fatewalker/game/power"
 	"fatewalker/game/progression"
-	"fatewalker/game/save"
+	"fatewalker/game/account"
 	"fatewalker/world"
 )
 
 type Session struct {
-	Character *character.Character
-	Conn net.Conn
-	World *world.World
-	Enemy *combat.Enemy
-	TutorialStep int
+ Character *character.Character
+ Account *account.Account
+ Accounts *account.Store
+ Conn net.Conn
+ World *world.World
+ Enemy *combat.Enemy
+ TutorialStep int
 }
 
-func New(c *character.Character, conn net.Conn, w *world.World) *Session {
-	return &Session{Character:c, Conn:conn, World:w}
+func New(accounts *account.Store, conn net.Conn, w *world.World) *Session {
+ return &Session{Accounts:accounts, Conn:conn, World:w}
 }
 
 func (s *Session) WriteLine(format string,args ...any) { fmt.Fprintf(s.Conn,format+"\r\n",args...) }
@@ -36,17 +39,11 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("\x1b[1;36m        FATEWALKER: BEYOND THE STYX\x1b[0m")
 	s.WriteLine("\x1b[1;35m========================================\x1b[0m")
 	s.WriteLine("")
-	s.WriteLine("\x1b[1;33mTHE FIRST THREAD\x1b[0m")
-	s.WriteLine("Welcome, mortal. Your first life begins beneath the shadow of Olympus.")
-	s.WriteLine("You remember waking. You do not remember dying.")
-	s.WriteLine("A bronze sword rests beside you. A black thread is tied around its hilt.")
+	s.WriteLine("\x1b[1;33mTHE THREAD REMEMBERS\x1b[0m")
+	s.WriteLine("Your soul is persistent. The server remembers your account, characters, lives, and history.")
 	s.WriteLine("")
-	s.WriteLine("A voice whispers from beyond the gates: \"Walk. The story will find you.\"")
-	s.WriteLine("")
-	s.WriteLine("Type 'help' for commands, or 'help tutorial' to understand the first chapter.")
-	s.WriteLine("What is your name?")
-	if !scanner.Scan(){return}
-	if name:=strings.TrimSpace(scanner.Text()); name!="" { s.Character.Name=name }
+	if !s.login(scanner) { return }
+	if !s.selectCharacter(scanner) { return }
 	s.look()
 	s.tutorialHint()
 	for {
@@ -99,14 +96,68 @@ func (s *Session) handleCommand(input string) bool {
 		s.journal()
 	case "soul","legacy":
 		s.soul()
-	case "save":
-		s.saveGame(parts[1:])
-	case "load":
-		s.loadGame(parts[1:])
 	default:
 		s.WriteLine("Unknown command. Type 'help' for help.")
 	}
+	s.persist()
 	return true
+}
+
+func (s *Session) login(scanner *bufio.Scanner) bool {
+ for {
+  s.WriteLine("")
+  s.WriteLine("\x1b[1;33mACCOUNT\x1b[0m")
+  s.WriteLine("Type: login <username> <password>")
+  s.WriteLine("Or:   register <username> <password>")
+  s.WriteLine("Use 'quit' to disconnect.")
+  if !scanner.Scan(){return false}
+  p:=strings.Fields(scanner.Text())
+  if len(p)==1&&strings.EqualFold(p[0],"quit"){return false}
+  if len(p)!=3 {s.WriteLine("Please enter one of the two formats above.");continue}
+  var err error
+  if strings.EqualFold(p[0],"register") {
+   err=s.Accounts.Register(p[1],p[2])
+   if err==nil {s.Account,sErr:=s.Accounts.Login(p[1],p[2]);_ = sErr; s.Account=s; s.WriteLine("Account created.")}
+  } else if strings.EqualFold(p[0],"login") {
+   s.Account,err=s.Accounts.Login(p[1],p[2])
+  } else {err=fmt.Errorf("unknown account command")}
+  if err!=nil{s.WriteLine("Account error: %s",err);continue}
+  s.WriteLine("Logged in as %s.",s.Account.Username)
+  return true
+ }
+}
+
+func (s *Session) selectCharacter(scanner *bufio.Scanner) bool {
+ for {
+  s.WriteLine("")
+  s.WriteLine("\x1b[1;33mCHARACTER SELECT\x1b[0m")
+  if len(s.Account.Characters)==0 {s.WriteLine("No characters yet. Type: create <name>")}
+  for i,c:=range s.Account.Characters {s.WriteLine("  %d) %s — Life %d, Level %d, %s",i+1,c.Name,c.Life,c.Level,c.Era)}
+  s.WriteLine("Commands: <number>, create <name>, delete <number>, logout, quit")
+  if !scanner.Scan(){return false}
+  p:=strings.Fields(scanner.Text());if len(p)==0{continue}
+  switch strings.ToLower(p[0]) {
+  case "logout": return s.login(scanner)
+  case "quit","exit": return false
+  case "create":
+   if len(p)<2{s.WriteLine("Create which character?");continue}
+   rec,err:=s.Account.NewCharacter(strings.Join(p[1:]," "));if err!=nil{s.WriteLine("Cannot create character: %s",err);continue}
+   s.Account.Characters=append(s.Account.Characters,*rec);s.persist();s.Character=rec.Character;s.WriteLine("%s created.",s.Character.Name);return true
+  case "delete":
+   if len(p)!=2{s.WriteLine("Delete which character number?");continue}
+   n,err:=strconv.Atoi(p[1]);if err!=nil||n<1||n>len(s.Account.Characters){s.WriteLine("Invalid character number.");continue}
+   s.Account.Characters=append(s.Account.Characters[:n-1],s.Account.Characters[n:]...);s.persist();s.WriteLine("Character deleted.")
+  default:
+   n,err:=strconv.Atoi(p[0]);if err!=nil||n<1||n>len(s.Account.Characters){s.WriteLine("Choose a character number.");continue}
+   s.Character=s.Account.Characters[n-1].Character;s.WriteLine("Welcome back, %s.",s.Character.Name);return true
+  }
+ }
+}
+
+func (s *Session) persist() {
+ if s.Account==nil||s.Character==nil{return}
+ for i:=range s.Account.Characters {if s.Account.Characters[i].Character==s.Character {break}}
+ if err:=s.Accounts.Save(s.Account);err!=nil{s.WriteLine("Persistence warning: %s",err)}
 }
 
 func (s *Session) help(args []string) {
