@@ -42,7 +42,7 @@ func NewManticore() *Enemy {
 
 func Attack(name string, w item.Item, e *Enemy, attack int) Result {
 	if e.HP <= 0 { return Result{Text:"The "+e.Name+" is already defeated."} }
-	if roll(20)+1+attack < e.Defense+10 { return Result{Text:fmt.Sprintf("Your %s misses; the %s twists away from the blow.", w.Name, e.Name)} }
+	if roll(20)+1+attack < e.Defense+10 { return Result{Text:fmt.Sprintf("Your %s misses; the %s twists away from the blow. (0 damage)", w.Name, e.Name)} }
 	damage := w.Damage + roll(7)
 	critical := roll(100) < 12
 	if critical { damage += damage/2 }
@@ -53,8 +53,9 @@ func Attack(name string, w item.Item, e *Enemy, attack int) Result {
 	if e.HP < 0 { e.HP=0 }
 	verb := "strikes"
 	if w.Kind=="bow" { verb="pierces" } else if w.Kind=="sword" { verb="slashes" } else if w.Kind=="spear" { verb="drives into" }
-	text := fmt.Sprintf("Your %s %s the %s's %s for %d damage.", w.Name,verb,e.Name,where,damage)
+	text := fmt.Sprintf("Your %s %s the %s's %s.", w.Name,verb,e.Name,where)
 	if critical { text+=" The impact is devastating." }
+	text += fmt.Sprintf(" (%d damage)", damage)
 	if where=="tail" && roll(100)<18 { e.TailSevered=true; text+=" The blade cuts through—the manticore's tail is severed!" }
 	if e.HP==0 { text+=" The "+e.Name+" collapses." }
 	return Result{Damage:damage,Text:text,Killed:e.HP==0}
@@ -78,7 +79,7 @@ func Cast(caster,pName string,dmg int,domain string,e *Enemy) Result {
 }
 
 func EnemyAttack(e *Enemy,defense int) Result {
-	if roll(20)+1+e.Level < defense+8 { return Result{Text:"The "+e.Name+" attacks, but you evade it."} }
+	if roll(20)+1+e.Level < defense+8 { return Result{Text:"The "+e.Name+" attacks, but you evade it. (0 damage)"} }
 	damage:=e.Damage/2+roll(e.Damage/2+1)
-	return Result{Damage:damage,Text:fmt.Sprintf("The %s strikes you for %d damage.",e.Name,damage)}
+	return Result{Damage:damage,Text:fmt.Sprintf("The %s strikes you. (%d damage)",e.Name,damage)}
 }
