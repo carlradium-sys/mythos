@@ -156,3 +156,27 @@ func TestBlackThreadOnlyCountsHarpyKillsInFoothills(t *testing.T) {
 		t.Fatalf("black_thread progress in foothills = %d, want 1", got)
 	}
 }
+
+func TestEnteringFoothillsDoesNotCompleteBlackThread(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.updateQuests()
+	if got := s.Character.Quests["black_thread"]; got != 0 {
+		t.Fatalf("black_thread progress on arrival = %d, want 0 until a Harpy is defeated", got)
+	}
+	if s.Character.Experience != 0 {
+		t.Fatalf("experience on arrival = %d, want 0", s.Character.Experience)
+	}
+}
+
+func TestRoomQuestCompletesOnArrival(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "delphi_sanctum"
+	s.updateQuests()
+	if got := s.Character.Quests["oracle_whisper"]; got != 1 {
+		t.Fatalf("oracle_whisper progress = %d, want 1", got)
+	}
+	if s.Character.Experience != 120 {
+		t.Fatalf("experience = %d, want 120", s.Character.Experience)
+	}
+}
