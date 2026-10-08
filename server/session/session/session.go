@@ -333,6 +333,7 @@ func (s *Session) questList() {
   if p>=q.Required {status="complete"} else if !s.questUnlocked(q) {status="locked"}
   s.WriteLine("  [%s] %s — %d/%d",status,q.Name,p,q.Required)
   s.WriteLine("      %s",q.Goal)
+  if q.RewardXP > 0 { s.WriteLine("      Reward: %d XP", q.RewardXP) }
   if status=="locked" {
    if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {
     s.WriteLine("      Unlock condition: discover %s",strings.ReplaceAll(q.RequiredFlag,"_"," "))
