@@ -23,6 +23,7 @@ BASIC LOOP
   awaken <domain>      Choose your first divine resonance at level 3.
   score                Review your character.
   inventory             Review your equipment.
+  equip <item>          Equip a weapon or armor.
   map                  See your current position.
   journal              See the current story thread without a forced quest path.
   quests               Review persistent story quest progress.
@@ -93,7 +94,7 @@ Item tiers:
   Legendary   Gold
   Mythic      Bright red/divine
 
-Inventory shows each item's tier and damage. Fatewalker's long-term gear
+Inventory shows each item's tier, damage, and armor. Use equip <item> to change your weapon or armor. Fatewalker's long-term gear
 system will expand this into weapons, armor, affixes, relics, and items
 that carry meaning between lives.`},
 	"story": {"story", `STORY & SANDBOX
