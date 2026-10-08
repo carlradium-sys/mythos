@@ -34,6 +34,7 @@ type Character struct {
 	Curses     []string
 	Echoes     []string
 	Quests     map[string]int
+	StoryFlags map[string]bool
 }
 
 func New(name string) *Character {
@@ -43,10 +44,24 @@ func New(name string) *Character {
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
 		Weapon: "bronze sword", Armor: "linen cuirass",
 		Quests: map[string]int{},
+		StoryFlags: map[string]bool{},
 		Reputation: map[string]int{"olympians":0,"delphi":0,"underworld":0},
 		Gold: 50,
 		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}, item.StarterArmor()},
 	}
+}
+
+// HasStoryFlag reports whether a persistent story choice or discovery has been recorded.
+func (c *Character) HasStoryFlag(flag string) bool {
+	return c.StoryFlags != nil && c.StoryFlags[flag]
+}
+
+// SetStoryFlag records a choice or discovery on the character's persistent soul.
+func (c *Character) SetStoryFlag(flag string) {
+	if c.StoryFlags == nil {
+		c.StoryFlags = map[string]bool{}
+	}
+	c.StoryFlags[flag] = true
 }
 
 func (c *Character) AttackPower() int { return c.Attack + c.Level*2 }
