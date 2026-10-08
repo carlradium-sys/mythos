@@ -78,7 +78,7 @@ func (s *Session) handleCommand(input string) bool {
 		s.advanceTutorial(1)
 	case "map":
 		s.WriteLine(s.World.MapText(s.Character.RoomID))
-	case "north","south","east","west","up","down","n","s","e","w","u","d":
+	case "north","south","east","west","up","down","in","out","n","s","e","w","u","d":
 		s.move(parts[0])
 	case "who":
 		s.WriteLine("You are the first known traveler on this shard.")
