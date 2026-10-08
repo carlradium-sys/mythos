@@ -179,8 +179,8 @@ func TestRoomQuestCompletesOnArrival(t *testing.T) {
 	if got := s.Character.Quests["oracle_whisper"]; got != 1 {
 		t.Fatalf("oracle_whisper progress = %d, want 1", got)
 	}
-	if s.Character.Experience != 120 {
-		t.Fatalf("experience = %d, want 120", s.Character.Experience)
+	if s.Character.Experience != 210 {
+		t.Fatalf("experience = %d, want 210 (Oracle's Whisper plus Trials of the Seer)", s.Character.Experience)
 	}
 }
 
