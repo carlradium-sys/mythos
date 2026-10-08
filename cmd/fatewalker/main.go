@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"os"
 
 	"fatewalker/game/account"
 	"fatewalker/server/session/session"
@@ -11,13 +12,17 @@ import (
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":4000")
+	addr := os.Getenv("FATEWALKER_ADDR")
+	if addr == "" {
+		addr = "127.0.0.1:4000"
+	}
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		panic(err)
 	}
 	defer listener.Close()
 
-	fmt.Println("Fatewalker: Beyond the Styx listening on :4000")
+	fmt.Printf("Fatewalker: Beyond the Styx listening on %s\n", addr)
 
 	w := world.NewWorld()
 	accounts := account.NewStore("data/accounts")
