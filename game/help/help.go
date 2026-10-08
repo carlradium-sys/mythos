@@ -96,9 +96,10 @@ Item tiers:
   Legendary   Gold
   Mythic      Bright red/divine
 
-Inventory shows each item's tier, damage, and armor. Use equip <item> to change your weapon or armor. Fatewalker's long-term gear
-system will expand this into weapons, armor, affixes, relics, and items
-that carry meaning between lives.`},
+Inventory shows each item's tier, damage, and armor. Use equip <item> to change your weapon or armor.
+Soul relics are marked in your inventory and persist through rebirth. The
+Styxglass Shard is the first relic: recover it by completing The River of
+Memory at the Styx. Repeating a reward cannot create a second copy.`},
 	"story": {"story", `STORY & SANDBOX
 
 Fatewalker is built around two promises:
@@ -200,6 +201,8 @@ Use:
 
 Review persistent memories, oaths, scars, favors, curses, echoes, faction
 standing, and recorded story choices. These marks can survive rebirth.
+Soul relics appear in inventory with a [soul relic] marker and endure across
+lives alongside your memories and other legacy marks.
 
 Faction standing changes through story choices and selected quests. Friendly
 factions may offer better prices; hostile factions may charge more.`},
