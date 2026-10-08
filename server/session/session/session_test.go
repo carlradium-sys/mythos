@@ -533,7 +533,7 @@ func TestLevelTenRebirthOpensModernAthensAndPreservesSoul(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.SetStoryFlag("oracle_trust")
 	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name: "Styxglass Shard", Kind: "relic", Relic: true})
-	s.awardExperience(4860)
+	s.awardExperience(3645)
 	if s.Character.Level != 10 {
 		t.Fatalf("level after reaching first rebirth threshold = %d, want 10", s.Character.Level)
 	}
