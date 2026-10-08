@@ -594,12 +594,14 @@ func (s *Session) enemyTurn() {
 	}
 	s.WriteLine("%s", result.Text)
 	s.WriteLine("\x1b[1;31m%s HP: %d/%d\x1b[0m  |  \x1b[1;36m%s HP: %d/%d\x1b[0m", s.Enemy.Name, s.Enemy.HP, s.Enemy.MaxHP, s.Character.Name, s.Character.HP, s.Character.MaxHP)
-	if s.Character.HP==0 {
-		s.WriteLine("\x1b[1;31mYour mortal life ends here. The Styx waits. But something is wrong...\x1b[0m")
+	if s.Character.HP == 0 {
+		s.WriteLine("\x1b[1;31mYour strength fails. Black water closes over your vision, and the Styx refuses to keep you.\x1b[0m")
 		s.Character.Restore()
-		s.Character.RoomID="olympus_gates"
-		s.Enemy=nil
-		s.WriteLine("You awaken at the Gates of Olympus, restored but shaken.")
+		s.Character.RoomID = "olympus_gates"
+		s.Enemy = nil
+		s.RelicWardSpent = false
+		s.RelicStrikeSpent = false
+		s.WriteLine("You awaken at the Gates of Olympus, restored but shaken. This life continues.")
 		s.WriteLine("The black thread around your sword is still there. It has not forgotten you.")
 	}
 }
