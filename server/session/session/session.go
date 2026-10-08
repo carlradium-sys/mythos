@@ -83,6 +83,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.score()
 	case "inventory","i":
 		s.inventory()
+	case "equip":
+		s.equip(parts[1:])
 	case "attack","kill","hit":
 		s.attack()
 	case "cast":
@@ -389,10 +391,21 @@ func (s *Session) currentWeapon() item.Item {
 	return s.Character.Inventory[0]
 }
 
+func (s *Session) equip(args []string) {
+ if len(args)==0 {s.WriteLine("Equip what?");return}
+ name:=strings.Join(args," ");for _,i:=range s.Character.Inventory {
+  if strings.EqualFold(i.Name,name) {
+   if item.IsWeapon(i) {s.Character.Weapon=i.Name;s.WriteLine("You equip %s.",i.Name);return}
+   if i.Kind=="armor" {s.Character.Armor=i.Name;s.WriteLine("You wear %s. Defense +%d.",i.Name,i.Armor);return}
+  }
+ }
+ s.WriteLine("You do not possess that equipment.")
+}
+
 func (s *Session) inventory() {
 	if len(s.Character.Inventory)==0{s.WriteLine("Your inventory is empty.");return}
 	s.WriteLine("\x1b[1;33mInventory\x1b[0m")
-	for _,i:=range s.Character.Inventory { s.WriteLine("%s%s %s(+%d)%s",s.color(i.TierColor()),i.TierName(),i.Name,i.Damage,s.color("0")) }
+	for _,i:=range s.Character.Inventory { equipped:=""; if strings.EqualFold(i.Name,s.Character.Weapon)||strings.EqualFold(i.Name,s.Character.Armor){equipped=" [equipped]"}; s.WriteLine("%s%s %s(+%d armor/%d damage)%s%s",s.color(i.TierColor()),i.TierName(),i.Name,i.Armor,i.Damage,equipped,s.color("0")) }
 }
 
 func (s *Session) powers() {
@@ -423,7 +436,7 @@ func (s *Session) score() {
 	s.WriteLine("Level: %d   Life: %d   Rebirths: %d",c.Level,c.Life,c.Rebirths)
 	s.WriteLine("Era: %s   HP: %d/%d   Mana: %d/%d",c.Era,c.HP,c.MaxHP,c.Mana,c.MaxMana)
 	s.WriteLine("XP: %d   Next level: %d",c.Experience,progression.XPToNextLevel(c.Level,c.Experience))
-	s.WriteLine("Attack: %d   Defense: %d   Divinity: %d   Domain: %s",c.AttackPower(),c.DefensePower(),c.Divinity,c.Domain)
+	s.WriteLine("Attack: %d   Defense: %d   Armor: %d   Divinity: %d   Domain: %s",c.AttackPower(),c.DefensePower(),c.ArmorPower(),c.Divinity,c.Domain)
 	s.WriteLine("Soul legacy: %d memories | %d scars | %d oaths | %d favors | %d curses | %d echoes",len(c.Memories),len(c.Scars),len(c.Oaths),len(c.Favors),len(c.Curses),len(c.Echoes))
 }
 
