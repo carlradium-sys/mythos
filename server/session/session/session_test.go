@@ -572,3 +572,13 @@ func TestStyxRecoveryRestoresCharacterAtGates(t *testing.T) {
 	if s.Character.Life != 1 { t.Fatalf("life = %d, want 1", s.Character.Life) }
 	if s.RelicWardSpent || s.RelicStrikeSpent { t.Fatal("relic encounter state was not reset") }
 }
+
+
+func TestRoomDiscoveryRewardIsOneTime(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.recordDiscovery("delphi_sanctum")
+	first := s.Character.Experience
+	s.recordDiscovery("delphi_sanctum")
+	if first != 110 || s.Character.Experience != first { t.Fatalf("XP after discovery/revisit = %d/%d, want 110/110", first, s.Character.Experience) }
+	if !s.Character.HasStoryFlag("room_discovered_delphi_sanctum") { t.Fatal("discovery flag missing") }
+}
