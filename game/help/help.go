@@ -38,7 +38,8 @@ There is no single correct way to play. The story gives you mysteries and
 consequences; the sandbox gives you room to decide what they mean.`},
 	"movement": {"movement", `MOVEMENT & EXPLORATION
 
-Use north, south, east, or west. Short forms also work: n, s, e, w.
+Use north, south, east, west, up, down, in, or out. Short forms also
+work for cardinal and vertical directions: n, s, e, w, u, d.
 
 LOOK is important. Rooms can contain enemies, discoveries, NPCs, quests,
 and future story hooks. The map shows where you are in the known world.
