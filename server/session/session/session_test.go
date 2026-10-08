@@ -314,6 +314,23 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 }
 
 
+func TestSoulRelicSummaryReportsKnownEffect(t *testing.T) {
+	inventory := []item.Item{
+		{Name: "bronze sword", Kind: "sword"},
+		{Name: "Styxglass Shard", Kind: "relic", Relic: true},
+		{Name: "Another Relic", Kind: "relic", Relic: true},
+	}
+	if got := soulRelicCount(inventory); got != 2 {
+		t.Fatalf("soulRelicCount = %d, want 2", got)
+	}
+	if got := soulRelicEffect("Styxglass Shard"); !strings.Contains(got, "8 incoming damage") {
+		t.Fatalf("Styxglass effect = %q, want its defensive effect", got)
+	}
+	if got := soulRelicEffect("Unknown Relic"); !strings.Contains(got, "unknown") {
+		t.Fatalf("unknown relic effect = %q, want an unknown-purpose message", got)
+	}
+}
+
 func TestStyxglassWardAbsorbsDamageOncePerEncounter(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name: "Styxglass Shard", Tier: item.Epic, Kind: "relic", Relic: true})
