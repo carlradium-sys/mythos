@@ -11,13 +11,13 @@ import (
 )
 
 func main() {
-	listener, err := net.Listen("tcp", "127.0.0.1:4000")
+	listener, err := net.Listen("tcp", ":4000")
 	if err != nil {
 		panic(err)
 	}
 	defer listener.Close()
 
-	fmt.Println("Fatewalker: Beyond the Styx listening on 127.0.0.1:4000")
+	fmt.Println("Fatewalker: Beyond the Styx listening on :4000")
 
 	w := world.NewWorld()
 
