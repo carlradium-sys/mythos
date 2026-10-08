@@ -8,6 +8,7 @@ import (
 
 	"fatewalker/game/character"
 	"fatewalker/game/combat"
+	"fatewalker/game/quest"
 	"fatewalker/world"
 )
 
@@ -311,6 +312,34 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 	}
 }
 
+
+func TestStyxglassSoulRelicPersistsAcrossRebirthWithoutDuplication(t *testing.T) {
+	s := newChoiceTestSession(t)
+	reward := quest.Quest{ID: "river_of_memory", RewardXP: 1}
+	s.completeQuest(reward)
+	s.completeQuest(reward)
+
+	count := 0
+	for _, owned := range s.Character.Inventory {
+		if owned.Name == "Styxglass Shard" && owned.Relic {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("Styxglass Shard count after repeated reward = %d, want 1", count)
+	}
+
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	count = 0
+	for _, owned := range s.Character.Inventory {
+		if owned.Name == "Styxglass Shard" && owned.Relic {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("Styxglass Shard count after rebirth = %d, want 1", count)
+	}
+}
 
 func TestLifeGiftCanOnlyBeUsedOncePerLife(t *testing.T) {
 	s := newChoiceTestSession(t)
