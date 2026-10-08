@@ -326,22 +326,16 @@ func (s *Session) move(direction string) {
 }
 
 func (s *Session) attack() {
-	if s.Enemy==nil || s.Enemy.HP<=0 {s.WriteLine("There is nothing here to fight.");return}
-	w:=s.currentWeapon()
-	result:=combat.Attack(s.Character.Name,w,s.Enemy,s.Character.AttackPower())
-	s.WriteLine("%s",result.Text)
+	if s.Enemy == nil || s.Enemy.HP <= 0 {
+		s.WriteLine("There is nothing here to fight.")
+		return
+	}
+	w := s.currentWeapon()
+	result := combat.Attack(s.Character.Name, w, s.Enemy, s.Character.AttackPower())
+	s.WriteLine("%s", result.Text)
 	s.advanceTutorial(3)
 	if result.Killed {
-		s.advanceQuestKill(s.Enemy.Name)
-		s.Character.AddExperience(s.Enemy.XP)
-		s.WriteLine("\x1b[1;32mVictory! +%d XP.\x1b[0m",s.Enemy.XP)
-		if s.Enemy.Name=="Manticore" && s.Character.Level>=5 && len(s.Character.Inventory)==1 {
-			drop:=item.Item{Name:"manticore fang",Tier:item.Rare,Damage:18,Kind:"sword"}
-			s.Character.Inventory=append(s.Character.Inventory,drop)
-			s.WriteLine("%sYou recover a %s %s%s.",s.color(drop.TierColor()),drop.TierName(),drop.Name,s.color("0"))
-			s.WriteLine("The weapon hums faintly, as if it remembers the creature.")
-		}
-		s.Enemy=nil
+		s.defeatEnemy(false)
 		return
 	}
 	s.enemyTurn()
@@ -362,13 +356,40 @@ func (s *Session) cast(args []string) {
 	result:=combat.Cast(s.Character.Name,chosen.Name,chosen.Damage,string(chosen.Domain),s.Enemy)
 	s.WriteLine("\x1b[1;35m%s\x1b[0m",result.Text)
 	if result.Killed {
-		xp:=s.Enemy.XP
-		s.Character.AddExperience(xp)
-		s.WriteLine("\x1b[1;32mDivine victory! +%d XP.\x1b[0m",xp)
-		s.Enemy=nil
+		s.defeatEnemy(true)
 		return
 	}
 	s.enemyTurn()
+}
+
+func (s *Session) defeatEnemy(divine bool) {
+	if s.Enemy == nil {
+		return
+	}
+	enemy := s.Enemy
+	s.advanceQuestKill(enemy.Name)
+	s.Character.AddExperience(enemy.XP)
+	if divine {
+		s.WriteLine("\x1b[1;32mDivine victory! +%d XP.\x1b[0m", enemy.XP)
+	} else {
+		s.WriteLine("\x1b[1;32mVictory! +%d XP.\x1b[0m", enemy.XP)
+	}
+	if enemy.Name == "Manticore" && s.Character.Level >= 5 {
+		hasFang := false
+		for _, owned := range s.Character.Inventory {
+			if strings.EqualFold(owned.Name, "manticore fang") {
+				hasFang = true
+				break
+			}
+		}
+		if !hasFang {
+			drop := item.Item{Name: "manticore fang", Tier: item.Rare, Damage: 18, Kind: "sword"}
+			s.Character.Inventory = append(s.Character.Inventory, drop)
+			s.WriteLine("%sYou recover a %s %s%s.", s.color(drop.TierColor()), drop.TierName(), drop.Name, s.color("0"))
+			s.WriteLine("The weapon hums faintly, as if it remembers the creature.")
+		}
+	}
+	s.Enemy = nil
 }
 
 func (s *Session) enemyTurn() {
