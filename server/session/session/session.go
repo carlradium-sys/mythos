@@ -35,6 +35,17 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("")
 	s.WriteLine("Type 'help' for commands.")
 	s.WriteLine("")
+	s.WriteLine("What is your name?")
+	if !scanner.Scan() {
+		return
+	}
+	name := strings.TrimSpace(scanner.Text())
+	if name != "" {
+		s.Character.Name = name
+	}
+	s.WriteLine("")
+	s.look()
+	s.WriteLine("")
 
 	for {
 		s.WriteLine("%s", s.prompt())
