@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"fatewalker/game/character"
+	"fatewalker/game/account"
 	"fatewalker/server/session/session"
 	"fatewalker/world"
 )
@@ -20,6 +20,7 @@ func main() {
 	fmt.Println("Fatewalker: Beyond the Styx listening on :4000")
 
 	w := world.NewWorld()
+	accounts := account.NewStore("data/accounts")
 
 	for {
 		conn, err := listener.Accept()
@@ -27,15 +28,14 @@ func main() {
 			fmt.Println("Connection error:", err)
 			continue
 		}
-		go handleConnection(conn, w)
+		go handleConnection(conn, w, accounts)
 	}
 }
 
-func handleConnection(conn net.Conn, w *world.World) {
+func handleConnection(conn net.Conn, w *world.World, accounts *account.Store) {
 	defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
-	c := character.New("Mortal")
-	s := session.New(c, conn, w)
+	s := session.New(accounts, conn, w)
 	s.Run(scanner)
 }
