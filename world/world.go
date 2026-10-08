@@ -18,7 +18,7 @@ func NewWorld() *World {
 	oracle.Exits["east"]=den.ID
 	den.Exits["west"]=oracle.ID
 
-	return &World{Rooms:map[string]*Room{
+	w:=&World{Rooms:map[string]*Room{
 		gates.ID:gates, foothills.ID:foothills, oracle.ID:oracle, den.ID:den, crossroads.ID:crossroads,
 	}}
 	expandWorld(w.Rooms)
