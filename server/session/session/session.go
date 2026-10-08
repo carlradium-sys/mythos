@@ -363,6 +363,7 @@ func (s *Session) rebirth(args []string) {
 
 	type destination struct { era, room, name string }
 	paths:=map[string]destination{
+		"ancient":{"ancient","olympus_gates","Ancient Greece"},
 		"modern":{"modern","modern_crossroads","Modern Athens"},
 		"future":{"future","future_city","Athens, After the Last Dawn"},
 		"lunar":{"future","future_moon","The Lunar Oracle"},
