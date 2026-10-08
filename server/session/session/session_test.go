@@ -661,6 +661,7 @@ func TestMovementCommandsSupportHiddenEntrances(t *testing.T) {
 	s.Character.RoomID = "modern_acropolis"
 	s.handleCommand("in")
 	if s.Character.RoomID != "modern_sanctum" { t.Fatalf("in command moved to %q", s.Character.RoomID) }
+	s.Enemy = nil
 	s.handleCommand("out")
 	if s.Character.RoomID != "modern_acropolis" { t.Fatalf("out command moved to %q", s.Character.RoomID) }
 }
