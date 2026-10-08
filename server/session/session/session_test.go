@@ -505,3 +505,14 @@ func TestStrongestOffensiveSoulRelicWinsRegardlessOfInventoryOrder(t *testing.T)
 		t.Fatalf("announced relic = %q, want Unwritten Ember", got)
 	}
 }
+
+
+func TestMyrtoGreetingReflectsOracleTrust(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("oracle_trust")
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	got := s.persistentNPCGreeting(s.currentNPC(), "hello")
+	if !strings.Contains(got, "trusted you with a warning") {
+		t.Fatalf("unexpected modern greeting: %q", got)
+	}
+}
