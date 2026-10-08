@@ -548,6 +548,9 @@ func (s *Session) defeatEnemy(divine bool) {
 	} else {
 		s.WriteLine("\x1b[1;32mVictory! +%d XP.\x1b[0m", enemy.XP)
 	}
+	goldReward := 5 + enemy.Level*5
+	s.Character.Gold += goldReward
+	s.WriteLine("You recover %d drachmae. Gold: %d.", goldReward, s.Character.Gold)
 	if enemy.Name == "Manticore" && s.Character.Level >= 5 {
 		hasFang := false
 		for _, owned := range s.Character.Inventory {
