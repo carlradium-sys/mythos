@@ -34,18 +34,8 @@ func main() {
 func handleConnection(conn net.Conn, w *world.World) {
 	defer conn.Close()
 
-	fmt.Fprint(conn, "What is your name? ")
 	scanner := bufio.NewScanner(conn)
-	if !scanner.Scan() {
-		return
-	}
-
-	name := scanner.Text()
-	if name == "" {
-		name = "Mortal"
-	}
-
-	c := character.New(name)
+	c := character.New("Mortal")
 	s := session.New(c, conn, w)
 	s.Run(scanner)
 }
