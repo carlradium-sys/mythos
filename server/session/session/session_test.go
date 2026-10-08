@@ -614,3 +614,30 @@ func TestCombatVictoryAwardsDrachmae(t *testing.T) {
 	s.defeatEnemy(false)
 	if got := s.Character.Gold - before; got != 15 { t.Fatalf("gold reward = %d, want 15", got) }
 }
+
+
+func TestFutureAreasOpenAfterSecondRebirth(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Life = 2
+	if s.canEnter("future_skyway") { t.Fatal("future path opened too early") }
+	s.Character.Life = 3
+	if !s.canEnter("future_skyway") { t.Fatal("future path stayed closed after rebirth") }
+	if !s.canEnter("far_era") { t.Fatal("far era stayed closed after rebirth") }
+}
+
+func TestModernAndFutureRoomsSpawnEnemies(t *testing.T) {
+	s := newChoiceTestSession(t)
+	for _, tc := range []struct{ life int; room, name string }{
+		{2, "modern_styx", "Styx Wraith"},
+		{2, "modern_metro", "Echo Hound"},
+		{3, "future_city", "Chronal Warden"},
+		{3, "future_moon", "Moonshade"},
+		{3, "far_era", "Last Shore Titan"},
+	} {
+		s.Character.Life = tc.life
+		s.Character.RoomID = tc.room
+		s.Enemy = nil
+		s.spawnEnemy()
+		if s.Enemy == nil || s.Enemy.Name != tc.name || s.Enemy.XP <= 0 { t.Errorf("unexpected enemy for %s: %#v", tc.room, s.Enemy) }
+	}
+}
