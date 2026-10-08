@@ -1,8 +1,8 @@
 package character
 
 import (
-	"fatewalker/game/power"
 	"fatewalker/game/item"
+	"fatewalker/game/power"
 	"fatewalker/game/progression"
 )
 
@@ -32,7 +32,7 @@ func New(name string) *Character {
 		Mana: 30, MaxMana: 30, RoomID: "olympus_gates",
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
 		Weapon: "bronze sword",
-		Inventory: []item.Item{{Name:"bronze sword", Tier:item.Common, Damage:10, Kind:"sword"}},
+		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}},
 	}
 }
 
@@ -69,18 +69,24 @@ func (c *Character) LearnDomain(d power.Domain) {
 	}
 }
 
+// Rebirth begins a new life while preserving the soul's accumulated divine identity.
 func (c *Character) Rebirth() {
+	if c.Life == 1 {
+		c.RebirthTo("modern", "modern_crossroads")
+		return
+	}
+	c.RebirthTo("beyond", "modern_crossroads")
+}
+
+// RebirthTo lets later lives choose an era without changing the core rebirth rules.
+func (c *Character) RebirthTo(era, room string) {
 	c.Life++
 	c.Rebirths++
 	c.Level = 1
 	c.Experience = 0
 	c.HP, c.Mana = c.MaxHP, c.MaxMana
 	c.Attack, c.Defense = 12, 3
-	c.RoomID = "modern_crossroads"
-	if c.Life == 2 {
-		c.Era = "modern"
-	} else {
-		c.Era = "beyond"
-	}
+	c.Era = era
+	c.RoomID = room
 	c.Divinity++
 }
