@@ -8,6 +8,7 @@ func expandWorld(r map[string]*Room) {
 	add("olympus_hall","Hall of the Olympians","Living marble columns surround an impossible court. The thrones seem to change when you look away.")
 	add("olympus_garden","Garden of Ambrosia","Silver-leafed trees grow beside luminous fountains. One mortal flower grows where none should.")
 	add("delphi_sanctum","The Delphi Sanctum","The Oracle's tripod is cold. Someone has been waiting here for you.")
+	add("temple_dawn","Temple of the First Dawn","A forgotten temple stands above the black river. Its altar bears the same mark as the thread bound to your soul.")
 	add("ancient_athens","Ancient Athens","A living city surrounds the Acropolis. Rumors spread about a stranger marked by a black thread.")
 	add("styx_shore","The Shores of the Styx","Black water moves without wind. A distant boatman waits beneath a sky without stars.")
 	add("underworld_crossroads","The Underworld Crossroads","Three roads divide among the dead, judgment, and a gate marked by enormous claw scratches.")
