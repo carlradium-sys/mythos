@@ -233,6 +233,7 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.Echoes = append(s.Character.Echoes, "A future that was never foretold burns at the edge of memory.")
 		s.grantSoulRelic(item.Item{Name: "Unwritten Ember", Tier: item.Epic, Kind: "relic", Relic: true})
 		s.WriteLine("A coal of impossible fire settles in your palm, warm but never consumed.")
+	}
 	faction, change := questReputationReward(q.ID)
 	if faction != "" && change != 0 {
 		if s.Character.Reputation == nil {
