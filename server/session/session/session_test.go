@@ -225,3 +225,22 @@ func TestDialogueMatchesLongerNaturalLanguageTopics(t *testing.T) {
 		t.Fatal("dialogue matching should ignore case and punctuation around keywords")
 	}
 }
+
+
+func TestFactionStandingChangesNPCGreeting(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	n := s.currentNPC()
+	s.Character.Reputation["olympians"] = 3
+	if got := s.factionGreeting(n); got == "" {
+		t.Fatal("friendly faction standing should change the merchant greeting")
+	}
+	s.Character.Reputation["olympians"] = -2
+	if got := s.factionGreeting(n); got == "" {
+		t.Fatal("hostile faction standing should change the merchant greeting")
+	}
+	s.Character.Reputation["olympians"] = 0
+	if got := s.factionGreeting(n); got != "" {
+		t.Fatalf("neutral faction greeting = %q, want empty to use default dialogue", got)
+	}
+}
