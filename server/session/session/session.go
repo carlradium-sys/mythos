@@ -93,7 +93,7 @@ func (s *Session) handleCommand(input string) bool {
 	case "flee":
 		s.flee()
 	case "rebirth":
-		s.rebirth()
+		s.rebirth(parts[1:])
 	case "journal","quest","story":
 		s.journal()
 	default:
@@ -327,19 +327,49 @@ func (s *Session) score() {
 	s.WriteLine("Attack: %d   Defense: %d   Divinity: %d   Domain: %s",c.AttackPower(),c.DefensePower(),c.Divinity,c.Domain)
 }
 
-func (s *Session) rebirth() {
+func (s *Session) rebirth(args []string) {
 	if !s.Character.CanRebirth() {s.WriteLine("The Fates have not yet opened the way. Reach level 10.");return}
-	old:=s.Character.Life
-	s.Character.Rebirth()
-	s.Enemy=nil
-	s.WriteLine("\x1b[1;35mThe world falls silent. You cross the Styx.\x1b[0m")
-	s.WriteLine("Life %d ends. Life %d begins.",old,s.Character.Life)
-	s.WriteLine("You awaken in the %s era.",s.Character.Era)
-	if s.Character.Life==2 {
-		s.WriteLine("The ancient world is gone. Athens has become a city of glass, engines, and hidden gods.")
-	} else {
-		s.WriteLine("Death has stopped being a reset. Your earlier lives now echo through the next.")
+
+	if s.Character.Life == 1 {
+		if len(args)>0 && args[0]!="modern" {
+			s.WriteLine("Your first rebirth leads to the modern world. Later lives will open other horizons.")
+			return
+		}
+		s.Character.Rebirth()
+		s.Enemy=nil
+		s.WriteLine("\x1b[1;35mThe world falls silent. You cross the Styx.\x1b[0m")
+		s.WriteLine("Life 1 ends. Life 2 begins.")
+		s.WriteLine("You awaken in the modern era. Athens has become a city of glass, engines, and hidden gods.")
+		return
 	}
+
+	if len(args)==0 {
+		s.WriteLine("\x1b[1;33mREBIRTH PATHS\x1b[0m")
+		s.WriteLine("  rebirth modern  — return to modern Athens")
+		s.WriteLine("  rebirth future  — awaken in Athens after the Last Dawn")
+		s.WriteLine("  rebirth lunar   — awaken at the Lunar Oracle")
+		s.WriteLine("  rebirth far     — awaken on the Last Shore")
+		s.WriteLine("Your choice shapes the next chapter, not the end of your story.")
+		return
+	}
+
+	type destination struct { era, room, name string }
+	paths:=map[string]destination{
+		"modern":{"modern","modern_crossroads","Modern Athens"},
+		"future":{"future","future_city","Athens, After the Last Dawn"},
+		"lunar":{"future","future_moon","The Lunar Oracle"},
+		"far":{"far","far_era","The Last Shore"},
+	}
+	p,ok:=paths[args[0]]
+	if !ok { s.WriteLine("Unknown path. Try 'rebirth' to see the available horizons."); return }
+
+	old:=s.Character.Life
+	s.Character.RebirthTo(p.era,p.room)
+	s.Enemy=nil
+	s.WriteLine("\x1b[1;35mThe world falls silent. You cross the Styx again.\x1b[0m")
+	s.WriteLine("Life %d ends. Life %d begins.",old,s.Character.Life)
+	s.WriteLine("You awaken in %s.",p.name)
+	s.WriteLine("Your previous lives remain part of you. The era changes; the soul does not.")
 }
 
 func (s *Session) color(code string) string { return "\x1b["+code+"m" }
