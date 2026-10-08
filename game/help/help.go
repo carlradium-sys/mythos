@@ -104,8 +104,10 @@ The ward refreshes when a new enemy encounter begins. Repeating a reward
 cannot create a second copy.
 An Oracle's Thread from the trust branch absorbs up to 4 damage once per
 encounter. The defiance branch grants an Unwritten Ember, adding 6 damage to
-your first successful weapon strike each encounter. Defensive relics do not
-stack; the strongest available ward is used.`},
+your first successful weapon strike each encounter. Finding the Delphi
+Sanctum also completes the Trials of the Seer and grants the Laurel of the
+Seer, which adds 3 damage to your first successful weapon strike each
+encounter. Defensive relics do not stack; the strongest available ward is used.`},
 	"story": {"story", `STORY & SANDBOX
 
 Fatewalker is built around two promises:
