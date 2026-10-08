@@ -108,6 +108,21 @@ func (s *Session) look() {
 	}
 }
 
+func (s *Session) spawnEnemy() {
+	switch s.Character.RoomID {
+	case "olympus_foothills":
+		s.Enemy=combat.NewHarpy()
+	case "oracle_path":
+		s.Enemy=combat.NewSatyr()
+	case "manticore_den":
+		s.Enemy=combat.NewManticore()
+	default:
+		return
+	}
+	s.WriteLine("\x1b[1;31mA %s appears!\x1b[0m",s.Enemy.Name)
+	s.WriteLine("%s",s.Enemy.Description)
+}
+
 func (s *Session) move(direction string) {
 	aliases:=map[string]string{"n":"north","s":"south","e":"east","w":"west","u":"up","d":"down"}
 	if v,ok:=aliases[direction];ok{direction=v}
@@ -134,6 +149,7 @@ func (s *Session) attack() {
 			s.WriteLine("%sYou recover a %s%s.",s.color(drop.TierColor()),drop.TierName(),s.color("0"))
 			s.WriteLine("The weapon hums faintly, as if it remembers the creature.")
 		}
+		s.Enemy=nil
 		return
 	}
 	s.enemyTurn()
