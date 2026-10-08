@@ -665,3 +665,17 @@ func TestMovementCommandsSupportHiddenEntrances(t *testing.T) {
 	s.handleCommand("out")
 	if s.Character.RoomID != "modern_acropolis" { t.Fatalf("out command moved to %q", s.Character.RoomID) }
 }
+
+
+func TestCerberusQuestRequiresStyxMemoryAndRewardsFavor(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "cerberus_gate"
+	s.advanceQuestKill("Cerberus")
+	if s.Character.HasStoryFlag("cerberus_defeated") { t.Fatal("Cerberus quest should be locked before Styx memory") }
+	s.Character.SetStoryFlag("styx_memory_recovered")
+	s.advanceQuestKill("Cerberus")
+	if !s.Character.HasStoryFlag("cerberus_defeated") { t.Fatal("Cerberus victory was not recorded") }
+	found := false
+	for _, favor := range s.Character.Favors { if favor == "Cerberus Oath" { found = true } }
+	if !found { t.Fatal("Cerberus reward favor missing") }
+}
