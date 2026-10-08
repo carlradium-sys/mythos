@@ -97,6 +97,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.rebirth(parts[1:])
 	case "journal","quest","story":
 		s.journal()
+	case "soul","legacy":
+		s.soul()
 	case "save":
 		s.saveGame(parts[1:])
 	case "load":
@@ -330,6 +332,7 @@ func (s *Session) score() {
 	s.WriteLine("Era: %s   HP: %d/%d   Mana: %d/%d",c.Era,c.HP,c.MaxHP,c.Mana,c.MaxMana)
 	s.WriteLine("XP: %d   Next level: %d",c.Experience,progression.XPToNextLevel(c.Level,c.Experience))
 	s.WriteLine("Attack: %d   Defense: %d   Divinity: %d   Domain: %s",c.AttackPower(),c.DefensePower(),c.Divinity,c.Domain)
+	s.WriteLine("Soul legacy: %d memories | %d scars | %d oaths | %d favors | %d curses | %d echoes",len(c.Memories),len(c.Scars),len(c.Oaths),len(c.Favors),len(c.Curses),len(c.Echoes))
 }
 
 func (s *Session) rebirth(args []string) {
