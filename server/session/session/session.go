@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -447,6 +448,51 @@ func (s *Session) score() {
 	s.WriteLine("XP: %d   Next level: %d",c.Experience,progression.XPToNextLevel(c.Level,c.Experience))
 	s.WriteLine("Attack: %d   Defense: %d   Armor: %d   Divinity: %d   Domain: %s   Gold: %d",c.AttackPower(),c.DefensePower(),c.ArmorPower(),c.Divinity,c.Domain,c.Gold)
 	s.WriteLine("Soul legacy: %d memories | %d scars | %d oaths | %d favors | %d curses | %d echoes",len(c.Memories),len(c.Scars),len(c.Oaths),len(c.Favors),len(c.Curses),len(c.Echoes))
+}
+
+func (s *Session) soul() {
+	c := s.Character
+	s.WriteLine("\x1b[1;35mSOUL LEGACY\x1b[0m")
+	s.WriteLine("Life %d — %s. These marks belong to the soul, not just this era.", c.Life, c.Era)
+	s.WriteLine("\x1b[1;33mFaction standing\x1b[0m")
+	if c.Reputation == nil {
+		c.Reputation = map[string]int{}
+	}
+	factions := []string{"delphi", "olympians", "underworld"}
+	for _, faction := range factions {
+		s.WriteLine("  %-12s %d", faction, c.Reputation[faction])
+	}
+	printLegacy := func(label string, entries []string) {
+		s.WriteLine("\x1b[1;33m%s (%d)\x1b[0m", label, len(entries))
+		if len(entries) == 0 {
+			s.WriteLine("  Nothing recorded yet.")
+			return
+		}
+		for _, entry := range entries {
+			s.WriteLine("  • %s", entry)
+		}
+	}
+	printLegacy("Memories", c.Memories)
+	printLegacy("Oaths", c.Oaths)
+	printLegacy("Scars", c.Scars)
+	printLegacy("Favors", c.Favors)
+	printLegacy("Curses", c.Curses)
+	printLegacy("Echoes", c.Echoes)
+	s.WriteLine("\x1b[1;33mStory choices\x1b[0m")
+	if len(c.StoryFlags) == 0 {
+		s.WriteLine("  No pivotal choices recorded yet.")
+		return
+	}
+	flags := make([]string, 0, len(c.StoryFlags))
+	for flag, chosen := range c.StoryFlags {
+		if chosen {
+			flags = append(flags, flag)
+		}
+	}
+	sort.Strings(flags)
+	for _, flag := range flags {
+		s.WriteLine("  %s", strings.ReplaceAll(flag, "_", " "))
+	}
 }
 
 func (s *Session) rebirth(args []string) {
