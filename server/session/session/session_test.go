@@ -72,8 +72,8 @@ func TestDefeatEnemyAwardsQuestProgressForCombatKills(t *testing.T) {
 	if got := s.Character.Quests["black_thread"]; got != 1 {
 		t.Fatalf("black_thread progress = %d, want 1", got)
 	}
-	if s.Character.Experience != 70 {
-		t.Fatalf("experience = %d, want 70", s.Character.Experience)
+	if s.Character.Experience != 150 {
+		t.Fatalf("experience = %d, want 150 (70 enemy XP + 80 quest XP)", s.Character.Experience)
 	}
 	if s.Enemy != nil {
 		t.Fatal("defeated enemy should be cleared")
