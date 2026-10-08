@@ -13,6 +13,7 @@ import (
 	"fatewalker/game/item"
 	"fatewalker/game/power"
 	"fatewalker/game/progression"
+	"fatewalker/game/quest"
 	"fatewalker/game/account"
 	"fatewalker/world"
 )
@@ -46,6 +47,7 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	defer s.persist()
 	if !s.selectCharacter(scanner) { return }
 	s.look()
+	s.updateQuests()
 	s.tutorialHint()
 	for {
 		s.WriteLine("")
@@ -95,6 +97,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.rebirth(parts[1:])
 	case "journal","quest","story":
 		s.journal()
+	case "quests":
+		s.questList()
 	case "soul","legacy":
 		s.soul()
 	default:
@@ -177,6 +181,40 @@ func (s *Session) help(args []string) {
 	}
 	s.WriteLine("\x1b[1;33m[%s]\x1b[0m",strings.ToUpper(t.Name))
 	for _,line:=range strings.Split(t.Text,"\n") { s.WriteLine("%s",line) }
+}
+
+func (s *Session) ensureQuests() {
+ if s.Character.Quests==nil {s.Character.Quests=map[string]int{}}
+}
+func (s *Session) updateQuests() {
+ s.ensureQuests()
+ for _,q:=range quest.All() {
+  if s.Character.Quests[q.ID]>=q.Required {continue}
+  if q.TargetRoom!="" && s.Character.RoomID==q.TargetRoom {
+   old:=s.Character.Quests[q.ID];s.Character.Quests[q.ID]=q.Required
+   if old<q.Required {s.WriteLine("\x1b[1;33mQuest advanced: %s\x1b[0m",q.Name)}
+   if q.RewardXP>0 {s.Character.AddExperience(q.RewardXP);s.WriteLine("\x1b[1;32mQuest complete! +%d XP.\x1b[0m",q.RewardXP)}
+  }
+ }
+}
+func (s *Session) advanceQuestKill(enemy string) {
+ s.ensureQuests()
+ for _,q:=range quest.All() {
+  if q.TargetEnemy!="" && strings.EqualFold(q.TargetEnemy,enemy) && s.Character.Quests[q.ID]<q.Required {
+   s.Character.Quests[q.ID]++
+   if s.Character.Quests[q.ID]>=q.Required {s.WriteLine("\x1b[1;33mQuest complete: %s\x1b[0m",q.Name);s.Character.AddExperience(q.RewardXP);s.WriteLine("\x1b[1;32m+%d XP.\x1b[0m",q.RewardXP)}
+  }
+ }
+}
+func (s *Session) questList() {
+ s.ensureQuests()
+ s.WriteLine("\x1b[1;33mQUESTS\x1b[0m")
+ for _,q:=range quest.All() {
+  p:=s.Character.Quests[q.ID];if p>q.Required{p=q.Required}
+  status:="active";if p>=q.Required{status="complete"}
+  s.WriteLine("  [%s] %s — %d/%d",status,q.Name,p,q.Required)
+  s.WriteLine("      %s",q.Goal)
+ }
 }
 
 func (s *Session) journal() {
@@ -271,6 +309,7 @@ func (s *Session) move(direction string) {
 	if !s.canEnter(next) { return }
 	s.Character.RoomID=next
 	s.look()
+	s.updateQuests()
 	if s.Character.RoomID=="olympus_foothills" { s.advanceTutorial(2) }
 }
 
@@ -281,6 +320,7 @@ func (s *Session) attack() {
 	s.WriteLine("%s",result.Text)
 	s.advanceTutorial(3)
 	if result.Killed {
+		s.advanceQuestKill(s.Enemy.Name)
 		s.Character.AddExperience(s.Enemy.XP)
 		s.WriteLine("\x1b[1;32mVictory! +%d XP.\x1b[0m",s.Enemy.XP)
 		if s.Enemy.Name=="Manticore" && s.Character.Level>=5 && len(s.Character.Inventory)==1 {
