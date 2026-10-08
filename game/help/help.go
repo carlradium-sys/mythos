@@ -31,6 +31,9 @@ BASIC LOOP
   invoke               Use your once-per-life manifestation.
   rebirth              At level 10, cross the Styx and begin another life.
 
+First-time visits to places grant exploration XP, so discovery matters as
+much as combat. You can revisit places, but a room's discovery reward is one-time.
+
 There is no single correct way to play. The story gives you mysteries and
 consequences; the sandbox gives you room to decide what they mean.`},
 	"movement": {"movement", `MOVEMENT & EXPLORATION
