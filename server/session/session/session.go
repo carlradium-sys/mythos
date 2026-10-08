@@ -283,6 +283,8 @@ func questReputationReward(id string) (string, int) {
 		return "underworld", 1
 	case "delphi_trials":
 		return "delphi", 1
+	case "gate_of_three":
+		return "underworld", 2
 	default:
 		return "", 0
 	}
