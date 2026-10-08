@@ -200,6 +200,7 @@ func (s *Session) ensureQuests() {
 func (s *Session) updateQuests() {
  s.ensureQuests()
  for _,q:=range quest.All() {
+  if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {continue}
   if s.Character.Quests[q.ID]>=q.Required {continue}
   if q.TargetRoom!="" && s.Character.RoomID==q.TargetRoom {
    old:=s.Character.Quests[q.ID];s.Character.Quests[q.ID]=q.Required
@@ -222,9 +223,11 @@ func (s *Session) questList() {
  s.WriteLine("\x1b[1;33mQUESTS\x1b[0m")
  for _,q:=range quest.All() {
   p:=s.Character.Quests[q.ID];if p>q.Required{p=q.Required}
-  status:="active";if p>=q.Required{status="complete"}
+  status:="active"
+  if p>=q.Required {status="complete"} else if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {status="locked"}
   s.WriteLine("  [%s] %s — %d/%d",status,q.Name,p,q.Required)
   s.WriteLine("      %s",q.Goal)
+  if status=="locked" {s.WriteLine("      Unlock condition: %s",strings.ReplaceAll(q.RequiredFlag,"_"," "))}
  }
 }
 
