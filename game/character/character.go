@@ -151,3 +151,12 @@ func lifeGiftFor(era, room string) string {
 		return "Thread Sense"
 	}
 }
+
+
+// EnsureLifeGift migrates characters saved before life-gifts were introduced.
+func (c *Character) EnsureLifeGift() {
+	if c.LifeGift == "" {
+		c.LifeGift = lifeGiftFor(c.Era, c.RoomID)
+		c.LifeGiftUsed = false
+	}
+}
