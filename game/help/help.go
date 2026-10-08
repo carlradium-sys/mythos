@@ -122,6 +122,23 @@ and new mechanics.
 
 The long-term goal is to make every life feel like a chapter of one soul's
 story rather than another unrelated character.`},
+	"journal": {"journal", `THE FATEWALKER JOURNAL
+
+Your journal tracks the story without turning the world into a checklist.
+
+The First Thread:
+  You awakened at the Gates of Olympus with no memory of your death.
+  A black thread binds itself to your sword.
+  Something beyond the gates knows your name.
+
+CURRENT DIRECTION
+  Explore the foothills and discover why the creatures seem to recognize you.
+
+Remember: a journal objective is a thread, not a command. You can ignore it,
+explore elsewhere, hunt for equipment, or pursue another mystery. The story
+will wait—and sometimes the world will change while you are away.
+
+`},
 	"tutorial": {"tutorial", `THE FIRST THREAD — STORY TUTORIAL
 
 The tutorial is part of the world, not a separate training room.
@@ -150,5 +167,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","items","story","rebirth","tutorial"}
+	return []string{"start","movement","combat","powers","items","story","journal","rebirth","tutorial"}
 }
