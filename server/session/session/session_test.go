@@ -746,3 +746,15 @@ func TestModernLifeUnlocksFutureLifeProgression(t *testing.T) {
 		t.Fatalf("future starting encounter = %#v", s.Enemy)
 	}
 }
+
+
+func TestRebirthWaitsForCombatToEnd(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Level = 10
+	s.Enemy = &combat.Enemy{Name: "Harpy", HP: 10, MaxHP: 10}
+	s.rebirth(nil)
+	if s.Character.Life != 1 { t.Fatal("rebirth occurred during combat") }
+	s.Enemy = nil
+	s.rebirth(nil)
+	if s.Character.Life != 2 { t.Fatal("rebirth did not work after combat") }
+}
