@@ -177,6 +177,17 @@ Story choices are recorded on your character and survive logout and rebirth.
 Some choices can only be made once; the world remembers what you decide.
 
 Use soul (or legacy) to inspect the marks your decisions leave behind.`},
+	"soul": {"soul", `SOUL LEGACY
+
+Use:
+  soul
+  legacy
+
+Review persistent memories, oaths, scars, favors, curses, echoes, faction
+standing, and recorded story choices. These marks can survive rebirth.
+
+Faction standing changes through story choices and selected quests. Friendly
+factions may offer better prices; hostile factions may charge more.`},
 	"shop": {"shop", `MERCHANTS
 
 Some NPCs sell equipment.
@@ -185,7 +196,10 @@ Some NPCs sell equipment.
   buy <item>       Purchase an item.
 
 Gold persists with your character. Equipment purchased in one life remains
-part of that character's inventory unless a future soul system changes it.`},
+part of that character's inventory unless a future soul system changes it.
+
+Faction standing affects prices: standing of +3 or higher grants a 10%
+discount, while standing of -2 or lower adds a 10% surcharge.`},
 	"buy": {"buy", `BUYING
 
 Stand near a merchant and use:
@@ -221,5 +235,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","shop","buy","tutorial"}
+	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","soul","shop","buy","tutorial"}
 }
