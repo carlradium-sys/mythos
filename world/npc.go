@@ -24,7 +24,11 @@ func NewNPC(id,name,description string,level,hp,attack,xp int)*NPC{return &NPC{I
 func(n *NPC) AddDialogue(keywords []string,text string){n.Dialogues=append(n.Dialogues,Dialogue{Keywords:keywords,Text:text})}
 func (n *NPC) DialogueFor(topic string) string {
 	normalize := func(value string) string {
-		return strings.Join(strings.Fields(strings.ToLower(value)), " ")
+		fields := strings.Fields(strings.ToLower(value))
+		for i := range fields {
+			fields[i] = strings.Trim(fields[i], ".,!?;:\"'()[]{}")
+		}
+		return strings.Join(fields, " ")
 	}
 	topic = normalize(topic)
 	for _, dialogue := range n.Dialogues {
