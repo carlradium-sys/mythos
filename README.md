@@ -39,3 +39,9 @@ The long-term goal is a living reincarnation game rather than a conventional fan
 Planned systems include persistent soul traits, divine relationships, faction reputation, more eras, equipment affixes, tactical combat states, quests, NPC relationships, bosses, procedural world events, and meaningful choices about what survives each reincarnation.
 
 The repository is currently named `mythos` for continuity, while the game and Go module are named `fatewalker`.
+
+## Persistent accounts and characters
+
+Fatewalker now uses server-managed persistence rather than player save commands. Players register or log into an account, then select an existing character or create another. Character state—including level, inventory, rebirth history, soul legacy, and quest progress—is written automatically by the server.
+
+The account system is the foundation for multiple characters per player and future account-level systems such as character rosters, shared unlocks, reincarnation records, and persistent world consequences.
