@@ -62,10 +62,6 @@ func TestRebirthGrantsDestinationSpecificLifeGift(t *testing.T) {
 	if c.LifeGiftUsed {
 		t.Fatal("life gift should reset on rebirth")
 	}
-	if !c.HasStoryFlag("oracle_trust") {
-		// A fresh character has no choice flag; this branch simply keeps the
-		// test focused on gift assignment without assuming prior story history.
-	}
 	c.RebirthTo("future", "future_moon")
 	if c.LifeGift != "Moon's Shelter" {
 		t.Fatalf("lunar life gift = %q, want Moon's Shelter", c.LifeGift)
