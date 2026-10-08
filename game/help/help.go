@@ -26,7 +26,8 @@ BASIC LOOP
   equip <item>          Equip a weapon or armor.
   map                  See your current position.
   journal              See the current story thread without a forced quest path.
-  quests               Review persistent story quest progress.
+  quests               Review active, completed, and choice-locked quests.
+  soul                 Review memories, oaths, scars, echoes, and faction standing.
   rebirth              At level 10, cross the Styx and begin another life.
 
 There is no single correct way to play. The story gives you mysteries and
@@ -158,6 +159,9 @@ Story quests are persistent parts of your character. Progress is saved automatic
   quests    Show active and completed story quests.
   journal   Show the broader story direction.
 
+Some quests only appear after a pivotal choice. Trusting Pythia and defying
+her prophecy open different paths, and those consequences remain after rebirth.
+
 Quests reward exploration and combat without forcing a linear path.`},
 	"talk": {"talk", `NPC DIALOGUE
 
@@ -170,7 +174,9 @@ Use:
   choose defy       Reject prophecy; lose Delphi reputation and gain a scar.
 
 Story choices are recorded on your character and survive logout and rebirth.
-Some choices can only be made once; the world remembers what you decide.`},
+Some choices can only be made once; the world remembers what you decide.
+
+Use soul (or legacy) to inspect the marks your decisions leave behind.`},
 	"shop": {"shop", `MERCHANTS
 
 Some NPCs sell equipment.
