@@ -679,3 +679,14 @@ func TestCerberusQuestRequiresStyxMemoryAndRewardsFavor(t *testing.T) {
 	for _, favor := range s.Character.Favors { if favor == "Cerberus Oath" { found = true } }
 	if !found { t.Fatal("Cerberus reward favor missing") }
 }
+
+
+func TestOracleChoiceWaitsUntilCombatEnds(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Enemy = &combat.Enemy{Name: "Satyr", HP: 20, MaxHP: 20}
+	s.choose([]string{"trust"})
+	if s.Character.HasStoryFlag("oracle_choice_made") { t.Fatal("choice was accepted during combat") }
+	s.Enemy = nil
+	s.choose([]string{"trust"})
+	if !s.Character.HasStoryFlag("oracle_trust") { t.Fatal("choice was not accepted after combat") }
+}
