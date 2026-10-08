@@ -923,6 +923,10 @@ func (s *Session) invokeGift() {
 }
 
 func (s *Session) rebirth(args []string) {
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("The battle holds you to this life. Defeat the enemy or flee before rebirth.")
+		return
+	}
 	if !s.Character.CanRebirth() {s.WriteLine("The Fates have not yet opened the way. Reach level 10.");return}
 
 	if s.Character.Life == 1 {
