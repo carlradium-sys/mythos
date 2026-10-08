@@ -32,6 +32,10 @@ func roll(n int) int {
 	return rng.Intn(n)
 }
 
+func NewHarpy() *Enemy { return &Enemy{Name:"Harpy", Description:"A storm-winged creature circles the ruins, watching for an opening.", Level:2, HP:75, MaxHP:75, Defense:5, Damage:10, XP:70} }
+
+func NewSatyr() *Enemy { return &Enemy{Name:"Satyr", Description:"A horned guardian blocks the path, staff in hand and eyes bright with old magic.", Level:3, HP:110, MaxHP:110, Defense:6, Damage:13, XP:110} }
+
 func NewManticore() *Enemy {
 	return &Enemy{Name:"Manticore", Description:"A lion-bodied horror watches you with a humanlike face. A crown of venomous spines ripples along its tail.", Level:4, HP:170, MaxHP:170, Defense:7, Damage:18, XP:180, CanSever:true}
 }
