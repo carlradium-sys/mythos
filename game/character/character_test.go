@@ -47,3 +47,31 @@ func TestStoryFlagsSurviveRebirth(t *testing.T) {
 		t.Fatalf("rebirth state = life %d, era %q; want life 2, modern", c.Life, c.Era)
 	}
 }
+
+
+func TestRebirthGrantsDestinationSpecificLifeGift(t *testing.T) {
+	c := New("GiftBearer")
+	if c.LifeGift != "Thread Sense" {
+		t.Fatalf("first life gift = %q, want Thread Sense", c.LifeGift)
+	}
+	c.LifeGiftUsed = true
+	c.RebirthTo("modern", "modern_crossroads")
+	if c.LifeGift != "Echo Sight" {
+		t.Fatalf("modern life gift = %q, want Echo Sight", c.LifeGift)
+	}
+	if c.LifeGiftUsed {
+		t.Fatal("life gift should reset on rebirth")
+	}
+	if !c.HasStoryFlag("oracle_trust") {
+		// A fresh character has no choice flag; this branch simply keeps the
+		// test focused on gift assignment without assuming prior story history.
+	}
+	c.RebirthTo("future", "future_moon")
+	if c.LifeGift != "Moon's Shelter" {
+		t.Fatalf("lunar life gift = %q, want Moon's Shelter", c.LifeGift)
+	}
+	c.RebirthTo("far", "far_era")
+	if c.LifeGift != "Fateweaver's Knot" {
+		t.Fatalf("far life gift = %q, want Fateweaver's Knot", c.LifeGift)
+	}
+}
