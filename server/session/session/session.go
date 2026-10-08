@@ -427,6 +427,25 @@ func (s *Session) canEnter(id string) bool {
 	return true
 }
 
+func (s *Session) recordDiscovery(roomID string) {
+	flag := "room_discovered_" + roomID
+	if s.Character.HasStoryFlag(flag) {
+		return
+	}
+	room := s.World.GetRoom(roomID)
+	if room == nil {
+		return
+	}
+	reward := 60
+	switch roomID {
+	case "delphi_sanctum", "temple_dawn", "styx_shore", "underworld_crossroads", "cerberus_gate", "tartarus_edge", "modern_styx", "modern_sanctum", "future_moon", "far_era":
+		reward = 110
+	}
+	s.Character.SetStoryFlag(flag)
+	s.WriteLine("Discovery: %s. +%d exploration XP.", room.Name, reward)
+	s.awardExperience(reward)
+}
+
 func (s *Session) move(direction string) {
 	aliases:=map[string]string{"n":"north","s":"south","e":"east","w":"west","u":"up","d":"down"}
 	if v,ok:=aliases[direction];ok{direction=v}
@@ -437,6 +456,7 @@ func (s *Session) move(direction string) {
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
 	if !s.canEnter(next) { return }
 	s.Character.RoomID=next
+	s.recordDiscovery(next)
 	s.look()
 	s.updateQuests()
 	if s.Character.RoomID=="olympus_foothills" { s.advanceTutorial(2) }
