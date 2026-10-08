@@ -353,6 +353,7 @@ func (s *Session) rebirth(args []string) {
 
 	if len(args)==0 {
 		s.WriteLine("\x1b[1;33mREBIRTH PATHS\x1b[0m")
+		s.WriteLine("  rebirth ancient — return to Ancient Greece")
 		s.WriteLine("  rebirth modern  — return to modern Athens")
 		s.WriteLine("  rebirth future  — awaken in Athens after the Last Dawn")
 		s.WriteLine("  rebirth lunar   — awaken at the Lunar Oracle")
