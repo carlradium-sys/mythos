@@ -165,10 +165,12 @@ Use:
   talk
   talk thread
   talk fate
-  talk rebirth
+  talk choices      Show the Oracle’s first major choice.
+  choose trust      Trust Pythia; gain Delphi reputation and a lasting oath.
+  choose defy       Reject prophecy; lose Delphi reputation and gain a scar.
 
-NPCs respond to different topics. The world may reveal lore, warnings,
-choices, or clues through conversation.`},
+Story choices are recorded on your character and survive logout and rebirth.
+Some choices can only be made once; the world remembers what you decide.`},
 	"shop": {"shop", `MERCHANTS
 
 Some NPCs sell equipment.
@@ -213,5 +215,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","tutorial"}
+	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","shop","buy","tutorial"}
 }
