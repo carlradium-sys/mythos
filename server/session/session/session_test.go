@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"fatewalker/game/character"
+	"fatewalker/game/item"
 	"fatewalker/game/combat"
 	"fatewalker/game/quest"
 	"fatewalker/world"
@@ -312,6 +313,30 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 	}
 }
 
+
+func TestStyxglassWardAbsorbsDamageOncePerEncounter(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name: "Styxglass Shard", Tier: item.Epic, Kind: "relic", Relic: true})
+
+	remaining, absorbed := s.applySoulRelicWard(12)
+	if remaining != 4 || absorbed != 8 {
+		t.Fatalf("first ward = remaining %d, absorbed %d; want 4 and 8", remaining, absorbed)
+	}
+	remaining, absorbed = s.applySoulRelicWard(12)
+	if remaining != 12 || absorbed != 0 {
+		t.Fatalf("second ward = remaining %d, absorbed %d; want 12 and 0", remaining, absorbed)
+	}
+}
+
+func TestStyxglassWardCannotAbsorbMoreThanIncomingDamage(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name: "Styxglass Shard", Tier: item.Epic, Kind: "relic", Relic: true})
+
+	remaining, absorbed := s.applySoulRelicWard(3)
+	if remaining != 0 || absorbed != 3 {
+		t.Fatalf("small-hit ward = remaining %d, absorbed %d; want 0 and 3", remaining, absorbed)
+	}
+}
 
 func TestStyxglassSoulRelicPersistsAcrossRebirthWithoutDuplication(t *testing.T) {
 	s := newChoiceTestSession(t)
