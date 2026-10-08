@@ -749,15 +749,9 @@ func(s *Session) talk(args []string) {
 	if len(args) > 0 {
 		topic = strings.Join(args, " ")
 	}
-	if n.ID == "athens_vendor" && (topic == "hello" || topic == "greeting") {
-		if s.Character.HasStoryFlag("styx_memory_recovered") {
-			s.WriteLine("Myrto's smile fades as she studies you. \"You found the river beneath the old world. I wondered when it would recognize you here.\"")
-			return
-		}
-		if s.Character.HasStoryFlag("quest_completed_oracle_whisper") {
-			s.WriteLine("Myrto tilts her head. \"You carry an old prophecy. In this city, old words have a way of becoming new trouble.\"")
-			return
-		}
+	if greeting := s.persistentNPCGreeting(n, topic); greeting != "" {
+		s.WriteLine("%s", greeting)
+		return
 	}
 	if topic == "hello" || topic == "greeting" {
 		if greeting := s.factionGreeting(n); greeting != "" {
@@ -792,6 +786,20 @@ func(s *Session) talk(args []string) {
 		return
 	}
 	s.WriteLine("\x1b[1;36m%s:\x1b[0m \"Ask me about the things that matter here.\"", n.Name)
+}
+
+
+func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
+	if n == nil || n.ID != "athens_vendor" || (topic != "hello" && topic != "greeting") {
+		return ""
+	}
+	if s.Character.HasStoryFlag("styx_memory_recovered") {
+		return "Myrto's smile fades as she studies you. \"You found the river beneath the old world. I wondered when it would recognize you here.\""
+	}
+	if s.Character.HasStoryFlag("quest_completed_oracle_whisper") {
+		return "Myrto tilts her head. \"You carry an old prophecy. In this city, old words have a way of becoming new trouble.\""
+	}
+	return ""
 }
 
 func (s *Session) choose(args []string) {
