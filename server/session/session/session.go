@@ -546,6 +546,11 @@ func (s *Session) soul() {
 	c := s.Character
 	s.WriteLine("\x1b[1;35mSOUL LEGACY\x1b[0m")
 	s.WriteLine("Life %d — %s. These marks belong to the soul, not just this era.", c.Life, c.Era)
+	giftStatus := "ready"
+	if c.LifeGiftUsed {
+		giftStatus = "spent until rebirth"
+	}
+	s.WriteLine("Life-gift: %s (%s). Use 'invoke' to call on it.", c.LifeGift, giftStatus)
 	s.WriteLine("\x1b[1;33mFaction standing\x1b[0m")
 	if c.Reputation == nil {
 		c.Reputation = map[string]int{}
