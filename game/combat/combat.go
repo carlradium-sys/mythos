@@ -78,8 +78,24 @@ func Cast(caster,pName string,dmg int,domain string,e *Enemy) Result {
 	return Result{Damage:damage,Text:text,Killed:e.HP==0}
 }
 
-func EnemyAttack(e *Enemy,defense int) Result {
-	if roll(20)+1+e.Level < defense+8 { return Result{Text:"The "+e.Name+" attacks, but you evade it. (0 damage)"} }
-	damage:=e.Damage/2+roll(e.Damage/2+1)
-	return Result{Damage:damage,Text:fmt.Sprintf("The %s strikes you. (%d damage)",e.Name,damage)}
+func EnemyAttack(e *Enemy, defense int) Result {
+	approach, impact := enemyAttackNarration(e.Name)
+	if roll(20)+1+e.Level < defense+8 {
+		return Result{Text:fmt.Sprintf("%s You evade the attack. (0 damage)", approach)}
+	}
+	damage := e.Damage/2 + roll(e.Damage/2+1)
+	return Result{Damage: damage, Text: fmt.Sprintf("%s (%d damage)", impact, damage)}
+}
+
+func enemyAttackNarration(name string) (string, string) {
+	switch name {
+	case "Harpy":
+		return "The Harpy folds its wings and stoops from above.", "Talons rake across you as the Harpy beats past"
+	case "Satyr":
+		return "The Satyr plants its hooves and whips its rune-carved staff around.", "The staff crashes into you with a burst of green sparks"
+	case "Manticore":
+		return "The Manticore's tail arches over its shoulder, spines hissing through the air.", "Venomous spines punch into you as the Manticore's tail snaps back"
+	default:
+		return "The " + name + " lunges for an opening.", "The " + name + " lands a heavy blow"
+	}
 }
