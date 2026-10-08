@@ -592,3 +592,16 @@ func TestJournalSelectsNextUnlockedQuest(t *testing.T) {
 	q, ok = s.nextAvailableQuest()
 	if !ok || q.ID != "oracle_whisper" { t.Fatalf("next suggested quest = %q, found=%v", q.ID, ok) }
 }
+
+
+func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = 25
+	s.Character.Mana = 3
+	s.Enemy = &combat.Enemy{Name: "Harpy", HP: 20, MaxHP: 20}
+	s.rest()
+	if s.Character.HP != 25 || s.Character.Mana != 3 { t.Fatal("rest should not work during combat") }
+	s.Enemy = nil
+	s.rest()
+	if s.Character.HP != s.Character.MaxHP || s.Character.Mana != s.Character.MaxMana { t.Fatal("rest did not restore health and mana") }
+}
