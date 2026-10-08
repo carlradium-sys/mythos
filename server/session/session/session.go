@@ -213,7 +213,7 @@ func (s *Session) advanceQuestKill(enemy string) {
  s.ensureQuests()
  for _,q:=range quest.All() {
   if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {continue}
-  if q.TargetEnemy!="" && strings.EqualFold(q.TargetEnemy,enemy) && s.Character.Quests[q.ID]<q.Required {
+  if q.TargetEnemy!="" && strings.EqualFold(q.TargetEnemy,enemy) && (q.TargetRoom=="" || q.TargetRoom==s.Character.RoomID) && s.Character.Quests[q.ID]<q.Required {
    s.Character.Quests[q.ID]++
    if s.Character.Quests[q.ID]>=q.Required {s.WriteLine("\x1b[1;33mQuest complete: %s\x1b[0m",q.Name);s.Character.AddExperience(q.RewardXP);s.WriteLine("\x1b[1;32m+%d XP.\x1b[0m",q.RewardXP)}
   }
