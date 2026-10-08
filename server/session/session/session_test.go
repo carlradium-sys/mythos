@@ -108,3 +108,37 @@ func TestManticoreDropWorksWithStarterInventoryAndDoesNotDuplicate(t *testing.T)
 		t.Fatalf("repeated Manticore kill duplicated fang; count = %d", count)
 	}
 }
+
+func TestOracleChoiceUnlocksOnlyItsBranchQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "temple_dawn"
+	s.updateQuests()
+	if got := s.Character.Quests["oath_across_the_river"]; got != 0 {
+		t.Fatalf("locked oath quest progress = %d, want 0", got)
+	}
+
+	s.Character.SetStoryFlag("oracle_trust")
+	s.updateQuests()
+	if got := s.Character.Quests["oath_across_the_river"]; got != 1 {
+		t.Fatalf("trusted branch quest progress = %d, want 1", got)
+	}
+	if got := s.Character.Quests["unwritten_path"]; got != 0 {
+		t.Fatalf("defiance branch quest progress = %d, want 0", got)
+	}
+	if s.Character.Experience != 180 {
+		t.Fatalf("branch quest XP = %d, want 180", s.Character.Experience)
+	}
+}
+
+func TestDefianceUnlocksItsOwnQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "ancient_athens"
+	s.Character.SetStoryFlag("oracle_defied")
+	s.updateQuests()
+	if got := s.Character.Quests["unwritten_path"]; got != 1 {
+		t.Fatalf("defiance quest progress = %d, want 1", got)
+	}
+	if got := s.Character.Quests["oath_across_the_river"]; got != 0 {
+		t.Fatalf("trust branch quest progress = %d, want 0", got)
+	}
+}
