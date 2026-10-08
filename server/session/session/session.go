@@ -608,6 +608,20 @@ func (s *Session) rebirth(args []string) {
 func (s *Session) color(code string) string { return "\x1b["+code+"m" }
 
 func(s *Session) currentNPC()*world.NPC{n:=s.World.NPCs[s.Character.RoomID];if len(n)==0{return nil};return n[0]}
+func (s *Session) factionGreeting(n *world.NPC) string {
+	if n == nil || n.Faction == "" || s.Character.Reputation == nil {
+		return ""
+	}
+	switch standing := s.Character.Reputation[n.Faction]; {
+	case standing >= 3:
+		return fmt.Sprintf("%s greets you with newfound warmth. Your deeds have earned the faction's respect.", n.Name)
+	case standing <= -2:
+		return fmt.Sprintf("%s regards you warily. Your standing with the %s has made trust difficult.", n.Name, n.Faction)
+	default:
+		return ""
+	}
+}
+
 func(s *Session) talk(args []string) {
 	n := s.currentNPC()
 	if n == nil {
@@ -617,6 +631,12 @@ func(s *Session) talk(args []string) {
 	topic := "hello"
 	if len(args) > 0 {
 		topic = strings.Join(args, " ")
+	}
+	if topic == "hello" || topic == "greeting" {
+		if greeting := s.factionGreeting(n); greeting != "" {
+			s.WriteLine("%s", greeting)
+			return
+		}
 	}
 	if n.ID == "pythia" && (topic == "hello" || topic == "greeting") {
 		switch {
