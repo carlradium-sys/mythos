@@ -582,6 +582,25 @@ func (s *Session) score() {
 	s.WriteLine("Soul legacy: %d memories | %d scars | %d oaths | %d favors | %d curses | %d echoes",len(c.Memories),len(c.Scars),len(c.Oaths),len(c.Favors),len(c.Curses),len(c.Echoes))
 }
 
+func soulRelicCount(inventory []item.Item) int {
+	count := 0
+	for _, owned := range inventory {
+		if owned.Relic {
+			count++
+		}
+	}
+	return count
+}
+
+func soulRelicEffect(name string) string {
+	switch strings.ToLower(name) {
+	case "styxglass shard":
+		return "once per encounter, absorbs up to 8 incoming damage"
+	default:
+		return "its deeper purpose is still unknown"
+	}
+}
+
 func (s *Session) soul() {
 	c := s.Character
 	s.WriteLine("\x1b[1;35mSOUL LEGACY\x1b[0m")
@@ -591,6 +610,17 @@ func (s *Session) soul() {
 		giftStatus = "spent until rebirth"
 	}
 	s.WriteLine("Life-gift: %s (%s). Use 'invoke' to call on it.", c.LifeGift, giftStatus)
+	s.WriteLine("\x1b[1;33mSoul relics (%d)\x1b[0m", soulRelicCount(c.Inventory))
+	hasRelic := false
+	for _, owned := range c.Inventory {
+		if owned.Relic {
+			hasRelic = true
+			s.WriteLine("  %s — %s", owned.Name, soulRelicEffect(owned.Name))
+		}
+	}
+	if !hasRelic {
+		s.WriteLine("  No soul relics recovered yet.")
+	}
 	s.WriteLine("\x1b[1;33mFaction standing\x1b[0m")
 	if c.Reputation == nil {
 		c.Reputation = map[string]int{}
