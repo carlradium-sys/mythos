@@ -26,6 +26,7 @@ type Session struct {
  Conn net.Conn
  World *world.World
  Enemy *combat.Enemy
+ RelicWardSpent bool
  TutorialStep int
 }
 
@@ -371,6 +372,7 @@ func (s *Session) look() {
 }
 
 func (s *Session) spawnEnemy() {
+	s.RelicWardSpent = false
 	switch s.Character.RoomID {
 	case "olympus_foothills":
 		s.Enemy=combat.NewHarpy()
@@ -478,10 +480,32 @@ func (s *Session) defeatEnemy(divine bool) {
 	s.Enemy = nil
 }
 
+func (s *Session) applySoulRelicWard(damage int) (int, int) {
+	if damage <= 0 || s.RelicWardSpent {
+		return damage, 0
+	}
+	for _, owned := range s.Character.Inventory {
+		if owned.Relic && strings.EqualFold(owned.Name, "Styxglass Shard") {
+			absorbed := 8
+			if absorbed > damage {
+				absorbed = damage
+			}
+			s.RelicWardSpent = true
+			return damage - absorbed, absorbed
+		}
+	}
+	return damage, 0
+}
+
 func (s *Session) enemyTurn() {
 	if s.Enemy==nil || s.Enemy.HP<=0{return}
 	result:=combat.EnemyAttack(s.Enemy,s.Character.DefensePower())
 	if result.Damage>0 {
+		finalDamage, absorbed := s.applySoulRelicWard(result.Damage)
+		if absorbed > 0 {
+			result.Damage = finalDamage
+			result.Text += fmt.Sprintf("\nThe Styxglass Shard flashes; its river-ward absorbs %d damage.", absorbed)
+		}
 		s.Character.HP-=result.Damage
 		if s.Character.HP<0{s.Character.HP=0}
 	}
@@ -499,6 +523,7 @@ func (s *Session) enemyTurn() {
 func (s *Session) flee() {
 	if s.Enemy==nil || s.Enemy.HP<=0 {s.WriteLine("You are not in combat.");return}
 	s.Enemy=nil
+	s.RelicWardSpent = false
 	s.WriteLine("You break away from the battle and retreat. Sometimes survival is the wiser path.")
 }
 
