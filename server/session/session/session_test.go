@@ -653,3 +653,14 @@ func TestCerberusAndTartarusSpawnInTheirRooms(t *testing.T) {
 		if s.Enemy == nil || s.Enemy.Name != tc.name { t.Errorf("room %s spawned %#v", tc.room, s.Enemy) }
 	}
 }
+
+
+func TestMovementCommandsSupportHiddenEntrances(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Life = 2
+	s.Character.RoomID = "modern_acropolis"
+	s.handleCommand("in")
+	if s.Character.RoomID != "modern_sanctum" { t.Fatalf("in command moved to %q", s.Character.RoomID) }
+	s.handleCommand("out")
+	if s.Character.RoomID != "modern_acropolis" { t.Fatalf("out command moved to %q", s.Character.RoomID) }
+}
