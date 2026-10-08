@@ -343,6 +343,17 @@ func (s *Session) questList() {
  }
 }
 
+func (s *Session) nextAvailableQuest() (quest.Quest, bool) {
+	s.ensureQuests()
+	for _, q := range quest.All() {
+		if s.Character.Quests[q.ID] >= q.Required || !s.questUnlocked(q) {
+			continue
+		}
+		return q, true
+	}
+	return quest.Quest{}, false
+}
+
 func (s *Session) journal() {
 	s.WriteLine("\x1b[1;33mFATEWALKER JOURNAL\x1b[0m")
 	s.WriteLine("\x1b[1;36mThe First Thread\x1b[0m")
@@ -362,6 +373,14 @@ func (s *Session) journal() {
 		s.WriteLine("Athens is familiar in ways it should not be. Find the place where the ancient world survived.")
 	default:
 		s.WriteLine("Your earlier lives are becoming a single story. Find the next thread.")
+	}
+	s.WriteLine("")
+	if q, ok := s.nextAvailableQuest(); ok {
+		s.WriteLine("\x1b[1;33mSuggested thread: %s\x1b[0m", q.Name)
+		s.WriteLine("%s", q.Goal)
+		s.WriteLine("Use 'quests' to review every active and locked thread.")
+	} else {
+		s.WriteLine("No new story thread is calling clearly. Explore, revisit old places, or speak with the people you have met.")
 	}
 	s.WriteLine("")
 	s.WriteLine("The journal offers direction, not a leash. You are free to wander.")
