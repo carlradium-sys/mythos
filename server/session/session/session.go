@@ -987,6 +987,10 @@ func (s *Session) factionGreeting(n *world.NPC) string {
 }
 
 func(s *Session) talk(args []string) {
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("The %s keeps you too busy to talk.", s.Enemy.Name)
+		return
+	}
 	n := s.currentNPC()
 	if n == nil {
 		s.WriteLine("There is no one here willing to speak with you.")
@@ -1056,6 +1060,10 @@ func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
 }
 
 func (s *Session) choose(args []string) {
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("The %s leaves no room for a choice right now.", s.Enemy.Name)
+		return
+	}
 	if len(args) == 0 {
 		s.WriteLine("Choose what? At the Oracle, try 'talk choices' first.")
 		return
