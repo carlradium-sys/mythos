@@ -12,6 +12,7 @@ import (
 	"fatewalker/game/item"
 	"fatewalker/game/power"
 	"fatewalker/game/progression"
+	"fatewalker/game/save"
 	"fatewalker/world"
 )
 
@@ -96,6 +97,10 @@ func (s *Session) handleCommand(input string) bool {
 		s.rebirth(parts[1:])
 	case "journal","quest","story":
 		s.journal()
+	case "save":
+		s.saveGame(parts[1:])
+	case "load":
+		s.loadGame(parts[1:])
 	default:
 		s.WriteLine("Unknown command. Type 'help' for help.")
 	}
