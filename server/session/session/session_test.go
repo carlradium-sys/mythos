@@ -694,6 +694,7 @@ func TestOracleChoiceWaitsUntilCombatEnds(t *testing.T) {
 
 func TestFirstLifeRouteCompletesCoreQuests(t *testing.T) {
 	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_gates"
 	s.Character.Level = 10
 	s.Character.Experience = 3645
 	s.move("north")
