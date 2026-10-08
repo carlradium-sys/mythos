@@ -8,13 +8,11 @@ func (w *World) MapText(cur string) string {
   {"MODERN",[]string{"modern_crossroads","modern_plaka","modern_acropolis","modern_metro","modern_museum","modern_rooftop","modern_styx","modern_sanctum"}},
   {"LATER LIVES",[]string{"future_city","future_skyway","future_moon","far_era"}},
  }
- out:="[1;33mFATEWALKER WORLD MAP[0m
-"
+ out:="\x1b[1;33mFATEWALKER WORLD MAP\x1b[0m\n"
  for _,g:=range groups {
-  out+=fmt.Sprintf("[1;36m%s[0m ",g.name)
-  for _,id:=range g.ids { mark:="[ ]";if id==cur{mark="[1;36m[@][0m"};out+=mark+" " }
-  out+="
-"
+  out+=fmt.Sprintf("\x1b[1;36m%s\x1b[0m ",g.name)
+  for _,id:=range g.ids { mark:="[ ]";if id==cur{mark="\x1b[1;36m[@]\x1b[0m"};out+=mark+" " }
+  out+="\n"
  }
  out+="@ current | The world grows as your soul crosses eras."
  return out
