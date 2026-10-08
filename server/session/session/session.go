@@ -957,6 +957,12 @@ func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
 	if s.Character.HasStoryFlag("styx_memory_recovered") {
 		return "Myrto's smile fades as she studies you. \"You found the river beneath the old world. I wondered when it would recognize you here.\""
 	}
+	if s.Character.HasStoryFlag("oracle_trust") {
+		return "Myrto studies the oath-mark at your wrist. \"Someone from Delphi trusted you with a warning. In this city, promises have a longer shadow than gods expect.\""
+	}
+	if s.Character.HasStoryFlag("oracle_defied") {
+		return "Myrto notices the faint scar in your aura. \"You told an Oracle no and survived it? Good. Athens has enough people who mistake prophecy for permission.\""
+	}
 	if s.Character.HasStoryFlag("quest_completed_oracle_whisper") {
 		return "Myrto tilts her head. \"You carry an old prophecy. In this city, old words have a way of becoming new trouble.\""
 	}
