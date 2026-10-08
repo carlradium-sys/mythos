@@ -202,7 +202,7 @@ func (s *Session) updateQuests() {
  for _,q:=range quest.All() {
   if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {continue}
   if s.Character.Quests[q.ID]>=q.Required {continue}
-  if q.TargetRoom!="" && s.Character.RoomID==q.TargetRoom {
+  if q.TargetRoom!="" && q.TargetEnemy=="" && s.Character.RoomID==q.TargetRoom {
    old:=s.Character.Quests[q.ID];s.Character.Quests[q.ID]=q.Required
    if old<q.Required {s.WriteLine("\x1b[1;33mQuest advanced: %s\x1b[0m",q.Name)}
    if q.RewardXP>0 {s.Character.AddExperience(q.RewardXP);s.WriteLine("\x1b[1;32mQuest complete! +%d XP.\x1b[0m",q.RewardXP)}
