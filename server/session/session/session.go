@@ -426,11 +426,27 @@ func (s *Session) spawnEnemy() {
 	s.RelicStrikeSpent = false
 	switch s.Character.RoomID {
 	case "olympus_foothills":
-		s.Enemy=combat.NewHarpy()
+		s.Enemy = combat.NewHarpy()
 	case "oracle_path":
-		s.Enemy=combat.NewSatyr()
+		s.Enemy = combat.NewSatyr()
 	case "manticore_den":
-		s.Enemy=combat.NewManticore()
+		s.Enemy = combat.NewManticore()
+	case "modern_plaka":
+		s.Enemy = &combat.Enemy{Name: "Street Shade", Description: "A human-shaped shadow slips between the neon signs, moving against the light.", Level: 2, HP: 80, MaxHP: 80, Defense: 5, Damage: 10, XP: 90}
+	case "modern_metro":
+		s.Enemy = &combat.Enemy{Name: "Echo Hound", Description: "A hound made of static and old memories emerges from the empty train.", Level: 4, HP: 145, MaxHP: 145, Defense: 7, Damage: 15, XP: 170}
+	case "modern_styx":
+		s.Enemy = &combat.Enemy{Name: "Styx Wraith", Description: "Black water rises into the shape of a veiled figure, carrying coins from lives you never lived.", Level: 5, HP: 185, MaxHP: 185, Defense: 8, Damage: 18, XP: 230}
+	case "modern_sanctum":
+		s.Enemy = &combat.Enemy{Name: "Bronze Sentinel", Description: "A bronze guardian unfolds from the hidden temple wall, its eyes burning with borrowed starlight.", Level: 6, HP: 220, MaxHP: 220, Defense: 9, Damage: 20, XP: 280}
+	case "future_city":
+		s.Enemy = &combat.Enemy{Name: "Chronal Warden", Description: "A guardian of fractured seconds steps from a ripple in the air.", Level: 7, HP: 245, MaxHP: 245, Defense: 10, Damage: 22, XP: 320}
+	case "future_skyway":
+		s.Enemy = &combat.Enemy{Name: "Storm Automaton", Description: "A machine of celestial bronze and lightning blocks the road above the clouds.", Level: 8, HP: 275, MaxHP: 275, Defense: 11, Damage: 25, XP: 370}
+	case "future_moon":
+		s.Enemy = &combat.Enemy{Name: "Moonshade", Description: "A pale shadow detaches itself from the lunar sanctuary's wall and reaches for your memories.", Level: 9, HP: 305, MaxHP: 305, Defense: 12, Damage: 27, XP: 420}
+	case "far_era":
+		s.Enemy = &combat.Enemy{Name: "Last Shore Titan", Description: "The drowned world's final guardian rises from the surf, carrying the weight of vanished centuries.", Level: 10, HP: 360, MaxHP: 360, Defense: 13, Damage: 30, XP: 500}
 	default:
 		return
 	}
@@ -442,7 +458,10 @@ func (s *Session) spawnEnemy() {
 func (s *Session) canEnter(id string) bool {
 	c:=s.Character
 	if strings.HasPrefix(id,"modern_") && c.Life<2 { s.WriteLine("The world beyond the Styx has not opened to you. This is a road for another life."); return false }
-	if strings.HasPrefix(id,"future_") || id=="far_era" { s.WriteLine("That horizon belongs to a later chapter of your soul."); return false }
+	if (strings.HasPrefix(id, "future_") || id == "far_era") && c.Life < 3 {
+		s.WriteLine("That horizon belongs to a later chapter of your soul. Rebirth must open the way.")
+		return false
+	}
 	if id=="olympus_road" && c.Level<6 { s.WriteLine("The path into Olympus is veiled by divine law. Become stronger before attempting the ascent."); return false }
 	if id=="styx_shore" && c.Level<7 { s.WriteLine("The black river calls, but you are not yet strong enough to cross its threshold."); return false }
 	if id=="cerberus_gate" && c.Level<9 { s.WriteLine("A presence beyond the gate warns you away. The guardian is not yet your battle."); return false }
