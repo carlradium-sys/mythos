@@ -555,6 +555,16 @@ func(s *Session) talk(args []string) {
 	if len(args) > 0 {
 		topic = strings.Join(args, " ")
 	}
+	if n.ID == "pythia" && (topic == "hello" || topic == "greeting") {
+		switch {
+		case s.Character.HasStoryFlag("oracle_trust"):
+			s.WriteLine("\x1b[1;36mPythia smiles faintly. \"You kept the thread I gave you. The river will test that promise when you least expect it.\"\x1b[0m")
+			return
+		case s.Character.HasStoryFlag("oracle_defied"):
+			s.WriteLine("\x1b[1;36mPythia regards you without anger. \"Still walking your own road, I see. Even the Fates have learned to leave a little room for defiance.\"\x1b[0m")
+			return
+		}
+	}
 	if topic == "choice" || topic == "choices" {
 		if n.ID == "pythia" {
 			if s.Character.HasStoryFlag("oracle_choice_made") {
