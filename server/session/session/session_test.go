@@ -142,3 +142,17 @@ func TestDefianceUnlocksItsOwnQuest(t *testing.T) {
 		t.Fatalf("trust branch quest progress = %d, want 0", got)
 	}
 }
+
+func TestBlackThreadOnlyCountsHarpyKillsInFoothills(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "ancient_athens"
+	s.advanceQuestKill("Harpy")
+	if got := s.Character.Quests["black_thread"]; got != 0 {
+		t.Fatalf("black_thread progress outside foothills = %d, want 0", got)
+	}
+	s.Character.RoomID = "olympus_foothills"
+	s.advanceQuestKill("Harpy")
+	if got := s.Character.Quests["black_thread"]; got != 1 {
+		t.Fatalf("black_thread progress in foothills = %d, want 1", got)
+	}
+}
