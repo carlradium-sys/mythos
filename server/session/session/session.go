@@ -3,7 +3,7 @@ package session
 import (
 	"net"
 
-	"mythos/game/character"
+	"fatewalker/game/character"
 )
 
 type Session struct {
