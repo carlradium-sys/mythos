@@ -592,7 +592,8 @@ func (s *Session) enemyTurn() {
 		s.Character.HP-=result.Damage
 		if s.Character.HP<0{s.Character.HP=0}
 	}
-	s.WriteLine("%s",result.Text)
+	s.WriteLine("%s", result.Text)
+	s.WriteLine("\x1b[1;31m%s HP: %d/%d\x1b[0m  |  \x1b[1;36m%s HP: %d/%d\x1b[0m", s.Enemy.Name, s.Enemy.HP, s.Enemy.MaxHP, s.Character.Name, s.Character.HP, s.Character.MaxHP)
 	if s.Character.HP==0 {
 		s.WriteLine("\x1b[1;31mYour mortal life ends here. The Styx waits. But something is wrong...\x1b[0m")
 		s.Character.Restore()
