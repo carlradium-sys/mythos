@@ -31,10 +31,11 @@ type Session struct {
  TutorialStep int
  EncounterClearedRoom string
  PendingEquip []string
+	AutoMap bool
 }
 
 func New(accounts *account.Store, conn net.Conn, w *world.World) *Session {
- return &Session{Accounts:accounts, Conn:conn, World:w}
+ return &Session{Accounts:accounts, Conn:conn, World:w, AutoMap:true}
 }
 
 func (s *Session) WriteLine(format string,args ...any) { fmt.Fprintf(s.Conn,format+"\r\n",args...) }
@@ -82,6 +83,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.advanceTutorial(1)
 	case "map":
 		s.localMap()
+	case "automap", "mapauto", "maptoggle":
+		s.autoMap(parts[1:])
 	case "worldmap", "world-map":
 		s.WriteLine(s.World.MapText(s.Character.RoomID))
 	case "exits":
@@ -468,6 +471,36 @@ func (s *Session) advanceTutorial(step int) {
 	}
 }
 
+
+func (s *Session) autoMap(args []string) {
+	if len(args) == 0 {
+		state := "ON"
+		if !s.AutoMap { state = "OFF" }
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;36m╭─ AUTOMATIC MAP ─╮\x1b[0m")
+		s.WriteLine("  Automatic map after movement: %s", state)
+		s.WriteLine("  Usage: automap on | automap off | automap toggle")
+		return
+	}
+	switch strings.ToLower(args[0]) {
+	case "on", "yes", "true":
+		s.AutoMap = true
+	case "off", "no", "false":
+		s.AutoMap = false
+	case "toggle":
+		s.AutoMap = !s.AutoMap
+	default:
+		s.WriteLine("Use 'automap on', 'automap off', or 'automap toggle'.")
+		return
+	}
+	state := "ON"
+	if !s.AutoMap { state = "OFF" }
+	s.WriteLine("Automatic map after movement is now %s.", state)
+	if s.AutoMap {
+		s.localMap()
+	}
+}
+
 func (s *Session) showExits() {
 	r := s.World.GetRoom(s.Character.RoomID)
 	if r == nil {
@@ -680,6 +713,7 @@ func (s *Session) move(direction string) {
 	s.PendingEquip = nil
 	s.recordDiscovery(next)
 	s.look()
+	if s.AutoMap { s.localMap() }
 	s.updateQuests()
 	if s.Character.RoomID=="olympus_foothills" { s.advanceTutorial(2) }
 }
