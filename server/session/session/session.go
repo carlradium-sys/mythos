@@ -1486,12 +1486,19 @@ func (s *Session) parseNPCSelection(args []string) (int, []string) {
 	npcs := s.World.NPCs[s.Character.RoomID]
 	for index, npc := range npcs {
 		nameParts := strings.Fields(strings.ToLower(npc.Name))
-		if len(nameParts) == 0 || len(args) < len(nameParts) { continue }
-		matches := true
-		for i, part := range nameParts {
-			if !strings.EqualFold(args[i], part) { matches = false; break }
+		for i := range nameParts {
+			nameParts[i] = strings.Trim(nameParts[i], ".,!?;:\\\"'()[]{}")
 		}
-		if matches { return index + 1, args[len(nameParts):] }
+		if len(nameParts) == 0 { continue }
+		// Accept the full display name or the NPC's first-name alias.
+		for _, nameLength := range []int{len(nameParts), 1} {
+			if len(args) < nameLength { continue }
+			matches := true
+			for i := 0; i < nameLength; i++ {
+				if !strings.EqualFold(strings.Trim(args[i], ".,!?;:\\\"'()[]{}"), nameParts[i]) { matches = false; break }
+			}
+			if matches { return index + 1, args[nameLength:] }
+		}
 	}
 	return 1, args
 }
@@ -1515,6 +1522,8 @@ func(s *Session) talk(args []string) {
  index,topicArgs:=s.parseNPCSelection(args);n:=s.currentNPC(index)
  if n==nil{if len(s.World.NPCs[s.Character.RoomID])==0{s.WriteLine("There is no one here willing to speak with you.")}else{s.WriteLine("Choose a valid NPC number from 'look'.")};return}
  topic:="hello";if len(topicArgs)>0{topic=strings.Join(topicArgs," ")}
+ matchedTopic, dialogueText := n.MatchDialogue(topic)
+ if matchedTopic != "" { topic = matchedTopic }
  if greeting:=s.persistentNPCGreeting(n,topic);greeting!=""{s.WriteLine("%s",greeting);return}
  if topic=="hello"||topic=="greeting"{if greeting:=s.factionGreeting(n);greeting!=""{s.WriteLine("%s",greeting);return}}
  if n.ID=="pythia"&&(topic=="hello"||topic=="greeting"){switch{case s.Character.HasStoryFlag("oracle_trust"):s.WriteLine("\x1b[1;36mPythia smiles faintly. \"You kept the thread I gave you. The river will test that promise when you least expect it.\"\x1b[0m");return;case s.Character.HasStoryFlag("oracle_defied"):s.WriteLine("\x1b[1;36mPythia regards you without anger. \"Still walking your own road, I see. Even the Fates have learned to leave a little room for defiance.\"\x1b[0m");return}}
@@ -1525,7 +1534,7 @@ func(s *Session) talk(args []string) {
 		s.WriteLine("Damon taps the milestone. \"Before you ask about the road, try 'hint' and see what guidance is available.\"")
 		return
 	}
- if t:=n.DialogueFor(topic);t!="" {
+ if t:=dialogueText;t!="" {
 		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t)
 		if n.ID == "village_guide" && s.TutorialStep == 3 && (topic == "hello" || topic == "greeting") {
 			s.advanceTutorial(4)
