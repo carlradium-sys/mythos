@@ -153,10 +153,9 @@ combat attack and defense values.`},
   exits               List exits and their destination room names.
   worldmap            Show the broader world overview.
 
-Automatic mapping is ON by default. When you move successfully, the room
-description is followed by a local map. The map marks your current room
-and shows connected destinations where available. You can still type map
-at any time when automatic mapping is off.`},
+Automatic mapping is OFF by default to keep the room view compact. When
+enabled, a local map appears after each successful movement. Type map at
+any time to show the current room and its connected destinations.`},
 	"automap": {"automap", `AUTOMATIC MAP
 
 Automatic mapping displays the local map after each successful movement.
@@ -170,7 +169,7 @@ Commands:
   map                  Display the local map immediately.
 
 This setting applies to your current session. A new connection starts with
-automatic mapping enabled.`},
+automatic mapping disabled.`},
 	"items": {"items", `ITEMS & RARITY
 
 Item tiers:
@@ -243,9 +242,9 @@ eras rather than forcing every player through the same third life.`},
 Your journal tracks the story without turning the world into a checklist.
 
 The First Thread:
-  You awakened at the Gates of Olympus with no memory of your death.
+  You began in Asterion, a small village beneath Mount Olympus.
   A black thread binds itself to your sword.
-  Something beyond the gates knows your name.
+  Something beyond the village knows your name.
 
 CURRENT DIRECTION
   Complete the village lessons, then explore the foothills and discover
