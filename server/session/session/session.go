@@ -29,6 +29,8 @@ type Session struct {
  RelicWardSpent bool
  RelicStrikeSpent bool
  TutorialStep int
+ EncounterClearedRoom string
+ PendingEquip []string
 }
 
 func New(accounts *account.Store, conn net.Conn, w *world.World) *Session {
@@ -73,6 +75,8 @@ func (s *Session) handleCommand(input string) bool {
 		return false
 	case "help","?":
 		s.help(parts[1:])
+	case "tutorial", "guide":
+		s.tutorial()
 	case "look","l":
 		s.look()
 		s.advanceTutorial(1)
@@ -84,9 +88,11 @@ func (s *Session) handleCommand(input string) bool {
 		s.WriteLine("You are the first known traveler on this shard.")
 	case "score","stats":
 		s.score()
-	case "inventory","i":
+	case "inventory", "inv", "i":
 		s.inventory()
-	case "equip":
+	case "equipment", "eq", "gear":
+		s.equipment()
+	case "equip", "wield", "wear":
 		s.equip(parts[1:])
 	case "talk", "say":
 		s.talk(parts[1:])
@@ -400,6 +406,23 @@ func (s *Session) journal() {
 	s.WriteLine("The journal offers direction, not a leash. You are free to wander.")
 }
 
+func (s *Session) tutorial() {
+	s.WriteLine("\x1b[1;33mFATEWALKER — PLAYER TUTORIAL\x1b[0m")
+	s.WriteLine("1. Explore: look (l), map, and move with north/south/east/west or n/s/e/w.")
+	s.WriteLine("2. Fight: attack (kill/hit). Combat continues until you or the creature falls.")
+	s.WriteLine("3. After victory: the encounter stays cleared while you remain in that room.")
+	s.WriteLine("4. Gear: inv lists carried items; eq shows what you have equipped.")
+	s.WriteLine("5. Equip: wield heph matches item names partially. If several match, choose a number.")
+	s.WriteLine("6. Progress: score shows stats; quests/journal show your story; help lists commands.")
+	s.WriteLine("7. Divine path: reach level 3, then awaken storm, tide, ember, or aegis.")
+	s.WriteLine("8. Talk: talk <topic> or talk choices; make choices with choose trust or choose defy.")
+	s.WriteLine("9. Rest: rest recovers resources when it is safe. Flee escapes an active battle.")
+	s.WriteLine("10. Rebirth: at level 10, use rebirth to cross the Styx and enter a new era.")
+	s.WriteLine("")
+	s.WriteLine("Suggested first route: north to the foothills, defeat the Harpy, continue north, then meet Pythia.")
+	s.WriteLine("Tip: commands are case-insensitive. Use short unique fragments of item names.")
+}
+
 func (s *Session) tutorialHint() {
 	switch s.TutorialStep {
 	case 0:
@@ -429,7 +452,9 @@ func (s *Session) look() {
 	for direction:=range r.Exits {exits=append(exits,direction)}
 	if len(exits)>0{s.WriteLine("Exits: %s",strings.Join(exits,", "))}
 	if npcs:=s.World.NPCs[s.Character.RoomID];len(npcs)>0{for _,n:=range npcs{s.WriteLine("\x1b[1;36m%s\x1b[0m — %s",n.Name,n.Description)};s.WriteLine("You can talk <topic> or shop.")}
-	if s.Enemy==nil { s.spawnEnemy() }
+	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID {
+		s.spawnEnemy()
+	}
 }
 
 func (s *Session) spawnEnemy() {
@@ -512,6 +537,8 @@ func (s *Session) move(direction string) {
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
 	if !s.canEnter(next) { return }
 	s.Character.RoomID=next
+	s.EncounterClearedRoom = ""
+	s.PendingEquip = nil
 	s.recordDiscovery(next)
 	s.look()
 	s.updateQuests()
@@ -600,6 +627,7 @@ func (s *Session) defeatEnemy(divine bool) {
 			s.WriteLine("The weapon hums faintly, as if it remembers the creature.")
 		}
 	}
+	s.EncounterClearedRoom = s.Character.RoomID
 	s.Enemy = nil
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
@@ -710,20 +738,110 @@ func (s *Session) currentWeapon() item.Item {
 }
 
 func (s *Session) equip(args []string) {
- if len(args)==0 {s.WriteLine("Equip what?");return}
- name:=strings.Join(args," ");for _,i:=range s.Character.Inventory {
-  if strings.EqualFold(i.Name,name) {
-   if item.IsWeapon(i) {s.Character.Weapon=i.Name;s.WriteLine("You equip %s.",i.Name);return}
-   if i.Kind=="armor" {s.Character.Armor=i.Name;s.WriteLine("You wear %s. Defense +%d.",i.Name,i.Armor);return}
-  }
- }
- s.WriteLine("You do not possess that equipment.")
+	if len(args) == 0 {
+		s.WriteLine("Equip what? Try 'eq' to inspect your gear, or 'inv' to list items.")
+		return
+	}
+
+	// A numbered choice resolves the ambiguity from the most recent partial match.
+	if len(args) == 1 {
+		if n, err := strconv.Atoi(args[0]); err == nil {
+			if n < 1 || n > len(s.PendingEquip) {
+				s.WriteLine("That selection is no longer available. Try 'wield <part of item name>' again.")
+				s.PendingEquip = nil
+				return
+			}
+			name := s.PendingEquip[n-1]
+			s.PendingEquip = nil
+			s.equip([]string{name})
+			return
+		}
+	}
+
+	query := strings.ToLower(strings.Join(args, " "))
+	var exact []item.Item
+	var matches []item.Item
+	for _, candidate := range s.Character.Inventory {
+		name := strings.ToLower(candidate.Name)
+		if name == query {
+			exact = append(exact, candidate)
+			continue
+		}
+		if strings.Contains(name, query) {
+			matches = append(matches, candidate)
+		}
+	}
+
+	if len(exact) == 1 {
+		s.equipItem(exact[0])
+		return
+	}
+	if len(exact) == 0 && len(matches) == 1 {
+		s.equipItem(matches[0])
+		return
+	}
+	if len(exact) > 1 {
+		matches = exact
+	}
+	if len(matches) > 1 {
+		s.PendingEquip = make([]string, len(matches))
+		s.WriteLine("Several items match '%s'. Type 'equip <number>' to choose:", query)
+		for i, candidate := range matches {
+			s.PendingEquip[i] = candidate.Name
+			s.WriteLine("  %d) %s", i+1, candidate.Name)
+		}
+		return
+	}
+	s.PendingEquip = nil
+	s.WriteLine("No carried equipment matches '%s'. Try 'inv' to see your items.", query)
+}
+
+func (s *Session) equipItem(i item.Item) {
+	if item.IsWeapon(i) {
+		s.Character.Weapon = i.Name
+		s.WriteLine("You wield %s.", i.Name)
+		return
+	}
+	if i.Kind == "armor" {
+		s.Character.Armor = i.Name
+		s.WriteLine("You wear %s. Armor: %d.", i.Name, i.Armor)
+		return
+	}
+	s.WriteLine("%s cannot be equipped.", i.Name)
 }
 
 func (s *Session) inventory() {
-	if len(s.Character.Inventory)==0{s.WriteLine("Your inventory is empty.");return}
+	if len(s.Character.Inventory) == 0 {
+		s.WriteLine("Your inventory is empty.")
+		return
+	}
 	s.WriteLine("\x1b[1;33mInventory\x1b[0m")
-	for _,i:=range s.Character.Inventory { equipped:=""; if strings.EqualFold(i.Name,s.Character.Weapon)||strings.EqualFold(i.Name,s.Character.Armor){equipped=" [equipped]"}; relic:=""; if i.Relic { relic=" [soul relic]" }; s.WriteLine("%s%s %s(+%d armor/%d damage)%s%s%s",s.color(i.TierColor()),i.TierName(),i.Name,i.Armor,i.Damage,equipped,relic,s.color("0")) }
+	for _, i := range s.Character.Inventory {
+		equipped := ""
+		if strings.EqualFold(i.Name, s.Character.Weapon) || strings.EqualFold(i.Name, s.Character.Armor) {
+			equipped = " [equipped]"
+		}
+		relic := ""
+		if i.Relic {
+			relic = " [soul relic]"
+		}
+		s.WriteLine("%s%s %s (+%d armor / %d damage)%s%s%s", s.color(i.TierColor()), i.TierName(), i.Name, i.Armor, i.Damage, equipped, relic, s.color("0"))
+	}
+}
+
+func (s *Session) equipment() {
+	s.WriteLine("\x1b[1;33mEquipped Gear\x1b[0m")
+	weapon := s.Character.Weapon
+	armor := s.Character.Armor
+	if weapon == "" {
+		weapon = "none"
+	}
+	if armor == "" {
+		armor = "none"
+	}
+	s.WriteLine("Weapon: %s", weapon)
+	s.WriteLine("Armor:  %s", armor)
+	s.WriteLine("Use 'wield <item name>' or 'wear <item name>' to equip by name.")
 }
 
 func (s *Session) powers() {
