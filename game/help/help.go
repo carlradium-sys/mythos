@@ -55,7 +55,8 @@ that the world itself tells part of the story.`},
 	"combat": {"combat", `COMBAT
 
 ATTACK
-  attack
+  attack Harpy       Attack by enemy name.
+  attack 1           Number-selector alternative.
 
 Your weapon determines the style of the attack. Combat descriptions can
 target different body locations and may trigger special effects.
@@ -274,6 +275,14 @@ QUEST CHAINS ACROSS LIVES
 Quests reward exploration and combat without forcing a linear path.`},
 	"talk": {"talk", `NPC DIALOGUE
 
+Prefer targeting people by name:
+  talk Damon hello
+  talk Damon <topic>
+  talk Pythia choices
+
+You can also use a number selector, such as talk 1 hello or talk 1 choices.
+NPC names and numbers are shown by look.
+
 Use:
   talk
   talk thread
@@ -328,15 +337,15 @@ The opening tutorial is deliberately paced. Each lesson gives one action:
   1. Type look.
   2. Move north to the village lane.
   3. Inspect Damon with look Damon.
-  4. Greet him with talk 1 hello.
-  5. Ask about the village with talk 1 village.
+  4. Greet him with talk Damon hello (or use the number selector: talk 1 hello).
+  5. Ask about the village with talk Damon village (or talk 1 village).
   6. Type hint.
-  7. Ask about the road with talk 1 road.
+  7. Ask about the road with talk Damon road (or talk 1 road).
   8. Type exits for the detailed path list.
   9. Type map for nearby connections.
  10. Move north to the foothills.
  11. Inspect the Harpy with look Harpy.
- 12. Type attack 1 to fight.
+ 12. Type attack Harpy to fight (or use the number selector: attack 1).
  13. Type inv to review carried items.
  14. Type eq to review equipped gear.
  15. Type quests to review objectives.
