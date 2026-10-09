@@ -42,7 +42,7 @@ type Character struct {
 func New(name string) *Character {
 	return &Character{
 		Name: name, Level: 1, HP: 100, MaxHP: 100,
-		Mana: 30, MaxMana: 30, RoomID: "olympus_gates",
+		Mana: 30, MaxMana: 30, RoomID: "village_square",
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
 		Weapon: "bronze sword", Armor: "linen cuirass",
 		Quests: map[string]int{},
