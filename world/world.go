@@ -8,23 +8,37 @@ type World struct {
 }
 
 func NewWorld() *World {
+	village := NewRoom("village_square", "Asterion Village Square", "Olive trees shade a quiet square in a small Greek village. Potters and fishmongers prepare for the day while the mountain road waits beyond the cottages.")
+	lane := NewRoom("village_lane", "The Village Lane", "Whitewashed cottages and blue shutters line a narrow stone lane. A local guide waits beside a weathered milestone pointing toward the mountain.")
 	gates := NewRoom("olympus_gates","The Gates of Olympus","Massive marble gates rise before you. Beyond them, Mount Olympus disappears into clouds illuminated by divine light. A weathered altar stands nearby, its inscription worn almost smooth: 'Every life begins with a choice.'")
 	foothills := NewRoom("olympus_foothills","The Foothills of Olympus","A steep mountain path winds upward through ancient stone and mist. Far above, thunder rolls across the peak. Feathers drift through the air though there is no bird in sight.")
 	oracle := NewRoom("oracle_path","The Oracle Path","Cypress trees crowd a winding trail toward Delphi. The air smells of smoke, laurel, and prophecy. Somewhere ahead, a voice seems to whisper a name you do not remember having.")
 	den := NewRoom("manticore_den","The Manticore Den","Broken columns and old offerings surround a dark cavern. Something large has disturbed the dust. Ancient claw marks cross a wall beside a half-erased image of a three-headed hound.")
 	crossroads := NewRoom("modern_crossroads","The Crossroads of Athens","Neon signs glow beside ancient stones. Cars hiss over wet pavement while, somewhere above the city, an impossible thunderclap answers your arrival.")
 
-	gates.Exits["north"]=foothills.ID
-	foothills.Exits["south"]=gates.ID
+	gates.Exits["north"] = foothills.ID
+	gates.Exits["east"] = village.ID
+	village.Exits["west"] = gates.ID
+	village.Exits["north"] = lane.ID
+	lane.Exits["south"] = village.ID
+	lane.Exits["north"] = foothills.ID
+	lane.Exits["east"] = foothills.ID
+	foothills.Exits["south"] = gates.ID
+	foothills.Exits["west"] = lane.ID
 	foothills.Exits["north"]=oracle.ID
 	oracle.Exits["south"]=foothills.ID
 	oracle.Exits["east"]=den.ID
 	den.Exits["west"]=oracle.ID
 
 	w:=&World{Rooms:map[string]*Room{
-		gates.ID:gates, foothills.ID:foothills, oracle.ID:oracle, den.ID:den, crossroads.ID:crossroads,
+		village.ID:village, lane.ID:lane, gates.ID:gates, foothills.ID:foothills, oracle.ID:oracle, den.ID:den, crossroads.ID:crossroads,
 	}}
 	w.NPCs=map[string][]*NPC{}
+	guide := NewNPC("village_guide", "Damon, Village Guide", "A patient local leans on a walking stick beside the milestone.", 1, 100, 5, 0)
+	guide.AddDialogue([]string{"hello", "greeting"}, `Damon smiles. "Welcome to Asterion. Take your time; even heroes should learn where their feet are going."`)
+	guide.AddDialogue([]string{"road", "mountain", "north"}, `Damon points up the lane. "When you are ready, the northern road leads to the foothills. A harpy has been troubling travelers there. Finish your first lessons, then follow the road."`)
+	guide.AddDialogue([]string{"village", "home"}, `"Asterion is small, but it remembers everyone who passes through. The mountain has a longer memory."`)
+	w.NPCs["village_lane"] = append(w.NPCs["village_lane"], guide)
 	oracleNPC:=NewNPC("pythia","Pythia","The Oracle of Delphi sits beside a brazier of fragrant smoke. Her eyes are closed, but she seems to have been waiting for you.",5,120,8,0)
 	oracleNPC.AddDialogue([]string{"hello","greeting"}, `Pythia opens her eyes. "You carry a thread that has already crossed the river."`)
 	oracleNPC.AddDialogue([]string{"thread","fate"}, `"The black thread is not a chain," the Oracle whispers. "It is a memory of a choice you have not yet made."`)
