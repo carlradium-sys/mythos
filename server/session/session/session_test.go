@@ -45,9 +45,9 @@ func TestStoryIntroIsRecordedForFirstLife(t *testing.T) {
 func TestVillageTutorialRequiresHintBeforeRoadTopic(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "village_lane"
-	s.TutorialStep = 3
+	s.TutorialStep = 4
 	s.talk([]string{"1", "road"})
-	if s.TutorialStep != 3 {
+	if s.TutorialStep != 4 {
 		t.Fatal("road topic should not bypass the hint lesson")
 	}
 	s.hint(nil)
@@ -55,8 +55,8 @@ func TestVillageTutorialRequiresHintBeforeRoadTopic(t *testing.T) {
 		t.Fatal("asking for an NPC hint should record tutorial hint use")
 	}
 	s.talk([]string{"1", "road"})
-	if s.TutorialStep != 4 {
-		t.Fatal("road topic after asking for a hint should unlock the next stage")
+	if s.TutorialStep != 5 {
+		t.Fatal("road topic after asking for a hint should unlock the navigation lesson")
 	}
 }
 
@@ -656,40 +656,46 @@ func TestVillageTutorialBlocksMountainRoadUntilGuideLessonCompletes(t *testing.T
 	if s.Character.RoomID != "village_lane" {
 		t.Fatalf("tutorial bypass moved to %q before lessons completed", s.Character.RoomID)
 	}
-	s.TutorialStep = 4
+	s.TutorialStep = 6
 	s.move("north")
 	if s.Character.RoomID != "olympus_foothills" {
 		t.Fatalf("completed tutorial moved to %q, want olympus_foothills", s.Character.RoomID)
 	}
 }
 
-func TestTutorialProgressesThroughConversationCombatGearAndQuests(t *testing.T) {
+func TestTutorialProgressesThroughInspectionConversationNavigationCombatAndStory(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "village_lane"
 	s.TutorialStep = 2
+	s.lookTarget([]string{"Damon"})
+	if !s.Character.HasStoryFlag("tutorial_inspected_npc") { t.Fatal("inspecting Damon should record the inspection lesson") }
+	s.advanceTutorial(3)
 	s.talk([]string{"1", "hello"})
-	if s.TutorialStep != 3 || !s.Character.HasStoryFlag("tutorial_conversation_complete") {
-		t.Fatal("guide conversation did not complete the conversation lesson")
-	}
+	if s.TutorialStep != 3 { t.Fatal("greeting alone should not skip the conversation lesson") }
+	s.talk([]string{"1", "village"})
+	if s.TutorialStep != 4 || !s.Character.HasStoryFlag("tutorial_conversation_complete") { t.Fatal("greeting plus village topic should complete the conversation lesson") }
 	s.hint(nil)
 	s.talk([]string{"1", "road"})
-	if s.TutorialStep != 4 || !s.Character.HasStoryFlag("tutorial_hint_complete") {
-		t.Fatal("road conversation did not complete the hint lesson")
-	}
+	if s.TutorialStep != 5 || !s.Character.HasStoryFlag("tutorial_hint_complete") { t.Fatal("road conversation after a hint should complete the hint lesson") }
+	s.handleCommand("exits")
+	s.handleCommand("map")
+	if s.TutorialStep != 6 || !s.Character.HasStoryFlag("tutorial_navigation_complete") { t.Fatal("using exits and map should complete the navigation lesson") }
 	s.Character.RoomID = "olympus_foothills"
-	s.Enemy = &combat.Enemy{Name: "Harpy", Level: 1, HP: 0, MaxHP: 20, XP: 0}
+	s.Enemy = &combat.Enemy{Name: "Harpy", Description: "A test harpy.", Level: 1, HP: 20, MaxHP: 20, XP: 0}
+	s.lookTarget([]string{"Harpy"})
+	if !s.Character.HasStoryFlag("tutorial_enemy_inspected") { t.Fatal("inspecting the Harpy should record the combat preparation lesson") }
+	s.TutorialStep = 6
+	s.Enemy.HP = 0
 	s.defeatEnemy(false)
-	if s.TutorialStep != 5 || !s.Character.HasStoryFlag("tutorial_combat_complete") {
-		t.Fatal("Harpy victory did not complete the combat lesson")
-	}
+	if s.TutorialStep != 7 || !s.Character.HasStoryFlag("tutorial_combat_complete") { t.Fatal("Harpy victory did not complete the combat lesson") }
 	s.handleCommand("inv")
-	if s.TutorialStep != 6 || !s.Character.HasStoryFlag("tutorial_inventory_complete") {
-		t.Fatal("inventory command did not complete the gear lesson")
-	}
+	if s.TutorialStep != 8 || !s.Character.HasStoryFlag("tutorial_inventory_complete") { t.Fatal("inventory command did not complete the inventory lesson") }
+	s.handleCommand("eq")
+	if s.TutorialStep != 9 || !s.Character.HasStoryFlag("tutorial_equipment_complete") { t.Fatal("equipment command did not complete the equipment lesson") }
 	s.handleCommand("quests")
-	if s.TutorialStep != 7 || !s.Character.HasStoryFlag("tutorial_complete") {
-		t.Fatal("quest review did not complete the tutorial")
-	}
+	if s.TutorialStep != 9 { t.Fatal("quests alone should not skip the journal portion of the story lesson") }
+	s.handleCommand("journal")
+	if s.TutorialStep != 10 || !s.Character.HasStoryFlag("tutorial_complete") { t.Fatal("quests and journal should complete the tutorial") }
 }
 
 func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
