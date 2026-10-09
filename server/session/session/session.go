@@ -879,7 +879,7 @@ func (s *Session) move(direction string) {
 	if !ok {s.WriteLine("You cannot go that way.");return}
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
 	if !s.canEnter(next) { return }
-	if r.ID == "village_lane" && direction == "north" && s.TutorialStep < 6 {
+	if r.ID == "village_lane" && direction == "north" && s.TutorialStep < 9 {
 		s.WriteLine("Damon raises a hand. Finish the village lessons first: inspect and speak with him, use 'hint', then practice 'exits' and 'map'.")
 		return
 	}
@@ -888,15 +888,14 @@ func (s *Session) move(direction string) {
 	s.PendingEquip = nil
 	s.recordDiscovery(next)
 	s.WriteLine("You travel %s.", direction)
-	s.WriteLine("Type 'look' to inspect your surroundings.")
 	if s.AutoMap { s.localMap() }
 	s.updateQuests()
+	s.look()
 	if s.Character.RoomID == "village_lane" && s.TutorialStep == 1 {
 		s.advanceTutorial(2)
 	} else if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 9 {
 		s.advanceTutorial(10)
 	}
-	s.look()
 }
 
 func (s *Session) attack(args []string) {
@@ -905,10 +904,6 @@ func (s *Session) attack(args []string) {
 		return
 	}
 	if s.TutorialStep == 11 && s.Enemy.Name == "Harpy" && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
-		s.WriteLine("Before striking, inspect the creature with 'look Harpy'. Learn what you are facing.")
-		return
-	}
-	if s.TutorialStep == 6 && s.Enemy.Name == "Harpy" && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
 		s.WriteLine("Before striking, inspect the creature with 'look Harpy'. Learn what you are facing.")
 		return
 	}
