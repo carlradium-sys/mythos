@@ -62,7 +62,7 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 - `talk` greets the first person in the room.
 - `hint` or `hint 2` asks a nearby NPC for a suggested conversation topic or next action. Hints are optional and never repeat automatically.
 - `talk <topic>` asks that person about a topic, such as `talk fate`.
-- Prefer `talk <NPC name> <topic>`, such as `talk Damon road` or `talk Pythia choices`. You can also use the number selector, such as `talk 1 road`; NPC names and numbers are shown by `look`.
+- Prefer `talk <NPC name> <question>`, such as `talk Damon can you tell me more about the village?` or `talk Pythia what choices do I have?`. The conversation system matches meaningful keywords and topic aliases, so polite wording and full questions are fine; you do not have to type one exact phrase. You can also use a number selector, such as `talk 1 road`; NPC names and numbers are shown by `look`.
 - `talk choices` asks Pythia about the choice she offers.
 - `shop` lists a merchant's wares with numbers; `buy 1` buys the first listed item, while `buy <part of name>` also works.
 - `choose trust` or `choose defy` makes that story choice. Choices may affect reputation, memories, oaths, and later scenes.
