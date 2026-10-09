@@ -530,9 +530,20 @@ func (s *Session) look() {
  directions:=[]string{"north","south","east","west","up","down","in","out"};var visible []string
  for _,d:=range directions{if id,ok:=r.Exits[d];ok{if dest:=s.World.GetRoom(id);dest!=nil{visible=append(visible,fmt.Sprintf("%s — %s",d,dest.Name))}else{visible=append(visible,d)}}}
  if len(visible)>0{s.WriteLine("Exits: %s",strings.Join(visible," | "))}
- npcs:=s.World.NPCs[s.Character.RoomID];if len(npcs)>0{s.WriteLine("\x1b[1;36mPeople here:\x1b[0m");for i,n:=range npcs{s.WriteLine("  NPC %d) %s — %s",i+1,n.Name,n.Description)};s.WriteLine("Interact with 'talk <number> <topic>' or 'shop <number>'.")}
+ npcs:=s.World.NPCs[s.Character.RoomID]
+ if len(npcs)>0 {
+  s.WriteLine("\x1b[1;32mInteractable NPCs (GREEN):\x1b[0m")
+  for i,n:=range npcs{s.WriteLine("  \x1b[32m[NPC %d]\x1b[0m \x1b[1;32m%s\x1b[0m — %s",i+1,n.Name,n.Description)}
+  s.WriteLine("Talk: 'talk <number> <topic>' | Merchant: 'shop <number>'")
+ }
+ // Player names use BLUE when player-presence support is added.
+ s.WriteLine("\x1b[1;34mPlayers (BLUE):\x1b[0m no other players are visible here.")
  if s.Enemy==nil&&s.EncounterClearedRoom!=s.Character.RoomID{s.spawnEnemy()}
- if s.Enemy!=nil&&s.Enemy.HP>0{s.WriteLine("\x1b[1;31mThreat 1) %s — %s (HP %d/%d)\x1b[0m",s.Enemy.Name,s.Enemy.Description,s.Enemy.HP,s.Enemy.MaxHP);s.WriteLine("Combat: 'attack 1' or 'attack %s'.",strings.ToLower(s.Enemy.Name))}else if s.EncounterClearedRoom==s.Character.RoomID{s.WriteLine("The area is quiet. The defeated creature has not returned.")}
+ if s.Enemy!=nil&&s.Enemy.HP>0 {
+  s.WriteLine("\x1b[1;33mEnemies (YELLOW):\x1b[0m")
+  s.WriteLine("  \x1b[33m[ENEMY 1]\x1b[0m \x1b[1;33m%s\x1b[0m — %s (HP %d/%d)",s.Enemy.Name,s.Enemy.Description,s.Enemy.HP,s.Enemy.MaxHP)
+  s.WriteLine("Attack: 'attack 1' or 'attack %s'.",strings.ToLower(s.Enemy.Name))
+ }else if s.EncounterClearedRoom==s.Character.RoomID{s.WriteLine("The area is quiet. The defeated creature has not returned.")}
 }
 
 func (s *Session) spawnEnemy() {
