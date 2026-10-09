@@ -17,6 +17,7 @@ make choices, and uncover why the Fates have marked you for rebirth.
 
 BASIC LOOP
   look                 Examine the room and discover threats.
+  hint                 Ask a nearby NPC what to ask or do next.
   north/south/east/west Travel through discovered paths.
   attack               Fight with your equipped weapon.
   powers               See divine powers and their unlock levels.
@@ -159,7 +160,7 @@ at any time when automatic mapping is off.`},
 	"automap": {"automap", `AUTOMATIC MAP
 
 Automatic mapping displays the local map after each successful movement.
-It is ON by default.
+It is OFF by default to keep the terminal view compact.
 
 Commands:
   automap on
@@ -319,22 +320,30 @@ Stand near a merchant and use:
 Purchased equipment is added to your inventory and can be equipped normally.`},
 	"tutorial": {"tutorial", `THE FIRST THREAD — STORY TUTORIAL
 
-The tutorial is part of the world, not a separate training room.
+You begin in Asterion, a small village beneath Mount Olympus. The guided
+opening teaches one action at a time:
+  1. Movement: north to the village lane.
+  2. Look: inspect the lane and find Damon, the village guide.
+  3. Conversation: talk 1 hello.
+  4. Hint: use hint, then talk 1 road.
 
-You begin at the Gates of Olympus with no explanation for why you are
-alive. Follow the prompts, but you are free to leave the intended path.
+The guide then opens the road toward the foothills. After the opening,
+use hint with any nearby NPC for a suggested topic or next step. The
+tutorial's progress is saved with your character.`},
+	"hint": {"hint", `NPC HINTS
 
-The tutorial teaches:
-  look / movement
-  combat
-  inventory and gear
-  XP and leveling
-  divine awakening
-  map use
-  the first major choice
+Use:
+  hint       Ask the first nearby NPC for a hint.
+  hint 2     Ask NPC number 2 (use look to see NPC numbers).
 
-If you ignore the tutorial and explore, the world does not punish you.
-You may simply discover the story in a different order.`},
+Hints suggest a conversation topic or a practical next step. Examples:
+  Damon: talk 1 road
+  Pythia: talk 1 choices, then choose trust or choose defy
+  Theron: talk 1 thread, then deal with the Harpy in the foothills
+  Myrto: talk 1 ancient, or talk 1 museum when the memory is ready
+
+Hints are guidance, not quest completion. Use quests and journal for
+your current story progress.`},
 }
 
 func Get(name string) (Topic, bool) {
@@ -345,5 +354,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","soul","invoke","shop","buy","tutorial"}
+	return []string{"start","movement","combat","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","tutorial"}
 }
