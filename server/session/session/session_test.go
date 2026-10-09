@@ -594,6 +594,28 @@ func TestJournalSelectsNextUnlockedQuest(t *testing.T) {
 }
 
 
+func TestNewCharacterBeginsInAsterionVillage(t *testing.T) {
+	c := character.New("Newwalker")
+	if c.RoomID != "village_square" {
+		t.Fatalf("new character room = %q, want village_square", c.RoomID)
+	}
+}
+
+func TestVillageTutorialRouteAndGuideExist(t *testing.T) {
+	w := world.NewWorld()
+	square := w.GetRoom("village_square")
+	lane := w.GetRoom("village_lane")
+	if square == nil || lane == nil {
+		t.Fatal("village tutorial rooms are missing")
+	}
+	if square.Exits["north"] != lane.ID || lane.Exits["south"] != square.ID || lane.Exits["north"] != "olympus_foothills" {
+		t.Fatal("village tutorial route is not connected correctly")
+	}
+	if len(w.NPCs["village_lane"]) == 0 || w.NPCs["village_lane"][0].ID != "village_guide" {
+		t.Fatal("village lane must contain the tutorial guide")
+	}
+}
+
 func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.HP = 25
@@ -780,15 +802,15 @@ func TestMyrtoAnswersAboutMuseumEcho(t *testing.T) {
 }
 
 
-// TestNewSessionEnablesAutomaticMap verifies the default for fresh connections.
-func TestNewSessionEnablesAutomaticMap(t *testing.T) {
+// TestNewSessionKeepsAutomaticMapOffByDefault verifies the compact screen default.
+func TestNewSessionKeepsAutomaticMapOffByDefault(t *testing.T) {
 	server, client := net.Pipe()
 	t.Cleanup(func() { server.Close(); client.Close() })
 	go func() { _, _ = io.Copy(io.Discard, client) }()
 
 	s := New(nil, server, world.NewWorld())
-	if !s.AutoMap {
-		t.Fatal("automatic map should be enabled for new sessions")
+	if s.AutoMap {
+		t.Fatal("automatic map should be off by default to keep the screen compact")
 	}
 }
 
