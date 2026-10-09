@@ -544,12 +544,38 @@ func (s *Session) localMap() {
 
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36m╭─ LOCAL MAP ─╮\x1b[0m")
-	if north != "" { s.WriteLine("                 ↑ NORTH"); s.WriteLine("              [ %s ]", north) }
-	if west != "" { s.WriteLine("  [ %s ]  ←", west) }
-	s.WriteLine("              \x1b[1;32m★ YOU ★\x1b[0m")
-	s.WriteLine("              [ %s ]", r.Name)
-	if east != "" { s.WriteLine("                 → [ %s ]", east) }
-	if south != "" { s.WriteLine("                 [ %s ]", south); s.WriteLine("                 ↓ SOUTH") }
+	// Keep the compass grid compact even when room names are long. Full names
+	// are listed below so truncation in the diagram never hides information.
+	cell := func(name string) string {
+		label := name
+		runes := []rune(label)
+		if len(runes) > 18 {
+			label = string(runes[:17]) + "…"
+		}
+		return fmt.Sprintf("%-20s", "["+label+"]")
+	}
+	if north != "" {
+		s.WriteLine("          %s", cell(north))
+		s.WriteLine("               ↑")
+	}
+	left, right := "                    ", "                    "
+	if west != "" { left = cell(west) }
+	if east != "" { right = cell(east) }
+	s.WriteLine("%s%s%s", left, "← \x1b[1;32m★ YOU ★\x1b[0m → ", right)
+	s.WriteLine("          %s", cell(r.Name))
+	if south != "" {
+		s.WriteLine("               ↓")
+		s.WriteLine("          %s", cell(south))
+	}
+	if len(r.Exits) > 0 {
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;37mCONNECTED ROOMS\x1b[0m")
+		for _, direction := range []string{"north", "west", "east", "south"} {
+			if name := destName(direction); name != "" {
+				s.WriteLine("  %-5s → %s", strings.ToUpper(direction), name)
+			}
+		}
+	}
 	if up != "" || down != "" || in != "" || out != "" {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;37mOTHER PATHS\x1b[0m")
