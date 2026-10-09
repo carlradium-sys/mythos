@@ -516,7 +516,7 @@ func (s *Session) localMap() {
 	s.WriteLine("              \x1b[1;32m★ YOU ★\x1b[0m")
 	s.WriteLine("              [ %s ]", r.Name)
 	if east != "" { s.WriteLine("                 → [ %s ]", east) }
-	if south != "" { s.WriteLine("                 [ %s ]"); s.WriteLine("                 ↓ SOUTH", south) }
+	if south != "" { s.WriteLine("                 [ %s ]", south); s.WriteLine("                 ↓ SOUTH") }
 	if up != "" || down != "" || in != "" || out != "" {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;37mOTHER PATHS\x1b[0m")
