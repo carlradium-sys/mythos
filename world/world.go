@@ -17,8 +17,6 @@ func NewWorld() *World {
 	crossroads := NewRoom("modern_crossroads","The Crossroads of Athens","Neon signs glow beside ancient stones. Cars hiss over wet pavement while, somewhere above the city, an impossible thunderclap answers your arrival.")
 
 	gates.Exits["north"] = foothills.ID
-	gates.Exits["east"] = village.ID
-	village.Exits["west"] = gates.ID
 	village.Exits["north"] = lane.ID
 	lane.Exits["south"] = village.ID
 	lane.Exits["north"] = foothills.ID
