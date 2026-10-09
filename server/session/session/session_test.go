@@ -778,3 +778,41 @@ func TestMyrtoAnswersAboutMuseumEcho(t *testing.T) {
 	got := s.persistentNPCGreeting(s.currentNPC(), "museum")
 	if !strings.Contains(got, "behind glass") { t.Fatalf("museum response = %q", got) }
 }
+
+
+func TestLookingAfterKillingSatyrDoesNotRespawnItAndNorthWorks(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "oracle_path"
+	s.Enemy = combat.NewSatyr()
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+
+	s.handleCommand("look")
+	if s.Enemy != nil {
+		t.Fatalf("look respawned defeated enemy: %s", s.Enemy.Name)
+	}
+
+	s.move("north")
+	if s.Character.RoomID != "delphi_sanctum" {
+		t.Fatalf("north after Satyr victory moved to %q, want delphi_sanctum", s.Character.RoomID)
+	}
+	if s.Enemy != nil {
+		t.Fatalf("unexpected enemy after entering Delphi Sanctum: %s", s.Enemy.Name)
+	}
+}
+
+func TestDefeatedEncounterCanReturnInNextLife(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "oracle_path"
+	s.Enemy = combat.NewSatyr()
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	s.Character.RebirthTo("modern", "modern_crossroads")
+	s.Character.RebirthTo("future", "future_city")
+	s.Character.Life = 3
+	s.Character.RoomID = "oracle_path"
+	s.spawnEnemy()
+	if s.Enemy == nil || s.Enemy.Name != "Satyr" {
+		t.Fatal("room encounter should reset for a later life")
+	}
+}
