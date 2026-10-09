@@ -28,10 +28,28 @@ func TestNewWorldContainsTempleOfTheFirstDawn(t *testing.T) {
 }
 
 
+func TestTheronsForgeIsSeparateFromTheHarpyEncounter(t *testing.T) {
+	w := NewWorld()
+	foothills := w.GetRoom("olympus_foothills")
+	forge := w.GetRoom("therons_forge")
+	if foothills == nil || forge == nil {
+		t.Fatal("foothills and Theron's forge must both exist")
+	}
+	if foothills.Exits["east"] != "therons_forge" || forge.Exits["west"] != "olympus_foothills" {
+		t.Fatal("forge must have a two-way connection east of the foothills")
+	}
+	if len(w.NPCs["olympus_foothills"]) != 0 {
+		t.Fatal("the Harpy encounter room should not also contain the apprentice")
+	}
+	if len(w.NPCs["therons_forge"]) != 1 || w.NPCs["therons_forge"][0].ID != "hephaestus_apprentice" {
+		t.Fatal("Theron should be the forge's sole NPC")
+	}
+}
+
 func TestMapNamesCurrentAndFutureLocations(t *testing.T) {
 	w := NewWorld()
 	got := w.MapText("delphi_sanctum")
-	for _, want := range []string{"FATEWALKER WORLD MAP", "ANCIENT", "Asterion Village Square", "The Village Lane", "The Gates of Olympus", "The Delphi Sanctum", "MODERN", "The Crossroads of Athens", "LATER LIVES", "The Lunar Oracle", ">@"} {
+	for _, want := range []string{"FATEWALKER WORLD MAP", "ANCIENT", "Asterion Village Square", "The Village Lane", "Theron's Forge", "The Gates of Olympus", "The Delphi Sanctum", "MODERN", "The Crossroads of Athens", "LATER LIVES", "The Lunar Oracle", ">@"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("map output missing %q", want)
 		}
