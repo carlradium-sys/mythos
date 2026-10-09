@@ -1570,7 +1570,7 @@ func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
 	if n == nil || n.ID != "athens_vendor" {
 		return ""
 	}
-	if (topic == "museum" || topic == "artifact" || topic == "replica") && s.Character.HasStoryFlag("museum_echo_uncovered") {
+	if containsTopicKeyword(topic, "museum", "artifact", "artifacts", "replica", "replicas") && s.Character.HasStoryFlag("museum_echo_uncovered") {
 		return "Myrto glances toward the museum district. \"Some things behind glass are not exhibits. If one remembered you, keep that memory close.\""
 	}
 	if topic != "hello" && topic != "greeting" {
