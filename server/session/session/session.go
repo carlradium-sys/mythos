@@ -103,11 +103,11 @@ func (s *Session) handleCommand(input string) bool {
 	case "choose":
 		s.choose(parts[1:])
 	case "shop", "wares":
-		s.shop()
+		s.shop(parts[1:])
 	case "buy":
 		s.buy(parts[1:])
 	case "attack","kill","hit":
-		s.attack()
+		s.attack(parts[1:])
 	case "cast":
 		s.cast(parts[1:])
 	case "powers","power":
@@ -412,19 +412,19 @@ func (s *Session) journal() {
 
 func (s *Session) tutorial() {
 	s.WriteLine("\x1b[1;33mFATEWALKER — PLAYER TUTORIAL\x1b[0m")
-	s.WriteLine("1. Explore: look (l), exits, map (local), worldmap (overview), and move with directions.")
+	s.WriteLine("1. Explore: look (l) shows named exits, nearby NPCs, and threats; use exits, map, or worldmap too.")
 	s.WriteLine("2. Fight: attack (kill/hit). Combat continues until you or the creature falls.")
 	s.WriteLine("3. After victory: the encounter stays cleared while you remain in that room.")
 	s.WriteLine("4. Gear: inv lists carried items; eq shows what you have equipped.")
 	s.WriteLine("5. Equip: wield heph matches item names partially. If several match, choose a number.")
 	s.WriteLine("6. Progress: score shows stats; quests/journal show your story; help lists commands.")
 	s.WriteLine("7. Divine path: reach level 3, then awaken storm, tide, ember, or aegis.")
-	s.WriteLine("8. Talk: talk <topic> or talk choices; make choices with choose trust or choose defy.")
+	s.WriteLine("8. Talk: talk <topic> or talk 1 <topic>; use look for NPC numbers, then choose trust or defy.")
 	s.WriteLine("9. Rest: rest recovers resources when it is safe. Flee escapes an active battle.")
 	s.WriteLine("10. Rebirth: at level 10, use rebirth to cross the Styx and enter a new era.")
 	s.WriteLine("")
 	s.WriteLine("Suggested first route: north to the foothills, defeat the Harpy, continue north, then meet Pythia.")
-	s.WriteLine("Tip: commands are case-insensitive. Use short unique fragments of item names.")
+	s.WriteLine("Tip: commands are case-insensitive. Use short unique item-name fragments; shop and buy support numbered wares.")
 }
 
 func (s *Session) tutorialHint() {
@@ -525,17 +525,14 @@ func (s *Session) localMap() {
 }
 
 func (s *Session) look() {
-	r:=s.World.GetRoom(s.Character.RoomID)
-	if r==nil {s.WriteLine("You are nowhere. The world has lost track of you.");return}
-	s.WriteLine("\x1b[1;33m%s\x1b[0m",r.Name)
-	s.WriteLine("%s",r.Description)
-	exits:=make([]string,0,len(r.Exits))
-	for direction:=range r.Exits {exits=append(exits,direction)}
-	if len(exits)>0{s.WriteLine("Exits: %s",strings.Join(exits,", "))}
-	if npcs:=s.World.NPCs[s.Character.RoomID];len(npcs)>0{for _,n:=range npcs{s.WriteLine("\x1b[1;36m%s\x1b[0m — %s",n.Name,n.Description)};s.WriteLine("You can talk <topic> or shop.")}
-	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID {
-		s.spawnEnemy()
-	}
+ r:=s.World.GetRoom(s.Character.RoomID);if r==nil{s.WriteLine("You are nowhere. The world has lost track of you.");return}
+ s.WriteLine("\x1b[1;33m%s\x1b[0m",r.Name);s.WriteLine("%s",r.Description)
+ directions:=[]string{"north","south","east","west","up","down","in","out"};var visible []string
+ for _,d:=range directions{if id,ok:=r.Exits[d];ok{if dest:=s.World.GetRoom(id);dest!=nil{visible=append(visible,fmt.Sprintf("%s — %s",d,dest.Name))}else{visible=append(visible,d)}}}
+ if len(visible)>0{s.WriteLine("Exits: %s",strings.Join(visible," | "))}
+ npcs:=s.World.NPCs[s.Character.RoomID];if len(npcs)>0{s.WriteLine("\x1b[1;36mPeople here:\x1b[0m");for i,n:=range npcs{s.WriteLine("  NPC %d) %s — %s",i+1,n.Name,n.Description)};s.WriteLine("Interact with 'talk <number> <topic>' or 'shop <number>'.")}
+ if s.Enemy==nil&&s.EncounterClearedRoom!=s.Character.RoomID{s.spawnEnemy()}
+ if s.Enemy!=nil&&s.Enemy.HP>0{s.WriteLine("\x1b[1;31mThreat 1) %s — %s (HP %d/%d)\x1b[0m",s.Enemy.Name,s.Enemy.Description,s.Enemy.HP,s.Enemy.MaxHP);s.WriteLine("Combat: 'attack 1' or 'attack %s'.",strings.ToLower(s.Enemy.Name))}else if s.EncounterClearedRoom==s.Character.RoomID{s.WriteLine("The area is quiet. The defeated creature has not returned.")}
 }
 
 func (s *Session) spawnEnemy() {
@@ -626,11 +623,12 @@ func (s *Session) move(direction string) {
 	if s.Character.RoomID=="olympus_foothills" { s.advanceTutorial(2) }
 }
 
-func (s *Session) attack() {
+func (s *Session) attack(args []string) {
 	if s.Enemy == nil || s.Enemy.HP <= 0 {
 		s.WriteLine("There is nothing here to fight.")
 		return
 	}
+	if len(args)>0{target:=strings.Join(args," ");if target!="1"&&!strings.Contains(strings.ToLower(s.Enemy.Name),target){s.WriteLine("Your current target is %s. Use 'attack 1' or 'attack %s'.",s.Enemy.Name,strings.ToLower(s.Enemy.Name));return}}
 	w := s.currentWeapon()
 	result := combat.Attack(s.Character.Name, w, s.Enemy, s.Character.AttackPower())
 	if result.Damage > 0 {
@@ -1179,7 +1177,9 @@ func (s *Session) rebirth(args []string) {
 
 func (s *Session) color(code string) string { return "\x1b["+code+"m" }
 
-func(s *Session) currentNPC()*world.NPC{n:=s.World.NPCs[s.Character.RoomID];if len(n)==0{return nil};return n[0]}
+func (s *Session) currentNPC(index int) *world.NPC { npcs:=s.World.NPCs[s.Character.RoomID];if index<1||index>len(npcs){return nil};return npcs[index-1] }
+func(s *Session) parseNPCSelection(args []string)(int,[]string){if len(args)==0{return 1,args};if n,err:=strconv.Atoi(args[0]);err==nil{return n,args[1:]};return 1,args}
+
 func (s *Session) factionGreeting(n *world.NPC) string {
 	if n == nil || n.Faction == "" || s.Character.Reputation == nil {
 		return ""
@@ -1195,58 +1195,16 @@ func (s *Session) factionGreeting(n *world.NPC) string {
 }
 
 func(s *Session) talk(args []string) {
-	if s.Enemy != nil && s.Enemy.HP > 0 {
-		s.WriteLine("The %s keeps you too busy to talk.", s.Enemy.Name)
-		return
-	}
-	n := s.currentNPC()
-	if n == nil {
-		s.WriteLine("There is no one here willing to speak with you.")
-		return
-	}
-	topic := "hello"
-	if len(args) > 0 {
-		topic = strings.Join(args, " ")
-	}
-	if greeting := s.persistentNPCGreeting(n, topic); greeting != "" {
-		s.WriteLine("%s", greeting)
-		return
-	}
-	if topic == "hello" || topic == "greeting" {
-		if greeting := s.factionGreeting(n); greeting != "" {
-			s.WriteLine("%s", greeting)
-			return
-		}
-	}
-	if n.ID == "pythia" && (topic == "hello" || topic == "greeting") {
-		switch {
-		case s.Character.HasStoryFlag("oracle_trust"):
-			s.WriteLine("\x1b[1;36mPythia smiles faintly. \"You kept the thread I gave you. The river will test that promise when you least expect it.\"\x1b[0m")
-			return
-		case s.Character.HasStoryFlag("oracle_defied"):
-			s.WriteLine("\x1b[1;36mPythia regards you without anger. \"Still walking your own road, I see. Even the Fates have learned to leave a little room for defiance.\"\x1b[0m")
-			return
-		}
-	}
-	if topic == "choice" || topic == "choices" {
-		if n.ID == "pythia" {
-			if s.Character.HasStoryFlag("oracle_choice_made") {
-				s.WriteLine("Pythia studies you. \"The river has recorded your answer. You cannot make that choice unmade.\"")
-				return
-			}
-			s.WriteLine("Pythia's voice falls to a whisper: \"When the Fates offer a thread, will you trust the pattern or cut your own path?\"")
-			s.WriteLine("  choose trust — accept the Oracle's guidance and swear to remember it.")
-			s.WriteLine("  choose defy  — reject prophecy and bear the consequences alone.")
-			return
-		}
-	}
-	if t := n.DialogueFor(topic); t != "" {
-		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s", n.Name, t)
-		return
-	}
-	s.WriteLine("\x1b[1;36m%s:\x1b[0m \"Ask me about the things that matter here.\"", n.Name)
+ if s.Enemy!=nil&&s.Enemy.HP>0{s.WriteLine("The %s keeps you too busy to talk.",s.Enemy.Name);return}
+ index,topicArgs:=s.parseNPCSelection(args);n:=s.currentNPC(index)
+ if n==nil{if len(s.World.NPCs[s.Character.RoomID])==0{s.WriteLine("There is no one here willing to speak with you.")}else{s.WriteLine("Choose a valid NPC number from 'look'.")};return}
+ topic:="hello";if len(topicArgs)>0{topic=strings.Join(topicArgs," ")}
+ if greeting:=s.persistentNPCGreeting(n,topic);greeting!=""{s.WriteLine("%s",greeting);return}
+ if topic=="hello"||topic=="greeting"{if greeting:=s.factionGreeting(n);greeting!=""{s.WriteLine("%s",greeting);return}}
+ if n.ID=="pythia"&&(topic=="hello"||topic=="greeting"){switch{case s.Character.HasStoryFlag("oracle_trust"):s.WriteLine("\x1b[1;36mPythia smiles faintly. \"You kept the thread I gave you. The river will test that promise when you least expect it.\"\x1b[0m");return;case s.Character.HasStoryFlag("oracle_defied"):s.WriteLine("\x1b[1;36mPythia regards you without anger. \"Still walking your own road, I see. Even the Fates have learned to leave a little room for defiance.\"\x1b[0m");return}}
+ if topic=="choice"||topic=="choices"{if n.ID=="pythia"{if s.Character.HasStoryFlag("oracle_choice_made"){s.WriteLine("Pythia studies you. \"The river has recorded your answer. You cannot make that choice unmade.\"");return};s.WriteLine("Pythia's voice falls to a whisper: \"When the Fates offer a thread, will you trust the pattern or cut your own path?\"");s.WriteLine("  choose trust — accept the Oracle's guidance and swear to remember it.");s.WriteLine("  choose defy  — reject prophecy and bear the consequences alone.");return}}
+ if t:=n.DialogueFor(topic);t!=""{s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t);return};s.WriteLine("\x1b[1;36m%s:\x1b[0m \"Ask me about the things that matter here.\"",n.Name)
 }
-
 
 func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
 	if n == nil || n.ID != "athens_vendor" {
@@ -1335,5 +1293,21 @@ func (s *Session) merchantPrice(n *world.NPC, item item.Item) int {
 	return price
 }
 
-func(s *Session) shop(){n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};s.WriteLine("\x1b[1;33m%s's WARES\x1b[0m — You have %d gold",n.Name,s.Character.Gold);for _,i:=range n.Shop{price:=s.merchantPrice(n,i);note:="";if price<i.Price{note=" (faction discount)"}else if price>i.Price{note=" (faction surcharge)"};s.WriteLine("  %s%s %s — %d gold%s",s.color(i.TierColor()),i.TierName(),i.Name,price,note)};s.WriteLine("Use: buy <item>")}
-func(s *Session) buy(args []string){if len(args)==0{s.WriteLine("Buy what? Try 'shop'.");return};n:=s.currentNPC();if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return};name:=strings.Join(args," ");for _,o:=range n.Shop{if strings.EqualFold(o.Name,name){price:=s.merchantPrice(n,o);if s.Character.Gold<price{s.WriteLine("You need %d more gold.",price-s.Character.Gold);return};for _,owned:=range s.Character.Inventory{if strings.EqualFold(owned.Name,o.Name){s.WriteLine("You already possess that item.");return}};s.Character.Gold-=price;s.Character.Inventory=append(s.Character.Inventory,o);s.WriteLine("\x1b[1;32mPurchased %s for %d gold.\x1b[0m",o.Name,price);return}};s.WriteLine("That item is not for sale here.")}
+func(s *Session) shop(args []string) {
+ index,_:=s.parseNPCSelection(args);n:=s.currentNPC(index);if n==nil||!n.HasShop(){s.WriteLine("There is no merchant at that NPC number.");return}
+ s.WriteLine("\x1b[1;33m%s's WARES\x1b[0m — You have %d gold",n.Name,s.Character.Gold)
+ for i,ware:=range n.Shop{price:=s.merchantPrice(n,ware);note:="";if price<ware.Price{note=" (faction discount)"}else if price>ware.Price{note=" (faction surcharge)"};s.WriteLine("  %d) %s%s %s — %d gold%s",i+1,s.color(ware.TierColor()),ware.TierName(),ware.Name,price,note)}
+ s.WriteLine("Use 'buy <number>' or 'buy <part of item name>'.")
+}
+
+func(s *Session) buy(args []string) {
+ if len(args)==0{s.WriteLine("Buy what? Try 'shop'.");return};n:=s.currentNPC(1);if n==nil||!n.HasShop(){s.WriteLine("There is no merchant here.");return}
+ var selected *item.Item
+ if len(args)==1{if number,err:=strconv.Atoi(args[0]);err==nil{if number<1||number>len(n.Shop){s.WriteLine("Choose an item number shown by 'shop'.");return};selected=&n.Shop[number-1]}}
+ if selected==nil{query:=strings.ToLower(strings.Join(args," "));var matches []int;for i:=range n.Shop{if strings.EqualFold(n.Shop[i].Name,query){selected=&n.Shop[i];break};if strings.Contains(strings.ToLower(n.Shop[i].Name),query){matches=append(matches,i)}}
+ if selected==nil&&len(matches)==1{selected=&n.Shop[matches[0]]};if selected==nil&&len(matches)>1{s.WriteLine("Several wares match '%s'. Choose a number:",query);for _,i:=range matches{s.WriteLine("  %d) %s",i+1,n.Shop[i].Name)};return}}
+ if selected==nil{s.WriteLine("That item is not for sale here. Type 'shop' to see numbered wares.");return};price:=s.merchantPrice(n,*selected);if s.Character.Gold<price{s.WriteLine("You need %d more gold.",price-s.Character.Gold);return}
+ for _,owned:=range s.Character.Inventory{if strings.EqualFold(owned.Name,selected.Name){s.WriteLine("You already possess that item.");return}}
+ s.Character.Gold-=price;s.Character.Inventory=append(s.Character.Inventory,*selected);s.WriteLine("\x1b[1;32mPurchased %s for %d gold.\x1b[0m",selected.Name,price)
+}
+
