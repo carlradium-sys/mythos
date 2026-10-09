@@ -50,7 +50,8 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.prepareTutorial()
 	s.storyIntro()
 	s.updateQuests()
-	if s.TutorialStep < 10 {
+	s.look()
+	if s.TutorialStep < 16 {
 		s.tutorialHint()
 	}
 	for {
@@ -80,26 +81,21 @@ func (s *Session) handleCommand(input string) bool {
 		if len(parts) > 1 {
 			s.lookTarget(parts[1:])
 			if s.TutorialStep == 2 && s.Character.HasStoryFlag("tutorial_inspected_npc") { s.advanceTutorial(3) }
+			if s.TutorialStep == 10 && s.Character.HasStoryFlag("tutorial_enemy_inspected") { s.advanceTutorial(11) }
 		} else {
 			s.look()
-			if s.TutorialStep == 1 { s.advanceTutorial(2) }
+			if s.TutorialStep == 0 { s.advanceTutorial(1) }
 		}
 	case "map":
 		s.localMap()
-		if s.TutorialStep == 5 {
-			s.Character.SetStoryFlag("tutorial_map_used")
-			if s.Character.HasStoryFlag("tutorial_exits_used") { s.advanceTutorial(6) }
-		}
+		if s.TutorialStep == 8 { s.advanceTutorial(9) }
 	case "automap", "mapauto", "maptoggle":
 		s.autoMap(parts[1:])
 	case "worldmap", "world-map":
 		s.WriteLine(s.World.MapText(s.Character.RoomID))
 	case "exits":
 		s.showExits()
-		if s.TutorialStep == 5 {
-			s.Character.SetStoryFlag("tutorial_exits_used")
-			if s.Character.HasStoryFlag("tutorial_map_used") { s.advanceTutorial(6) }
-		}
+		if s.TutorialStep == 7 { s.advanceTutorial(8) }
 	case "north","south","east","west","up","down","in","out","n","s","e","w","u","d":
 		s.move(parts[0])
 	case "who":
@@ -108,10 +104,10 @@ func (s *Session) handleCommand(input string) bool {
 		s.score()
 	case "inventory", "inv", "i":
 		s.inventory()
-		if s.TutorialStep == 7 { s.advanceTutorial(8) }
+		if s.TutorialStep == 12 { s.advanceTutorial(13) }
 	case "equipment", "eq", "gear":
 		s.equipment()
-		if s.TutorialStep == 8 { s.advanceTutorial(9) }
+		if s.TutorialStep == 13 { s.advanceTutorial(14) }
 	case "equip", "wield", "wear":
 		s.equip(parts[1:])
 	case "talk", "say":
@@ -140,16 +136,10 @@ func (s *Session) handleCommand(input string) bool {
 		s.rebirth(parts[1:])
 	case "journal","quest","story":
 		s.journal()
-		if s.TutorialStep == 9 {
-			s.Character.SetStoryFlag("tutorial_journal_viewed")
-			if s.Character.HasStoryFlag("tutorial_quests_viewed") { s.advanceTutorial(10) }
-		}
+		if s.TutorialStep == 15 { s.advanceTutorial(16) }
 	case "quests":
 		s.questList()
-		if s.TutorialStep == 9 {
-			s.Character.SetStoryFlag("tutorial_quests_viewed")
-			if s.Character.HasStoryFlag("tutorial_journal_viewed") { s.advanceTutorial(10) }
-		}
+		if s.TutorialStep == 14 { s.advanceTutorial(15) }
 	case "soul","legacy":
 		s.soul()
 	case "invoke","gift":
@@ -496,77 +486,64 @@ func (s *Session) prepareTutorial() {
 		!s.Character.HasStoryFlag("room_discovered_olympus_foothills") && !s.Character.HasStoryFlag("tutorial_complete") {
 		s.Character.RoomID = "village_square"
 	}
-	hasTutorialProgress := s.Character.HasStoryFlag("tutorial_movement_complete") ||
-		s.Character.HasStoryFlag("tutorial_look_complete") || s.Character.HasStoryFlag("tutorial_inspect_complete") ||
-		s.Character.HasStoryFlag("tutorial_conversation_complete") || s.Character.HasStoryFlag("tutorial_hint_complete") ||
-		s.Character.HasStoryFlag("tutorial_navigation_complete") || s.Character.HasStoryFlag("tutorial_combat_complete") ||
-		s.Character.HasStoryFlag("tutorial_inventory_complete") || s.Character.HasStoryFlag("tutorial_equipment_complete") ||
-		s.Character.HasStoryFlag("tutorial_complete")
-	if !hasTutorialProgress && s.Character.RoomID != "village_square" && s.Character.RoomID != "village_lane" {
-		if s.Character.RoomID != "olympus_gates" || s.Character.Level > 1 || s.Character.Life > 1 ||
-			s.Character.HasStoryFlag("room_discovered_olympus_foothills") { s.Character.SetStoryFlag("tutorial_complete") }
+	for step := 16; step >= 0; step-- {
+		if step == 16 && s.Character.HasStoryFlag("tutorial_complete") { s.TutorialStep = 16; return }
+		if step > 0 && s.Character.HasStoryFlag(fmt.Sprintf("tutorial_step_%d", step)) { s.TutorialStep = step; return }
 	}
+	// Map characters with progress from the earlier ten-stage tutorial onto the closest equivalent lesson.
 	switch {
-	case s.Character.HasStoryFlag("tutorial_complete"): s.TutorialStep = 10
-	case s.Character.HasStoryFlag("tutorial_equipment_complete"): s.TutorialStep = 9
-	case s.Character.HasStoryFlag("tutorial_inventory_complete"): s.TutorialStep = 8
-	case s.Character.HasStoryFlag("tutorial_combat_complete"): s.TutorialStep = 7
-	case s.Character.HasStoryFlag("tutorial_navigation_complete"): s.TutorialStep = 6
-	case s.Character.HasStoryFlag("tutorial_hint_complete"): s.TutorialStep = 5
-	case s.Character.HasStoryFlag("tutorial_conversation_complete"): s.TutorialStep = 4
+	case s.Character.HasStoryFlag("tutorial_equipment_complete"): s.TutorialStep = 14
+	case s.Character.HasStoryFlag("tutorial_inventory_complete"): s.TutorialStep = 13
+	case s.Character.HasStoryFlag("tutorial_combat_complete"): s.TutorialStep = 12
+	case s.Character.HasStoryFlag("tutorial_navigation_complete"): s.TutorialStep = 9
+	case s.Character.HasStoryFlag("tutorial_hint_complete"): s.TutorialStep = 7
+	case s.Character.HasStoryFlag("tutorial_conversation_complete"): s.TutorialStep = 5
 	case s.Character.HasStoryFlag("tutorial_inspect_complete"): s.TutorialStep = 3
 	case s.Character.HasStoryFlag("tutorial_look_complete"): s.TutorialStep = 2
-	case s.Character.HasStoryFlag("tutorial_movement_complete"): s.TutorialStep = 1
+	case s.Character.HasStoryFlag("tutorial_movement_complete"): s.TutorialStep = 2
 	default: s.TutorialStep = 0
 	}
 }
-
 func (s *Session) tutorialHint() {
 	switch s.TutorialStep {
-	case 0:
-		s.WriteLine("\x1b[1;36mTUTORIAL 1/10 — ORIENTATION:\x1b[0m You have returned from the river, but the world has not explained itself yet. Type 'look' to read the opening location, then walk north to the village lane.")
-	case 1:
-		s.WriteLine("\x1b[1;36mTUTORIAL 2/10 — READ THE ROOM:\x1b[0m Type 'look'. Read the room description and note the numbered people and threats; paths are intentionally handled by a separate command.")
-	case 2:
-		s.WriteLine("\x1b[1;36mTUTORIAL 3/10 — INSPECT WHAT YOU SEE:\x1b[0m Type 'look Damon' or 'look 1'. The room summary is brief; inspection gives a person or creature's fuller description and useful interaction options.")
-	case 3:
-		s.WriteLine("\x1b[1;36mTUTORIAL 4/10 — CONVERSATION:\x1b[0m Complete both actions: 'talk 1 hello' to greet Damon, then 'talk 1 village' to hear about Asterion.")
-	case 4:
-		s.WriteLine("\x1b[1;36mTUTORIAL 5/10 — ASK FOR A HINT:\x1b[0m Type 'hint' to ask Damon for guidance. Read his suggestion, then type 'talk 1 road' to ask about the mountain threat.")
-	case 5:
-		s.WriteLine("\x1b[1;36mTUTORIAL 6/10 — NAVIGATION:\x1b[0m Try 'exits' to read the full destination list, then 'map' to see nearby connections. You must try both before Damon lets you continue north.")
-	case 6:
-		s.WriteLine("\x1b[1;36mTUTORIAL 7/10 — INSPECT AND FIGHT:\x1b[0m Head north to the foothills. Use 'look' for a concise threat summary, 'look Harpy' to inspect it, then 'attack 1'. Inspection is required before the tutorial fight; the creature stays defeated while you remain in the room.")
-	case 7:
-		s.WriteLine("\x1b[1;36mTUTORIAL 8/10 — INVENTORY:\x1b[0m Type 'inv' and review the actual item names. Inventory is separate from equipped gear; owning an item does not mean you are wearing or wielding it.")
-	case 8:
-		s.WriteLine("\x1b[1;36mTUTORIAL 9/10 — EQUIPMENT:\x1b[0m Type 'eq' to review what is equipped. Later, use 'wield <item>' for a weapon or 'wear <item>' for armor; check 'inv' if you need the exact name.")
-	case 9:
-		s.WriteLine("\x1b[1;36mTUTORIAL 10/10 — FOLLOW THE STORY:\x1b[0m Type 'quests' to review objectives, 'journal' to read story context, and 'score' to understand your character's current progress.")
-	case 10:
-		s.WriteLine("\x1b[1;32mTUTORIAL COMPLETE:\x1b[0m You have practiced orientation, room reading, inspection, conversation, hints, navigation, combat, inventory, equipment, and story tracking.")
-		s.WriteLine("This is only the beginning. Explore freely, ask NPCs about topics, and use 'tutorial' or 'help <topic>' whenever you need a refresher.")
+	case 0: s.WriteLine("\x1b[1;36mTUTORIAL 1/16 — LOOK:\x1b[0m Type 'look'.")
+	case 1: s.WriteLine("\x1b[1;36mTUTORIAL 2/16 — MOVE:\x1b[0m Now go north to the village lane.")
+	case 2: s.WriteLine("\x1b[1;36mTUTORIAL 3/16 — INSPECT DAMON:\x1b[0m Type 'look Damon' to learn more about the guide.")
+	case 3: s.WriteLine("\x1b[1;36mTUTORIAL 4/16 — GREET DAMON:\x1b[0m Type 'talk 1 hello'.")
+	case 4: s.WriteLine("\x1b[1;36mTUTORIAL 5/16 — ASK ABOUT THE VILLAGE:\x1b[0m Type 'talk 1 village'.")
+	case 5: s.WriteLine("\x1b[1;36mTUTORIAL 6/16 — REQUEST GUIDANCE:\x1b[0m Type 'hint' to ask Damon for a hint.")
+	case 6: s.WriteLine("\x1b[1;36mTUTORIAL 7/16 — ASK ABOUT THE ROAD:\x1b[0m Type 'talk 1 road' to learn about the mountain threat.")
+	case 7: s.WriteLine("\x1b[1;36mTUTORIAL 8/16 — READ EXITS:\x1b[0m Type 'exits' to see the detailed list of paths.")
+	case 8: s.WriteLine("\x1b[1;36mTUTORIAL 9/16 — VIEW THE MAP:\x1b[0m Type 'map' to see nearby room connections.")
+	case 9: s.WriteLine("\x1b[1;36mTUTORIAL 10/16 — FOLLOW THE ROAD:\x1b[0m Now go north to the foothills.")
+	case 10: s.WriteLine("\x1b[1;36mTUTORIAL 11/16 — INSPECT THE HARPY:\x1b[0m Type 'look Harpy' before attacking.")
+	case 11: s.WriteLine("\x1b[1;36mTUTORIAL 12/16 — FIGHT:\x1b[0m Type 'attack 1' to fight the Harpy.")
+	case 12: s.WriteLine("\x1b[1;36mTUTORIAL 13/16 — INVENTORY:\x1b[0m Type 'inv' to review what you carry.")
+	case 13: s.WriteLine("\x1b[1;36mTUTORIAL 14/16 — EQUIPMENT:\x1b[0m Type 'eq' to review what you have equipped.")
+	case 14: s.WriteLine("\x1b[1;36mTUTORIAL 15/16 — QUESTS:\x1b[0m Type 'quests' to review your current objectives.")
+	case 15: s.WriteLine("\x1b[1;36mTUTORIAL 16/16 — JOURNAL:\x1b[0m Type 'journal' to read the story context.")
+	case 16:
+		s.WriteLine("\x1b[1;32mTUTORIAL COMPLETE:\x1b[0m You have practiced room inspection, movement, conversation, hints, navigation, combat, inventory, equipment, and story tracking.")
+		s.WriteLine("Explore freely. Use 'tutorial' or 'help <topic>' whenever you need a refresher.")
 	}
 }
-
 func (s *Session) advanceTutorial(step int) {
 	if step <= s.TutorialStep { return }
 	s.TutorialStep = step
+	s.Character.SetStoryFlag(fmt.Sprintf("tutorial_step_%d", step))
 	switch step {
-	case 1: s.Character.SetStoryFlag("tutorial_movement_complete")
-	case 2: s.Character.SetStoryFlag("tutorial_look_complete")
+	case 2: s.Character.SetStoryFlag("tutorial_movement_complete")
 	case 3: s.Character.SetStoryFlag("tutorial_inspect_complete")
-	case 4: s.Character.SetStoryFlag("tutorial_conversation_complete")
-	case 5: s.Character.SetStoryFlag("tutorial_hint_complete")
-	case 6: s.Character.SetStoryFlag("tutorial_navigation_complete")
-	case 7: s.Character.SetStoryFlag("tutorial_combat_complete")
-	case 8: s.Character.SetStoryFlag("tutorial_inventory_complete")
-	case 9: s.Character.SetStoryFlag("tutorial_equipment_complete")
-	case 10: s.Character.SetStoryFlag("tutorial_complete")
+	case 5: s.Character.SetStoryFlag("tutorial_conversation_complete")
+	case 7: s.Character.SetStoryFlag("tutorial_hint_complete")
+	case 9: s.Character.SetStoryFlag("tutorial_navigation_complete")
+	case 12: s.Character.SetStoryFlag("tutorial_combat_complete")
+	case 13: s.Character.SetStoryFlag("tutorial_inventory_complete")
+	case 14: s.Character.SetStoryFlag("tutorial_equipment_complete")
+	case 16: s.Character.SetStoryFlag("tutorial_complete")
 	}
 	s.tutorialHint()
 }
-
 func (s *Session) hint(args []string) {
 	index, _ := s.parseNPCSelection(args)
 	n := s.currentNPC(index)
@@ -587,7 +564,7 @@ func (s *Session) hint(args []string) {
 			s.WriteLine("Damon's hint: type 'look' to inspect your surroundings and find the person you can speak with.")
 		case 2:
 			s.WriteLine("Damon's hint: begin a conversation with 'talk 1 hello'.")
-		case 4:
+		case 5:
 			s.Character.SetStoryFlag("tutorial_hint_used")
 			s.WriteLine("Damon's hint: ask about the road. Type 'talk 1 road'.")
 		default:
@@ -804,7 +781,7 @@ func (s *Session) lookTarget(args []string) {
 		if strings.Contains(name, target) || strings.Contains(target, name) || target == "enemy" || target == "threat" || target == "mob" {
 			s.WriteLine("\x1b[1;33m%s\x1b[0m", s.Enemy.Name)
 			if s.Enemy.Description != "" { s.WriteLine("%s", s.Enemy.Description) }
-			if s.TutorialStep == 6 && s.Enemy.Name == "Harpy" { s.Character.SetStoryFlag("tutorial_enemy_inspected") }
+			if s.TutorialStep == 10 && s.Enemy.Name == "Harpy" { s.Character.SetStoryFlag("tutorial_enemy_inspected") }
 			s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
 			s.WriteLine("It is hostile. Use 'attack 1' or 'attack %s' to engage.", strings.ToLower(s.Enemy.Name))
 			return
@@ -914,9 +891,12 @@ func (s *Session) move(direction string) {
 	s.WriteLine("Type 'look' to inspect your surroundings.")
 	if s.AutoMap { s.localMap() }
 	s.updateQuests()
-	if s.Character.RoomID == "village_lane" && s.TutorialStep == 0 {
-		s.advanceTutorial(1)
+	if s.Character.RoomID == "village_lane" && s.TutorialStep == 1 {
+		s.advanceTutorial(2)
+	} else if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 9 {
+		s.advanceTutorial(10)
 	}
+	s.look()
 }
 
 func (s *Session) attack(args []string) {
@@ -924,7 +904,7 @@ func (s *Session) attack(args []string) {
 		s.WriteLine("There is nothing here to fight.")
 		return
 	}
-	if s.TutorialStep == 6 && s.Enemy.Name == "Harpy" && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
+	if s.TutorialStep == 11 && s.Enemy.Name == "Harpy" && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
 		s.WriteLine("Before striking, inspect the creature with 'look Harpy'. Learn what you are facing.")
 		return
 	}
@@ -1013,8 +993,8 @@ func (s *Session) defeatEnemy(divine bool) {
 	s.Enemy = nil
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
-	if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 6 && enemy.Name == "Harpy" {
-		s.advanceTutorial(7)
+	if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 11 && enemy.Name == "Harpy" {
+		s.advanceTutorial(12)
 	}
 }
 
@@ -1530,14 +1510,12 @@ func(s *Session) talk(args []string) {
 	}
  if t:=n.DialogueFor(topic);t!="" {
 		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t)
-		if n.ID == "village_guide" && s.TutorialStep == 3 {
-			if topic == "hello" || topic == "greeting" { s.Character.SetStoryFlag("tutorial_guide_greeted") }
-			if topic == "village" || topic == "home" { s.Character.SetStoryFlag("tutorial_village_topic_used") }
-			if s.Character.HasStoryFlag("tutorial_guide_greeted") && s.Character.HasStoryFlag("tutorial_village_topic_used") {
-				s.advanceTutorial(4)
-			}
-		} else if n.ID == "village_guide" && s.TutorialStep == 4 && (topic == "road" || topic == "mountain" || topic == "north") && s.Character.HasStoryFlag("tutorial_hint_used") {
+		if n.ID == "village_guide" && s.TutorialStep == 3 && (topic == "hello" || topic == "greeting") {
+			s.advanceTutorial(4)
+		} else if n.ID == "village_guide" && s.TutorialStep == 4 && (topic == "village" || topic == "home") {
 			s.advanceTutorial(5)
+		} else if n.ID == "village_guide" && s.TutorialStep == 6 && (topic == "road" || topic == "mountain" || topic == "north") && s.Character.HasStoryFlag("tutorial_hint_used") {
+			s.advanceTutorial(7)
 		}
 		return
 	}
