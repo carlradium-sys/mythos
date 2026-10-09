@@ -1511,7 +1511,7 @@ func(s *Session) talk(args []string) {
  if n.ID == "village_guide" && s.TutorialStep == 3 &&
 		(topic == "road" || topic == "mountain" || topic == "north") &&
 		!s.Character.HasStoryFlag("tutorial_hint_used") {
-		s.WriteLine("Damon taps the milestone. \"Before you ask about the road, try 'hint' and see what guidance is available.\")
+		s.WriteLine("Damon taps the milestone. \"Before you ask about the road, try 'hint' and see what guidance is available.\"")
 		return
 	}
  if t:=n.DialogueFor(topic);t!="" {
