@@ -1,16 +1,16 @@
 # Fatewalker Player Tutorial
 
-This is a separate beginner's guide for learning the game before following the story. You can also type `tutorial` or `guide` in-game for a compact version. The terminal UI uses short section headings, spacing, and color-coded labels to make room details easier to scan.
+This is a separate beginner's guide for learning the game before following the story. You can also type `tutorial` or `guide` in-game for a compact version. The terminal UI keeps room descriptions, exits, NPCs, and threats compact. The color legend is not repeated on every screen, and automatic maps are off by default so the important text stays visible.
 
 ## 1. The basic loop
 
 - `look` (or `l`) describes your current room, names each exit destination, numbers nearby NPCs, and shows active threats with their HP.
 - The room view is grouped into **Paths**, **People to talk to**, **Other travelers**, and **Threats** so exits and targets are easy to spot.
-- Color legend: **green** `[NPC]` means an interactable NPC; **blue** is reserved for other players; **yellow** `[ENEMY]` means a hostile creature. Labels remain understandable without color. Player-presence detection is not implemented yet, and the room view says so rather than pretending it can see other players.
+- NPCs and enemies use color-coded labels, but the legend is not repeated on every room view. Player-presence detection is not implemented yet.
 - `score`, `inv`, `eq`, and `quests` use separate headings and short labeled lines to make character information easier to scan.
 - `exits` lists each available direction and the destination room's name.
 - `map` shows a local, active map centered on your current room and its connected exits.
-- The local map appears automatically after every successful movement by default. Use `automap off` to hide it, `automap on` to restore it, and `automap toggle` to switch modes. `automap` by itself reports the current setting.
+- Automatic mapping is off by default to reduce screen clutter. Use `automap on` to show a local map after movement, `automap off` to hide it, and `automap toggle` to switch modes. `map` always shows the current local map.
 - `worldmap` shows the broader world overview.
 - Move with `north`, `south`, `east`, `west`, `up`, or `down`; short forms `n`, `s`, `e`, `w`, `u`, and `d` work too.
 - `score` (or `stats`) shows health, mana, level, experience, and other character details.
@@ -37,6 +37,7 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 ## 4. Story and conversations
 
 - `talk` greets the first person in the room.
+- `hint` or `hint 2` asks a nearby NPC for a suggested conversation topic or next action.
 - `talk <topic>` asks that person about a topic, such as `talk fate`.
 - `talk 1 <topic>` selects NPC 1 explicitly; use the NPC number shown by `look` when a room has multiple people.
 - `talk choices` asks Pythia about the choice she offers.
@@ -54,15 +55,18 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 - Use `cast <power name>` during combat when you have an unlocked power and enough mana.
 - At level 10, `rebirth` opens the next life. The first rebirth leads to modern Athens. Later rebirths offer more destinations.
 
-## 6. Suggested first journey
+## 6. The hand-held opening
 
-1. Start at the Gates of Olympus and type `look`.
-2. Travel `north` to the Foothills of Olympus.
-3. Defeat the Harpy with `attack`.
-4. After the victory, try `inv`, `eq`, `score`, and `quests`. The Harpy should not reappear until you leave and re-enter the room.
-5. Travel `north` to the Oracle Path.
-6. Defeat the Satyr, then speak to Pythia. Try `talk choices`, then choose `trust` or `defy`.
-7. Continue exploring, follow `journal` and `quests`, and grow to level 10 before rebirth.
+The game starts in **Asterion Village**, not at Olympus. Follow the prompts in order:
+
+1. **Movement:** type `north` to enter the Village Lane.
+2. **Look:** type `look` to inspect the lane and find Damon, the village guide.
+3. **Conversation:** type `talk 1 hello`.
+4. **Hint:** type `hint`, then ask about the road with `talk 1 road`.
+5. **Continue:** the northern road now opens. Travel north to the Foothills of Olympus and defeat the Harpy with `attack 1`.
+6. After victory, try `inv`, `eq`, `score`, and `quests`. The Harpy stays defeated while you remain in the room.
+7. Continue north to the Oracle Path. Use `hint` with Pythia if you are unsure what to ask, then follow the story choices and quest guidance.
+8. Use `journal` and `quests` as you explore and grow to level 10 before rebirth.
 
 ## Command quick reference
 
@@ -80,6 +84,7 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 | Equipped gear | `eq`, `equipment`, `gear` |
 | Equip by partial name | `wield heph`, `equip <name>`, `wear <name>` |
 | Talk to numbered NPC | `talk 1 <topic>` |
+| Ask an NPC for guidance | `hint`, `hint 2` |
 | Shop / buy | `shop`, `buy 1`, `buy <item fragment>` |
 | Character stats | `score`, `stats` |
 | Quests/story | `quests`, `journal`, `soul` |
