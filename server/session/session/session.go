@@ -465,6 +465,21 @@ func (s *Session) prepareTutorial() {
 		!s.Character.HasStoryFlag("tutorial_complete") {
 		s.Character.RoomID = "village_square"
 	}
+	hasTutorialProgress := s.Character.HasStoryFlag("tutorial_movement_complete") ||
+		s.Character.HasStoryFlag("tutorial_look_complete") ||
+		s.Character.HasStoryFlag("tutorial_conversation_complete") ||
+		s.Character.HasStoryFlag("tutorial_hint_complete") ||
+		s.Character.HasStoryFlag("tutorial_combat_complete") ||
+		s.Character.HasStoryFlag("tutorial_inventory_complete") ||
+		s.Character.HasStoryFlag("tutorial_complete")
+	if !hasTutorialProgress && s.Character.RoomID != "village_square" && s.Character.RoomID != "village_lane" {
+		// Existing characters that have already left the opening area should
+		// continue their story instead of being sent backward into the tutorial.
+		if s.Character.RoomID != "olympus_gates" || s.Character.Level > 1 ||
+			s.Character.Life > 1 || s.Character.HasStoryFlag("room_discovered_olympus_foothills") {
+			s.Character.SetStoryFlag("tutorial_complete")
+		}
+	}
 	switch {
 	case s.Character.HasStoryFlag("tutorial_complete"):
 		s.TutorialStep = 7
