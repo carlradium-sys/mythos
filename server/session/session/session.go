@@ -457,7 +457,7 @@ func (s *Session) tutorial() {
 	s.WriteLine("STORY      'quests' tracks objectives; 'journal' summarizes direction; 'score' shows stats.")
 	s.WriteLine("WORLD      'map' shows local paths; 'worldmap' shows the wider world; 'help <topic>' explains a system.")
 	s.WriteLine("MERCHANTS  'shop 1' views wares; 'buy 1' purchases the first item.")
-	s.WriteLine("DIVINITY   at level 3 use 'awaken storm|tide|ember|aegis'; 'powers' lists abilities.")
+	s.WriteLine("DIVINITY   at level 3 choose one: 'awaken storm', 'awaken tide', 'awaken ember', or 'awaken aegis'.")
 	s.WriteLine("REBIRTH    at level 10, use 'rebirth' to cross the Styx into a new era.")
 	s.WriteLine("Tutorial progress is saved with your character. These commands remain available through help.");
 }
