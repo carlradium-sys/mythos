@@ -100,6 +100,9 @@ func (s *Session) handleCommand(input string) bool {
 		s.score()
 	case "inventory", "inv", "i":
 		s.inventory()
+		if s.TutorialStep == 5 {
+			s.advanceTutorial(6)
+		}
 	case "equipment", "eq", "gear":
 		s.equipment()
 	case "equip", "wield", "wear":
@@ -130,8 +133,14 @@ func (s *Session) handleCommand(input string) bool {
 		s.rebirth(parts[1:])
 	case "journal","quest","story":
 		s.journal()
+		if s.TutorialStep == 6 {
+			s.advanceTutorial(7)
+		}
 	case "quests":
 		s.questList()
+		if s.TutorialStep == 6 {
+			s.advanceTutorial(7)
+		}
 	case "soul","legacy":
 		s.soul()
 	case "invoke","gift":
@@ -458,6 +467,12 @@ func (s *Session) prepareTutorial() {
 	}
 	switch {
 	case s.Character.HasStoryFlag("tutorial_complete"):
+		s.TutorialStep = 7
+	case s.Character.HasStoryFlag("tutorial_inventory_complete"):
+		s.TutorialStep = 6
+	case s.Character.HasStoryFlag("tutorial_combat_complete"):
+		s.TutorialStep = 5
+	case s.Character.HasStoryFlag("tutorial_hint_complete"):
 		s.TutorialStep = 4
 	case s.Character.HasStoryFlag("tutorial_conversation_complete"):
 		s.TutorialStep = 3
@@ -473,15 +488,21 @@ func (s *Session) prepareTutorial() {
 func (s *Session) tutorialHint() {
 	switch s.TutorialStep {
 	case 0:
-		s.WriteLine("\x1b[1;36mTUTORIAL 1/4 — MOVEMENT:\x1b[0m Type 'north' to walk from the village square into the village lane.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 1/7 — MOVEMENT:\x1b[0m Type 'north' to walk from the village square into the village lane.")
 	case 1:
-		s.WriteLine("\x1b[1;36mTUTORIAL 2/4 — LOOK:\x1b[0m Type 'look' to inspect the lane, its exit, and the village guide.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 2/7 — LOOK:\x1b[0m Type 'look' to inspect the lane, its exits, and the village guide.")
 	case 2:
-		s.WriteLine("\x1b[1;36mTUTORIAL 3/4 — CONVERSATION:\x1b[0m Speak to Damon, the guide. Type 'talk 1 hello'.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 3/7 — CONVERSATION:\x1b[0m Speak to Damon, the guide. Type 'talk 1 hello'.")
 	case 3:
-		s.WriteLine("\x1b[1;36mTUTORIAL 4/4 — ASK FOR A HINT:\x1b[0m Type 'hint', then ask Damon about the road with 'talk 1 road'.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 4/7 — HINTS:\x1b[0m Type 'hint', then ask Damon about the road with 'talk 1 road'.")
 	case 4:
-		s.WriteLine("\x1b[1;32mTUTORIAL COMPLETE:\x1b[0m The northern road leads to the foothills. Follow it when ready; use 'hint' whenever an NPC's next step is unclear.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 5/7 — COMBAT:\x1b[0m Go north to the foothills, type 'look' to inspect the Harpy, then use 'attack 1'.")
+	case 5:
+		s.WriteLine("\x1b[1;36mTUTORIAL 6/7 — INVENTORY & GEAR:\x1b[0m Type 'inv' to review your gear, then 'eq' to see what you have equipped.")
+	case 6:
+		s.WriteLine("\x1b[1;36mTUTORIAL 7/7 — QUESTS & STORY:\x1b[0m Type 'quests' or 'journal' to review your current goal. 'score' shows your character's progress.")
+	case 7:
+		s.WriteLine("\x1b[1;32mTUTORIAL COMPLETE:\x1b[0m Continue north to the Oracle Path. Use 'hint' whenever an NPC's next step is unclear.")
 	}
 }
 
@@ -498,6 +519,12 @@ func (s *Session) advanceTutorial(step int) {
 	case 3:
 		s.Character.SetStoryFlag("tutorial_conversation_complete")
 	case 4:
+		s.Character.SetStoryFlag("tutorial_hint_complete")
+	case 5:
+		s.Character.SetStoryFlag("tutorial_combat_complete")
+	case 6:
+		s.Character.SetStoryFlag("tutorial_inventory_complete")
+	case 7:
 		s.Character.SetStoryFlag("tutorial_complete")
 	}
 	s.tutorialHint()
@@ -935,6 +962,9 @@ func (s *Session) defeatEnemy(divine bool) {
 	s.Enemy = nil
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
+	if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 4 && enemy.Name == "Harpy" {
+		s.advanceTutorial(5)
+	}
 }
 
 func (s *Session) applySoulRelicWard(damage int) (int, int) {
