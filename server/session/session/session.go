@@ -348,25 +348,46 @@ func (s *Session) advanceQuestKill(enemy string) {
  }
 }
 func (s *Session) questList() {
- s.ensureQuests()
- s.WriteLine("\x1b[1;33mQUESTS\x1b[0m")
- for _,q:=range quest.All() {
-  p:=s.Character.Quests[q.ID];if p>q.Required{p=q.Required}
-  status:="active"
-  if p>=q.Required {status="complete"} else if !s.questUnlocked(q) {status="locked"}
-  s.WriteLine("  [%s] %s — %d/%d",status,q.Name,p,q.Required)
-  s.WriteLine("      %s",q.Goal)
-  if q.RewardXP > 0 { s.WriteLine("      Reward: %d XP", q.RewardXP) }
-  if status=="locked" {
-   if q.RequiredFlag!="" && !s.Character.HasStoryFlag(q.RequiredFlag) {
-    s.WriteLine("      Unlock condition: discover %s",strings.ReplaceAll(q.RequiredFlag,"_"," "))
-   } else if q.RequiredQuest!="" {
-    if prerequisite,ok:=quest.Get(q.RequiredQuest);ok {s.WriteLine("      Unlock condition: complete %s",prerequisite.Name)}
-   }
-  }
- }
+	s.ensureQuests()
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36m╭─ STORY THREADS / QUESTS ─╮\x1b[0m")
+	active, complete, locked := 0, 0, 0
+	for _, q := range quest.All() {
+		p := s.Character.Quests[q.ID]
+		if p > q.Required { p = q.Required }
+		status, color := "ACTIVE", "\x1b[1;33m"
+		if p >= q.Required {
+			status, color = "COMPLETE", "\x1b[1;32m"
+			complete++
+		} else if !s.questUnlocked(q) {
+			status, color = "LOCKED", "\x1b[90m"
+			locked++
+		} else {
+			active++
+		}
+		s.WriteLine("")
+		s.WriteLine("  %s[%s]\x1b[0m %s  (%d/%d)", color, status, q.Name, p, q.Required)
+		s.WriteLine("    %s", q.Goal)
+		if status == "ACTIVE" && q.Required > 1 {
+			s.WriteLine("    Progress: %d of %d", p, q.Required)
+		}
+		if q.RewardXP > 0 && status != "LOCKED" {
+			s.WriteLine("    Reward: %d XP", q.RewardXP)
+		}
+		if status == "LOCKED" {
+			if q.RequiredFlag != "" && !s.Character.HasStoryFlag(q.RequiredFlag) {
+				s.WriteLine("    Unlock: discover %s", strings.ReplaceAll(q.RequiredFlag, "_", " "))
+			} else if q.RequiredQuest != "" {
+				if prerequisite, ok := quest.Get(q.RequiredQuest); ok {
+					s.WriteLine("    Unlock: complete %s", prerequisite.Name)
+				}
+			}
+		}
+	}
+	s.WriteLine("")
+	s.WriteLine("\x1b[90mSummary: %d active  •  %d complete  •  %d locked\x1b[0m", active, complete, locked)
+	s.WriteLine("Type 'journal' for a concise suggestion on what to do next.")
 }
-
 func (s *Session) nextAvailableQuest() (quest.Quest, bool) {
 	s.ensureQuests()
 	for _, q := range quest.All() {
@@ -453,22 +474,24 @@ func (s *Session) showExits() {
 		s.WriteLine("You are nowhere. The world has lost track of you.")
 		return
 	}
-	if len(r.Exits) == 0 {
-		s.WriteLine("There are no visible exits from %s.", r.Name)
-		return
-	}
-
 	directions := []string{"north", "south", "east", "west", "up", "down", "in", "out"}
-	s.WriteLine("\x1b[1;33mExits from %s\x1b[0m", r.Name)
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36m╭─ PATHS FROM %s ─╮\x1b[0m", r.Name)
+	found := false
 	for _, direction := range directions {
 		if destinationID, ok := r.Exits[direction]; ok {
+			found = true
+			destinationName := destinationID
 			if destination := s.World.GetRoom(destinationID); destination != nil {
-				s.WriteLine("  %-5s — %s", direction, destination.Name)
+				destinationName = destination.Name
 			}
+			s.WriteLine("  \x1b[36m%-5s →\x1b[0m %s", strings.ToUpper(direction), destinationName)
 		}
 	}
+	if !found {
+		s.WriteLine("  No visible paths lead away from here.")
+	}
 }
-
 func (s *Session) localMap() {
 	r := s.World.GetRoom(s.Character.RoomID)
 	if r == nil {
@@ -477,75 +500,102 @@ func (s *Session) localMap() {
 	}
 	destName := func(direction string) string {
 		id, ok := r.Exits[direction]
-		if !ok {
-			return ""
-		}
-		if destination := s.World.GetRoom(id); destination != nil {
-			return destination.Name
-		}
-		return ""
+		if !ok { return "" }
+		if destination := s.World.GetRoom(id); destination != nil { return destination.Name }
+		return id
 	}
-
 	north, south := destName("north"), destName("south")
 	east, west := destName("east"), destName("west")
 	up, down := destName("up"), destName("down")
 	in, out := destName("in"), destName("out")
 
-	s.WriteLine("\x1b[1;33mLOCAL MAP\x1b[0m")
-	if north != "" {
-		s.WriteLine("                 [ %s ]", north)
-		s.WriteLine("                       |")
-	}
-	s.WriteLine("%s", func() string {
-		if west != "" {
-			return fmt.Sprintf("[ %s ] -- ", west)
-		}
-		return "             "
-	}() + "[ YOU: " + r.Name + " ]" + func() string {
-		if east != "" {
-			return fmt.Sprintf(" -- [ %s ]", east)
-		}
-		return ""
-	}())
-	if south != "" {
-		s.WriteLine("                       |")
-		s.WriteLine("                 [ %s ]", south)
-	}
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36m╭─ LOCAL MAP ─╮\x1b[0m")
+	if north != "" { s.WriteLine("                 ↑ NORTH"); s.WriteLine("              [ %s ]", north) }
+	if west != "" { s.WriteLine("  [ %s ]  ←", west) }
+	s.WriteLine("              \x1b[1;32m★ YOU ★\x1b[0m")
+	s.WriteLine("              [ %s ]", r.Name)
+	if east != "" { s.WriteLine("                 → [ %s ]", east) }
+	if south != "" { s.WriteLine("                 [ %s ]"); s.WriteLine("                 ↓ SOUTH", south) }
 	if up != "" || down != "" || in != "" || out != "" {
-		s.WriteLine("Other exits:")
-		if up != "" { s.WriteLine("  up   -> %s", up) }
-		if down != "" { s.WriteLine("  down -> %s", down) }
-		if in != "" { s.WriteLine("  in   -> %s", in) }
-		if out != "" { s.WriteLine("  out  -> %s", out) }
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;37mOTHER PATHS\x1b[0m")
+		if up != "" { s.WriteLine("  UP    → %s", up) }
+		if down != "" { s.WriteLine("  DOWN  → %s", down) }
+		if in != "" { s.WriteLine("  IN    → %s", in) }
+		if out != "" { s.WriteLine("  OUT   → %s", out) }
 	}
-	if len(r.Exits) == 0 {
-		s.WriteLine("No exits are visible.")
-	}
-	s.WriteLine("Use 'exits' for a complete list or 'worldmap' for the world overview.")
+	if len(r.Exits) == 0 { s.WriteLine("  No exits are visible.") }
+	s.WriteLine("")
+	s.WriteLine("\x1b[90mUse 'exits' for the full list or 'worldmap' for the wider world.\x1b[0m")
 }
-
 func (s *Session) look() {
- r:=s.World.GetRoom(s.Character.RoomID);if r==nil{s.WriteLine("You are nowhere. The world has lost track of you.");return}
- s.WriteLine("\x1b[1;33m%s\x1b[0m",r.Name);s.WriteLine("%s",r.Description)
- directions:=[]string{"north","south","east","west","up","down","in","out"};var visible []string
- for _,d:=range directions{if id,ok:=r.Exits[d];ok{if dest:=s.World.GetRoom(id);dest!=nil{visible=append(visible,fmt.Sprintf("%s — %s",d,dest.Name))}else{visible=append(visible,d)}}}
- if len(visible)>0{s.WriteLine("Exits: %s",strings.Join(visible," | "))}
- npcs:=s.World.NPCs[s.Character.RoomID]
- if len(npcs)>0 {
-  s.WriteLine("\x1b[1;32mInteractable NPCs (GREEN):\x1b[0m")
-  for i,n:=range npcs{s.WriteLine("  \x1b[32m[NPC %d]\x1b[0m \x1b[1;32m%s\x1b[0m — %s",i+1,n.Name,n.Description)}
-  s.WriteLine("Talk: 'talk <number> <topic>' | Merchant: 'shop <number>'")
- }
- // Player names use BLUE when player-presence support is added.
- s.WriteLine("\x1b[1;34mPlayers (BLUE):\x1b[0m no other players are visible here.")
- if s.Enemy==nil&&s.EncounterClearedRoom!=s.Character.RoomID{s.spawnEnemy()}
- if s.Enemy!=nil&&s.Enemy.HP>0 {
-  s.WriteLine("\x1b[1;33mEnemies (YELLOW):\x1b[0m")
-  s.WriteLine("  \x1b[33m[ENEMY 1]\x1b[0m \x1b[1;33m%s\x1b[0m — %s (HP %d/%d)",s.Enemy.Name,s.Enemy.Description,s.Enemy.HP,s.Enemy.MaxHP)
-  s.WriteLine("Attack: 'attack 1' or 'attack %s'.",strings.ToLower(s.Enemy.Name))
- }else if s.EncounterClearedRoom==s.Character.RoomID{s.WriteLine("The area is quiet. The defeated creature has not returned.")}
-}
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil {
+		s.WriteLine("\x1b[1;31mYou are nowhere.\x1b[0m The world has lost track of you.")
+		return
+	}
 
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", r.Name)
+	s.WriteLine("%s", r.Description)
+
+	directions := []string{"north", "south", "east", "west", "up", "down", "in", "out"}
+	var visible []string
+	for _, d := range directions {
+		if id, ok := r.Exits[d]; ok {
+			if dest := s.World.GetRoom(id); dest != nil {
+				visible = append(visible, fmt.Sprintf("%-5s → %s", strings.ToUpper(d), dest.Name))
+			}
+		}
+	}
+	if len(visible) > 0 {
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;37mPATHS\x1b[0m")
+		for _, exit := range visible {
+			s.WriteLine("  \x1b[36m›\x1b[0m %s", exit)
+		}
+	}
+
+	npcs := s.World.NPCs[s.Character.RoomID]
+	if len(npcs) > 0 {
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;32mPEOPLE TO TALK TO\x1b[0m")
+		for i, n := range npcs {
+			s.WriteLine("  \x1b[32m[NPC %d] %s\x1b[0m", i+1, n.Name)
+			if n.Description != "" {
+				s.WriteLine("         %s", n.Description)
+			}
+		}
+		s.WriteLine("  \x1b[32mTalk:\x1b[0m talk <number> <topic>   \x1b[32mShop:\x1b[0m shop <number>")
+	}
+
+	// The server does not yet track other connected players by room.
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;34mOTHER TRAVELERS\x1b[0m")
+	s.WriteLine("  No other travelers are visible here.")
+
+	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID {
+		s.spawnEnemy()
+	}
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;33mTHREATS\x1b[0m")
+		s.WriteLine("  \x1b[1;33m[ENEMY 1] %s\x1b[0m", s.Enemy.Name)
+		if s.Enemy.Description != "" {
+			s.WriteLine("           %s", s.Enemy.Description)
+		}
+		s.WriteLine("           Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
+		s.WriteLine("  \x1b[33mFight:\x1b[0m attack 1  (or attack %s)", strings.ToLower(s.Enemy.Name))
+	} else if s.EncounterClearedRoom == s.Character.RoomID {
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;32mTHREATS\x1b[0m")
+		s.WriteLine("  The area is quiet. The defeated creature has not returned.")
+	}
+
+	s.WriteLine("")
+	s.WriteLine("\x1b[90mLegend: \x1b[32mNPC = interactable\x1b[90m | \x1b[34mtraveler = player\x1b[90m | \x1b[33menemy = hostile\x1b[0m")
+}
 func (s *Session) spawnEnemy() {
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
@@ -901,39 +951,41 @@ func (s *Session) equipItem(i item.Item) {
 }
 
 func (s *Session) inventory() {
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36m╭─ INVENTORY ─╮\x1b[0m")
 	if len(s.Character.Inventory) == 0 {
-		s.WriteLine("Your inventory is empty.")
+		s.WriteLine("  Your pack is empty.")
 		return
 	}
-	s.WriteLine("\x1b[1;33mInventory\x1b[0m")
-	for _, i := range s.Character.Inventory {
-		equipped := ""
-		if strings.EqualFold(i.Name, s.Character.Weapon) || strings.EqualFold(i.Name, s.Character.Armor) {
-			equipped = " [equipped]"
+	s.WriteLine("  Items carried: %d", len(s.Character.Inventory))
+	for i, it := range s.Character.Inventory {
+		tags := ""
+		if strings.EqualFold(it.Name, s.Character.Weapon) || strings.EqualFold(it.Name, s.Character.Armor) {
+			tags += "  \x1b[1;32m[EQUIPPED]\x1b[0m"
 		}
-		relic := ""
-		if i.Relic {
-			relic = " [soul relic]"
+		if it.Relic {
+			tags += "  \x1b[1;35m[SOUL RELIC]\x1b[0m"
 		}
-		s.WriteLine("%s%s %s (+%d armor / %d damage)%s%s%s", s.color(i.TierColor()), i.TierName(), i.Name, i.Armor, i.Damage, equipped, relic, s.color("0"))
+		s.WriteLine("  %2d. %s%s%s%s", i+1, s.color(it.TierColor()), it.Name, s.color("0"), tags)
+		s.WriteLine("      %s  |  Armor +%d  |  Damage +%d", it.TierName(), it.Armor, it.Damage)
 	}
+	s.WriteLine("")
+	s.WriteLine("  Equip: wield <name>  |  Armor: wear <name>")
 }
-
 func (s *Session) equipment() {
-	s.WriteLine("\x1b[1;33mEquipped Gear\x1b[0m")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36m╭─ EQUIPPED GEAR ─╮\x1b[0m")
 	weapon := s.Character.Weapon
 	armor := s.Character.Armor
-	if weapon == "" {
-		weapon = "none"
-	}
-	if armor == "" {
-		armor = "none"
-	}
-	s.WriteLine("Weapon: %s", weapon)
-	s.WriteLine("Armor:  %s", armor)
-	s.WriteLine("Use 'wield <item name>' or 'wear <item name>' to equip by name.")
+	if weapon == "" { weapon = "None" }
+	if armor == "" { armor = "None" }
+	s.WriteLine("  Weapon  ⚔  %s", weapon)
+	s.WriteLine("  Armor   ◈  %s", armor)
+	s.WriteLine("")
+	s.WriteLine("  Change weapon: wield <item name>")
+	s.WriteLine("  Change armor:  wear <item name>")
+	s.WriteLine("  Tip: short names work, e.g. wield heph.")
 }
-
 func (s *Session) powers() {
 	if s.Character.Domain=="" {s.WriteLine("Divinity: dormant. Awaken a domain at level 3.");return}
 	s.WriteLine("\x1b[1;35m%s Domain — Divinity %d\x1b[0m",s.Character.Domain,s.Character.Divinity)
@@ -957,15 +1009,26 @@ func (s *Session) awaken(args []string) {
 }
 
 func (s *Session) score() {
-	c:=s.Character
-	s.WriteLine("\x1b[1;33m%s\x1b[0m",c.Name)
-	s.WriteLine("Level: %d   Life: %d   Rebirths: %d",c.Level,c.Life,c.Rebirths)
-	s.WriteLine("Era: %s   HP: %d/%d   Mana: %d/%d",c.Era,c.HP,c.MaxHP,c.Mana,c.MaxMana)
-	s.WriteLine("XP: %d   Next level: %d",c.Experience,progression.XPToNextLevel(c.Level,c.Experience))
-	s.WriteLine("Attack: %d   Defense: %d   Armor: %d   Divinity: %d   Domain: %s   Gold: %d",c.AttackPower(),c.DefensePower(),c.ArmorPower(),c.Divinity,c.Domain,c.Gold)
-	s.WriteLine("Soul legacy: %d memories | %d scars | %d oaths | %d favors | %d curses | %d echoes",len(c.Memories),len(c.Scars),len(c.Oaths),len(c.Favors),len(c.Curses),len(c.Echoes))
+	c := s.Character
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", c.Name)
+	s.WriteLine("\x1b[1;37mIDENTITY\x1b[0m")
+	s.WriteLine("  Level %d   •   Life %d   •   Rebirths %d", c.Level, c.Life, c.Rebirths)
+	s.WriteLine("  Era: %s   |   Domain: %s", c.Era, c.Domain)
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;37mVITALS\x1b[0m")
+	s.WriteLine("  HP    %d / %d", c.HP, c.MaxHP)
+	s.WriteLine("  Mana  %d / %d", c.Mana, c.MaxMana)
+	s.WriteLine("  XP    %d   |   Next level in %d", c.Experience, progression.XPToNextLevel(c.Level, c.Experience))
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;37mCOMBAT & RESOURCES\x1b[0m")
+	s.WriteLine("  Attack %d   |   Defense %d   |   Armor %d", c.AttackPower(), c.DefensePower(), c.ArmorPower())
+	s.WriteLine("  Divinity %d   |   Gold %d", c.Divinity, c.Gold)
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;37mSOUL LEGACY\x1b[0m")
+	s.WriteLine("  Memories %d  •  Scars %d  •  Oaths %d", len(c.Memories), len(c.Scars), len(c.Oaths))
+	s.WriteLine("  Favors %d  •  Curses %d  •  Echoes %d", len(c.Favors), len(c.Curses), len(c.Echoes))
 }
-
 func soulRelicCount(inventory []item.Item) int {
 	count := 0
 	for _, owned := range inventory {
