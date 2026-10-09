@@ -81,7 +81,11 @@ func (s *Session) handleCommand(input string) bool {
 		s.look()
 		s.advanceTutorial(1)
 	case "map":
+		s.localMap()
+	case "worldmap", "world-map":
 		s.WriteLine(s.World.MapText(s.Character.RoomID))
+	case "exits":
+		s.showExits()
 	case "north","south","east","west","up","down","in","out","n","s","e","w","u","d":
 		s.move(parts[0])
 	case "who":
@@ -408,7 +412,7 @@ func (s *Session) journal() {
 
 func (s *Session) tutorial() {
 	s.WriteLine("\x1b[1;33mFATEWALKER — PLAYER TUTORIAL\x1b[0m")
-	s.WriteLine("1. Explore: look (l), map, and move with north/south/east/west or n/s/e/w.")
+	s.WriteLine("1. Explore: look (l), exits, map (local), worldmap (overview), and move with directions.")
 	s.WriteLine("2. Fight: attack (kill/hit). Combat continues until you or the creature falls.")
 	s.WriteLine("3. After victory: the encounter stays cleared while you remain in that room.")
 	s.WriteLine("4. Gear: inv lists carried items; eq shows what you have equipped.")
@@ -441,6 +445,83 @@ func (s *Session) advanceTutorial(step int) {
 		s.TutorialStep=step
 		s.tutorialHint()
 	}
+}
+
+func (s *Session) showExits() {
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil {
+		s.WriteLine("You are nowhere. The world has lost track of you.")
+		return
+	}
+	if len(r.Exits) == 0 {
+		s.WriteLine("There are no visible exits from %s.", r.Name)
+		return
+	}
+
+	directions := []string{"north", "south", "east", "west", "up", "down", "in", "out"}
+	s.WriteLine("\x1b[1;33mExits from %s\x1b[0m", r.Name)
+	for _, direction := range directions {
+		if destinationID, ok := r.Exits[direction]; ok {
+			if destination := s.World.GetRoom(destinationID); destination != nil {
+				s.WriteLine("  %-5s — %s", direction, destination.Name)
+			}
+		}
+	}
+}
+
+func (s *Session) localMap() {
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil {
+		s.WriteLine("You are nowhere. The world has lost track of you.")
+		return
+	}
+	destName := func(direction string) string {
+		id, ok := r.Exits[direction]
+		if !ok {
+			return ""
+		}
+		if destination := s.World.GetRoom(id); destination != nil {
+			return destination.Name
+		}
+		return ""
+	}
+
+	north, south := destName("north"), destName("south")
+	east, west := destName("east"), destName("west")
+	up, down := destName("up"), destName("down")
+	in, out := destName("in"), destName("out")
+
+	s.WriteLine("\x1b[1;33mLOCAL MAP\x1b[0m")
+	if north != "" {
+		s.WriteLine("                 [ %s ]", north)
+		s.WriteLine("                       |")
+	}
+	s.WriteLine("%s", func() string {
+		if west != "" {
+			return fmt.Sprintf("[ %s ] -- ", west)
+		}
+		return "             "
+	}() + "[ YOU: " + r.Name + " ]" + func() string {
+		if east != "" {
+			return fmt.Sprintf(" -- [ %s ]", east)
+		}
+		return ""
+	}())
+	if south != "" {
+		s.WriteLine("                       |")
+		s.WriteLine("                 [ %s ]", south)
+	}
+	if up != "" || down != "" || in != "" || out != "" {
+		s.WriteLine("Other exits:")
+		if up != "" { s.WriteLine("  up   -> %s", up) }
+		if down != "" { s.WriteLine("  down -> %s", down) }
+		if in != "" { s.WriteLine("  in   -> %s", in) }
+		if out != "" { s.WriteLine("  out  -> %s", out) }
+	}
+	if len(r.Exits) == 0 {
+		s.WriteLine("No exits are visible.")
+	}
+	s.WriteLine("Use 'exits' for a complete list or 'worldmap' for the world overview.")
 }
 
 func (s *Session) look() {

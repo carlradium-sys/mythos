@@ -5,7 +5,9 @@ This is a separate beginner's guide for learning the game before following the s
 ## 1. The basic loop
 
 - `look` (or `l`) describes your current room, exits, and visible people.
-- `map` shows the local map.
+- `exits` lists each available direction and the destination room's name.
+- `map` shows a local, active map centered on your current room and its connected exits.
+- `worldmap` shows the broader world overview.
 - Move with `north`, `south`, `east`, `west`, `up`, or `down`; short forms `n`, `s`, `e`, `w`, `u`, and `d` work too.
 - `score` (or `stats`) shows health, mana, level, experience, and other character details.
 - `help` shows the available help topics. `help list` lists topics.
@@ -61,7 +63,9 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 | Goal | Commands |
 |---|---|
 | Look around | `look`, `l` |
-| View map | `map` |
+| Nearby room map | `map` |
+| Exit destinations | `exits` |
+| World overview | `worldmap` |
 | Move | `north` / `n`, `south` / `s`, `east` / `e`, `west` / `w` |
 | Fight | `attack`, `kill`, `hit` |
 | Inventory | `inv`, `inventory`, `i` |
