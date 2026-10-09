@@ -587,7 +587,7 @@ func (s *Session) hint(args []string) {
 			s.WriteLine("Damon's hint: type 'look' to inspect your surroundings and find the person you can speak with.")
 		case 2:
 			s.WriteLine("Damon's hint: begin a conversation with 'talk 1 hello'.")
-		case 3:
+		case 4:
 			s.Character.SetStoryFlag("tutorial_hint_used")
 			s.WriteLine("Damon's hint: ask about the road. Type 'talk 1 road'.")
 		default:
