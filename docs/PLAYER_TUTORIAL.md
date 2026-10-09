@@ -23,15 +23,15 @@ Each lesson gives one action. Complete it to receive the next instruction.
 1. Type `look`.
 2. Move north to the village lane.
 3. Inspect Damon with `look Damon`.
-4. Greet him with `talk 1 hello`.
-5. Ask about the village with `talk 1 village`.
+4. Greet him with `talk Damon hello` (or use the number selector: `talk 1 hello`).
+5. Ask about the village with `talk Damon village` (or `talk 1 village`).
 6. Request guidance with `hint`.
-7. Ask about the road with `talk 1 road`.
+7. Ask about the road with `talk Damon road` (or `talk 1 road`).
 8. Use `exits` to read the detailed route list.
 9. Use `map` to view nearby room connections.
 10. Move north to the foothills.
 11. Inspect the Harpy with `look Harpy`.
-12. Fight with `attack 1`.
+12. Fight with `attack Harpy` (or use the number selector: `attack 1`).
 13. Use `inv` to review carried items.
 14. Use `eq` to review equipped gear.
 15. Use `quests` to review objectives.
@@ -41,7 +41,7 @@ The tutorial requires inspection before the Harpy fight, and the defeated Harpy 
 
 ## 2. Combat without getting stuck
 
-Creatures in dangerous rooms are encounters. Use `attack` (also `kill` or `hit`) to strike; `attack 1` selects the numbered threat shown by `look`, and you can also use its name. Some characters later unlock divine powers and can use `cast <power name>`.
+Creatures in dangerous rooms are encounters. Prefer `attack <enemy name>`, such as `attack Harpy`; `attack 1` is also available as a number selector. Use `attack` (also `kill` or `hit`) to strike. Some characters later unlock divine powers and can use `cast <power name>`.
 
 After a creature is defeated, it stays defeated while you remain in that room. You can inspect inventory, check quests, talk, or issue other commands without the creature instantly returning. Leaving the room and entering it again can start a new encounter.
 
@@ -62,7 +62,7 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 - `talk` greets the first person in the room.
 - `hint` or `hint 2` asks a nearby NPC for a suggested conversation topic or next action. Hints are optional and never repeat automatically.
 - `talk <topic>` asks that person about a topic, such as `talk fate`.
-- `talk 1 <topic>` selects NPC 1 explicitly; use the NPC number shown by `look` when a room has multiple people.
+- Prefer `talk <NPC name> <topic>`, such as `talk Damon road` or `talk Pythia choices`. You can also use the number selector, such as `talk 1 road`; NPC names and numbers are shown by `look`.
 - `talk choices` asks Pythia about the choice she offers.
 - `shop` lists a merchant's wares with numbers; `buy 1` buys the first listed item, while `buy <part of name>` also works.
 - `choose trust` or `choose defy` makes that story choice. Choices may affect reputation, memories, oaths, and later scenes.
