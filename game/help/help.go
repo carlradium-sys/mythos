@@ -324,23 +324,28 @@ You died beside the black river and woke again near Asterion, with a dark
 thread tied to your soul. The gods are real, monsters haunt old roads, and
 rebirth can carry you into another age. Your choices remain with you.
 
-The opening tutorial has ten deliberate lessons:
-  1. Type look to read your current room, then move north to the village lane.
-  2. Use look again to read the new room's summary.
-  3. Inspect Damon with look Damon or look 1 for his full description.
-  4. Talk 1 hello, then talk 1 village to practice a greeting and topic.
-  5. Use hint, then talk 1 road to learn about the mountain threat.
-  6. Use exits for the detailed route list and map for nearby connections.
-  7. At the foothills, look Harpy before using attack 1.
-  8. Use inv to inspect carried items.
-  9. Use eq to inspect equipped gear.
- 10. Use both quests and journal to review objectives and story context.
+The opening tutorial is deliberately paced. Each lesson gives one action:
+  1. Type look.
+  2. Move north to the village lane.
+  3. Inspect Damon with look Damon.
+  4. Greet him with talk 1 hello.
+  5. Ask about the village with talk 1 village.
+  6. Type hint.
+  7. Ask about the road with talk 1 road.
+  8. Type exits for the detailed path list.
+  9. Type map for nearby connections.
+ 10. Move north to the foothills.
+ 11. Inspect the Harpy with look Harpy.
+ 12. Type attack 1 to fight.
+ 13. Type inv to review carried items.
+ 14. Type eq to review equipped gear.
+ 15. Type quests to review objectives.
+ 16. Type journal to read story context.
 
-Room summaries do not print paths or full NPC descriptions. Use look <target>
-for details, exits for the full route list, and map for a local diagram.
-Room information is not printed automatically after movement; use look when
-you want to inspect your surroundings. Hints appear only when requested.
-Use tutorial or help <topic> whenever you need a refresher. Progress is saved.`},
+A room is described once when you first enter it. Type look to see it again.
+Room summaries stay concise and do not list paths or full NPC descriptions.
+Use look <target> for details and exits for the full route list. Hints appear
+only when requested. Use tutorial or help <topic> for a refresher. Progress is saved.`}
 	"hint": {"hint", `NPC HINTS
 
 Use:
