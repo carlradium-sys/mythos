@@ -204,7 +204,7 @@ func TestQuestRewardsFactionReputation(t *testing.T) {
 func TestFactionStandingChangesMerchantPrice(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "olympus_foothills"
-	n := s.currentNPC()
+	n := s.currentNPC(1)
 	if got := s.merchantPrice(n, n.Shop[0]); got != 75 {
 		t.Fatalf("neutral merchant price = %d, want 75", got)
 	}
