@@ -896,8 +896,10 @@ func TestMyrtoAnswersAboutMuseumEcho(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "modern_crossroads"
 	s.Character.SetStoryFlag("museum_echo_uncovered")
-	got := s.persistentNPCGreeting(s.currentNPC(), "museum")
-	if !strings.Contains(got, "behind glass") { t.Fatalf("museum response = %q", got) }
+	for _, question := range []string{"museum", "can you tell me about the museum?", "tell me about artifacts"} {
+		got := s.persistentNPCGreeting(s.currentNPC(), question)
+		if !strings.Contains(got, "behind glass") { t.Errorf("museum question %q response = %q", question, got) }
+	}
 }
 
 
