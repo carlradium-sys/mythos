@@ -355,7 +355,7 @@ The opening tutorial is deliberately paced. Each lesson gives one action:
 A room is described once when you first enter it. Type look to see it again.
 Room summaries stay concise and do not list paths or full NPC descriptions.
 Use look <target> for details and exits for the full route list. Hints appear
-only when requested. Use tutorial or help <topic> for a refresher. Progress is saved.`,}
+only when requested. Use tutorial or help <topic> for a refresher. Progress is saved.`,},
 	"hint": {"hint", `NPC HINTS
 
 Use:
