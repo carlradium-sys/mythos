@@ -510,15 +510,15 @@ func (s *Session) tutorialHint() {
 	case 0: s.WriteLine("\x1b[1;36mTUTORIAL 1/16 — LOOK:\x1b[0m Type 'look'.")
 	case 1: s.WriteLine("\x1b[1;36mTUTORIAL 2/16 — MOVE:\x1b[0m Now go north to the village lane.")
 	case 2: s.WriteLine("\x1b[1;36mTUTORIAL 3/16 — INSPECT DAMON:\x1b[0m Type 'look Damon' to learn more about the guide.")
-	case 3: s.WriteLine("\x1b[1;36mTUTORIAL 4/16 — GREET DAMON:\x1b[0m Type 'talk 1 hello'.")
-	case 4: s.WriteLine("\x1b[1;36mTUTORIAL 5/16 — ASK ABOUT THE VILLAGE:\x1b[0m Type 'talk 1 village'.")
+	case 3: s.WriteLine("\x1b[1;36mTUTORIAL 4/16 — GREET DAMON:\x1b[0m Type 'talk Damon hello' (or use the number selector: 'talk 1 hello').")
+	case 4: s.WriteLine("\x1b[1;36mTUTORIAL 5/16 — ASK ABOUT THE VILLAGE:\x1b[0m Type 'talk Damon village' (or 'talk 1 village').")
 	case 5: s.WriteLine("\x1b[1;36mTUTORIAL 6/16 — REQUEST GUIDANCE:\x1b[0m Type 'hint' to ask Damon for a hint.")
-	case 6: s.WriteLine("\x1b[1;36mTUTORIAL 7/16 — ASK ABOUT THE ROAD:\x1b[0m Type 'talk 1 road' to learn about the mountain threat.")
+	case 6: s.WriteLine("\x1b[1;36mTUTORIAL 7/16 — ASK ABOUT THE ROAD:\x1b[0m Type 'talk Damon road' (or 'talk 1 road') to learn about the mountain threat.")
 	case 7: s.WriteLine("\x1b[1;36mTUTORIAL 8/16 — READ EXITS:\x1b[0m Type 'exits' to see the detailed list of paths.")
 	case 8: s.WriteLine("\x1b[1;36mTUTORIAL 9/16 — VIEW THE MAP:\x1b[0m Type 'map' to see nearby room connections.")
 	case 9: s.WriteLine("\x1b[1;36mTUTORIAL 10/16 — FOLLOW THE ROAD:\x1b[0m Now go north to the foothills.")
 	case 10: s.WriteLine("\x1b[1;36mTUTORIAL 11/16 — INSPECT THE HARPY:\x1b[0m Type 'look Harpy' before attacking.")
-	case 11: s.WriteLine("\x1b[1;36mTUTORIAL 12/16 — FIGHT:\x1b[0m Type 'attack 1' to fight the Harpy.")
+	case 11: s.WriteLine("\x1b[1;36mTUTORIAL 12/16 — FIGHT:\x1b[0m Type 'attack Harpy' (or use the number selector: 'attack 1').")
 	case 12: s.WriteLine("\x1b[1;36mTUTORIAL 13/16 — INVENTORY:\x1b[0m Type 'inv' to review what you carry.")
 	case 13: s.WriteLine("\x1b[1;36mTUTORIAL 14/16 — EQUIPMENT:\x1b[0m Type 'eq' to review what you have equipped.")
 	case 14: s.WriteLine("\x1b[1;36mTUTORIAL 15/16 — QUESTS:\x1b[0m Type 'quests' to review your current objectives.")
@@ -564,10 +564,10 @@ func (s *Session) hint(args []string) {
 		case 1:
 			s.WriteLine("Damon's hint: type 'look' to inspect your surroundings and find the person you can speak with.")
 		case 2:
-			s.WriteLine("Damon's hint: begin a conversation with 'talk 1 hello'.")
+			s.WriteLine("Damon's hint: begin a conversation with 'talk Damon hello'. You can also use the number selector: 'talk 1 hello'.")
 		case 5:
 			s.Character.SetStoryFlag("tutorial_hint_used")
-			s.WriteLine("Damon's hint: ask about the road. Type 'talk 1 road'.")
+			s.WriteLine("Damon's hint: ask about the road with 'talk Damon road', or use the number selector: 'talk 1 road'.")
 		default:
 			s.WriteLine("Damon's hint: the northern road leads to the foothills. The guide can answer 'road' or 'village'.")
 		}
@@ -1472,8 +1472,29 @@ func (s *Session) rebirth(args []string) {
 
 func (s *Session) color(code string) string { return "\x1b["+code+"m" }
 
-func (s *Session) currentNPC(index int) *world.NPC { npcs:=s.World.NPCs[s.Character.RoomID];if index<1||index>len(npcs){return nil};return npcs[index-1] }
-func(s *Session) parseNPCSelection(args []string)(int,[]string){if len(args)==0{return 1,args};if n,err:=strconv.Atoi(args[0]);err==nil{return n,args[1:]};return 1,args}
+func (s *Session) currentNPC(index int) *world.NPC {
+	npcs := s.World.NPCs[s.Character.RoomID]
+	if index < 1 || index > len(npcs) { return nil }
+	return npcs[index-1]
+}
+
+// parseNPCSelection accepts a numeric selector or an NPC name at the start
+// of the arguments, leaving any remaining words as the conversation topic.
+func (s *Session) parseNPCSelection(args []string) (int, []string) {
+	if len(args) == 0 { return 1, args }
+	if n, err := strconv.Atoi(args[0]); err == nil { return n, args[1:] }
+	npcs := s.World.NPCs[s.Character.RoomID]
+	for index, npc := range npcs {
+		nameParts := strings.Fields(strings.ToLower(npc.Name))
+		if len(nameParts) == 0 || len(args) < len(nameParts) { continue }
+		matches := true
+		for i, part := range nameParts {
+			if !strings.EqualFold(args[i], part) { matches = false; break }
+		}
+		if matches { return index + 1, args[len(nameParts):] }
+	}
+	return 1, args
+}
 
 func (s *Session) factionGreeting(n *world.NPC) string {
 	if n == nil || n.Faction == "" || s.Character.Reputation == nil {
