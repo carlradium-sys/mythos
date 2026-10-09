@@ -31,7 +31,7 @@ func TestNewWorldContainsTempleOfTheFirstDawn(t *testing.T) {
 func TestMapNamesCurrentAndFutureLocations(t *testing.T) {
 	w := NewWorld()
 	got := w.MapText("delphi_sanctum")
-	for _, want := range []string{"FATEWALKER WORLD MAP", "ANCIENT", "The Gates of Olympus", "The Delphi Sanctum", "MODERN", "The Crossroads of Athens", "LATER LIVES", "The Lunar Oracle", ">@"} {
+	for _, want := range []string{"FATEWALKER WORLD MAP", "ANCIENT", "Asterion Village Square", "The Village Lane", "The Gates of Olympus", "The Delphi Sanctum", "MODERN", "The Crossroads of Athens", "LATER LIVES", "The Lunar Oracle", ">@"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("map output missing %q", want)
 		}
