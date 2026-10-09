@@ -590,6 +590,7 @@ func (s *Session) hint(args []string) {
 		case 2:
 			s.WriteLine("Damon's hint: begin a conversation with 'talk 1 hello'.")
 		case 3:
+			s.Character.SetStoryFlag("tutorial_hint_used")
 			s.WriteLine("Damon's hint: ask about the road. Type 'talk 1 road'.")
 		default:
 			s.WriteLine("Damon's hint: the northern road leads to the foothills. The guide can answer 'road' or 'village'.")
@@ -777,16 +778,13 @@ func (s *Session) look() {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;32mPEOPLE TO TALK TO\x1b[0m")
 		for i, n := range npcs {
-			s.WriteLine("  \x1b[32m[NPC %d] %s\x1b[0m", i+1, n.Name)
+			label := ""
+			if n.HasShop() {
+				label = " \x1b[33m[MERCHANT]\x1b[0m"
+			}
+			s.WriteLine("  \x1b[32m[NPC %d] %s\x1b[0m%s", i+1, n.Name, label)
 			if n.Description != "" {
 				s.WriteLine("         %s", compactText(n.Description, 68))
-			}
-		}
-		s.WriteLine("  Talk: talk <number> <topic>")
-		for _, n := range npcs {
-			if n.HasShop() {
-				s.WriteLine("  Shop: shop <number>")
-				break
 			}
 		}
 	}
@@ -1510,6 +1508,12 @@ func(s *Session) talk(args []string) {
  if topic=="hello"||topic=="greeting"{if greeting:=s.factionGreeting(n);greeting!=""{s.WriteLine("%s",greeting);return}}
  if n.ID=="pythia"&&(topic=="hello"||topic=="greeting"){switch{case s.Character.HasStoryFlag("oracle_trust"):s.WriteLine("\x1b[1;36mPythia smiles faintly. \"You kept the thread I gave you. The river will test that promise when you least expect it.\"\x1b[0m");return;case s.Character.HasStoryFlag("oracle_defied"):s.WriteLine("\x1b[1;36mPythia regards you without anger. \"Still walking your own road, I see. Even the Fates have learned to leave a little room for defiance.\"\x1b[0m");return}}
  if topic=="choice"||topic=="choices"{if n.ID=="pythia"{if s.Character.HasStoryFlag("oracle_choice_made"){s.WriteLine("Pythia studies you. \"The river has recorded your answer. You cannot make that choice unmade.\"");return};s.WriteLine("Pythia's voice falls to a whisper: \"When the Fates offer a thread, will you trust the pattern or cut your own path?\"");s.WriteLine("  choose trust — accept the Oracle's guidance and swear to remember it.");s.WriteLine("  choose defy  — reject prophecy and bear the consequences alone.");return}}
+ if n.ID == "village_guide" && s.TutorialStep == 3 &&
+		(topic == "road" || topic == "mountain" || topic == "north") &&
+		!s.Character.HasStoryFlag("tutorial_hint_used") {
+		s.WriteLine("Damon taps the milestone. \"Before you ask about the road, try 'hint' and see what guidance is available.\")
+		return
+	}
  if t:=n.DialogueFor(topic);t!="" {
 		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t)
 		if n.ID == "village_guide" && s.TutorialStep == 2 && (topic == "hello" || topic == "greeting") {
@@ -1613,7 +1617,7 @@ func(s *Session) shop(args []string) {
  index,_:=s.parseNPCSelection(args);n:=s.currentNPC(index);if n==nil||!n.HasShop(){s.WriteLine("There is no merchant at that NPC number.");return}
  s.WriteLine("\x1b[1;33m%s's WARES\x1b[0m — You have %d gold",n.Name,s.Character.Gold)
  for i,ware:=range n.Shop{price:=s.merchantPrice(n,ware);note:="";if price<ware.Price{note=" (faction discount)"}else if price>ware.Price{note=" (faction surcharge)"};s.WriteLine("  %d) %s%s %s — %d gold%s",i+1,s.color(ware.TierColor()),ware.TierName(),ware.Name,price,note)}
- s.WriteLine("Use 'buy <number>' or 'buy <part of item name>'.")
+ 
 }
 
 func(s *Session) buy(args []string) {
