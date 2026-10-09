@@ -631,6 +631,35 @@ func TestVillageTutorialBlocksMountainRoadUntilGuideLessonCompletes(t *testing.T
 	}
 }
 
+func TestTutorialProgressesThroughConversationCombatGearAndQuests(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 2
+	s.talk([]string{"1", "hello"})
+	if s.TutorialStep != 3 || !s.Character.HasStoryFlag("tutorial_conversation_complete") {
+		t.Fatal("guide conversation did not complete the conversation lesson")
+	}
+	s.hint(nil)
+	s.talk([]string{"1", "road"})
+	if s.TutorialStep != 4 || !s.Character.HasStoryFlag("tutorial_hint_complete") {
+		t.Fatal("road conversation did not complete the hint lesson")
+	}
+	s.Character.RoomID = "olympus_foothills"
+	s.Enemy = &combat.Enemy{Name: "Harpy", Level: 1, HP: 0, MaxHP: 20, XP: 0}
+	s.defeatEnemy(false)
+	if s.TutorialStep != 5 || !s.Character.HasStoryFlag("tutorial_combat_complete") {
+		t.Fatal("Harpy victory did not complete the combat lesson")
+	}
+	s.handleCommand("inv")
+	if s.TutorialStep != 6 || !s.Character.HasStoryFlag("tutorial_inventory_complete") {
+		t.Fatal("inventory command did not complete the gear lesson")
+	}
+	s.handleCommand("quests")
+	if s.TutorialStep != 7 || !s.Character.HasStoryFlag("tutorial_complete") {
+		t.Fatal("quest review did not complete the tutorial")
+	}
+}
+
 func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.HP = 25
