@@ -1517,12 +1517,30 @@ func (s *Session) factionGreeting(n *world.NPC) string {
 	}
 }
 
+func containsTopicKeyword(topic string, keywords ...string) bool {
+	fields := strings.Fields(strings.ToLower(topic))
+	for i := range fields { fields[i] = strings.Trim(fields[i], ".,!?;:\\\"'()[]{}") }
+	normalized := " " + strings.Join(fields, " ") + " "
+	for _, keyword := range keywords {
+		keywordFields := strings.Fields(strings.ToLower(keyword))
+		for i := range keywordFields { keywordFields[i] = strings.Trim(keywordFields[i], ".,!?;:\\\"'()[]{}") }
+		needle := " " + strings.Join(keywordFields, " ") + " "
+		if needle != "  " && strings.Contains(normalized, needle) { return true }
+	}
+	return false
+}
+
 func(s *Session) talk(args []string) {
  if s.Enemy!=nil&&s.Enemy.HP>0{s.WriteLine("The %s keeps you too busy to talk.",s.Enemy.Name);return}
  index,topicArgs:=s.parseNPCSelection(args);n:=s.currentNPC(index)
  if n==nil{if len(s.World.NPCs[s.Character.RoomID])==0{s.WriteLine("There is no one here willing to speak with you.")}else{s.WriteLine("Choose a valid NPC number from 'look'.")};return}
  topic:="hello";if len(topicArgs)>0{topic=strings.Join(topicArgs," ")}
  matchedTopic, dialogueText := n.MatchDialogue(topic)
+ // Special dialogue actions use the same keyword intent matching as regular
+ // dialogue, so a full question like "what choices do I have?" still works.
+ if matchedTopic == "" && n.ID == "pythia" && containsTopicKeyword(topic, "choice", "choices") {
+	matchedTopic = "choices"
+ }
  if matchedTopic != "" { topic = matchedTopic }
  if greeting:=s.persistentNPCGreeting(n,topic);greeting!=""{s.WriteLine("%s",greeting);return}
  if topic=="hello"||topic=="greeting"{if greeting:=s.factionGreeting(n);greeting!=""{s.WriteLine("%s",greeting);return}}
