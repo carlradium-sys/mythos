@@ -22,8 +22,8 @@ BASIC LOOP
   powers               See divine powers and their unlock levels.
   awaken <domain>      Choose your first divine resonance at level 3.
   score                Review your character.
-  inventory             Review your equipment.
-  equip <item>          Equip a weapon or armor.
+  inventory             Review carried items and their bonuses.
+  wield / wear <item>  Equip a weapon or armor.
   map                  Show the local map now.
   automap on/off       Show or hide the local map after movement.
   help <topic>         Read a detailed help file (try inventory or powers).
