@@ -62,9 +62,9 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 The game starts in **Asterion Village**, not at Olympus. Follow the prompts in order:
 
 1. **Movement:** type `north` to enter the Village Lane.
-2. **Look:** type `look` to inspect the lane and find Damon, the village guide.
+2. **Look:** type `look` to inspect the lane and find Damon, the village guide. Room descriptions show exits, NPCs, and active threats; you do not need to type `look` repeatedly to receive tutorial instructions.
 3. **Conversation:** type `talk 1 hello`.
-4. **Hint:** type `hint`, then ask about the road with `talk 1 road`.
+4. **Hint:** type `hint`, then ask about the road with `talk 1 road`. The game teaches this once; afterward hints are only shown when you ask for them.
 5. **Combat:** travel north to the Foothills of Olympus, type `look` to inspect the Harpy, and use `attack 1` to fight. You cannot leave while it is alive.
 6. **Inventory and gear:** after victory, type `inv`, then `eq` to inspect your equipment.
 7. **Quests and story:** type `quests` or `journal`; use `score` to see your character progress. This completes the opening tutorial.
