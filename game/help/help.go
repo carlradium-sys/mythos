@@ -45,7 +45,7 @@ Use north, south, east, west, up, down, in, or out. Short forms also
 work for cardinal and vertical directions: n, s, e, w, u, d.
 
 LOOK is important. Rooms can contain enemies, discoveries, NPCs, quests,
-and future story hooks. The local map is shown automatically after movement by default. Use automap off to hide it, automap on to restore it, or automap toggle to switch modes. Type map to show it at any time; worldmap shows the wider world.
+and future story hooks. Automatic mapping is off by default to keep the room view compact. Use automap on to show a map after movement, automap off to hide it, or automap toggle to switch modes. Type map to show it at any time; worldmap shows the wider world.
 
 Combat can lock a path until the threat is defeated or escaped.
 
