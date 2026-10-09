@@ -573,7 +573,7 @@ func (s *Session) look() {
 	// The server does not yet track other connected players by room.
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;34mOTHER TRAVELERS\x1b[0m")
-	s.WriteLine("  No other travelers are visible here.")
+	s.WriteLine("  Player visibility is not available in this build yet.")
 
 	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID {
 		s.spawnEnemy()
