@@ -24,7 +24,9 @@ BASIC LOOP
   score                Review your character.
   inventory             Review your equipment.
   equip <item>          Equip a weapon or armor.
-  map                  See your current position.
+  map                  Show the local map now.
+  automap on/off       Show or hide the local map after movement.
+  help <topic>         Read a detailed help file (try inventory or powers).
   journal              See the current story thread without a forced quest path.
   quests               Review active, completed, and choice-locked quests.
   soul                 Review memories, oaths, scars, echoes, and faction standing.
@@ -42,7 +44,7 @@ Use north, south, east, west, up, down, in, or out. Short forms also
 work for cardinal and vertical directions: n, s, e, w, u, d.
 
 LOOK is important. Rooms can contain enemies, discoveries, NPCs, quests,
-and future story hooks. The map shows where you are in the known world.
+and future story hooks. The local map is shown automatically after movement by default. Use automap off to hide it, automap on to restore it, or automap toggle to switch modes. Type map to show it at any time; worldmap shows the wider world.
 
 Combat can lock a path until the threat is defeated or escaped.
 
@@ -87,12 +89,87 @@ At level 3, use:
 
 Your choice is permanent for the current character.
 
-Each domain has a progression of powers. The first begins at level 5,
-stronger manifestations arrive later, and future systems will let your
-choices shape how a domain evolves.
+Each domain has a progression of powers. Use powers to list the abilities
+available to your chosen domain, including each power's unlock level and
+mana cost. You must meet the unlock level and have enough mana to cast.
+
+During an active fight, use cast <power name>, for example:
+  cast Stormspark
+  cast Thunderfall
+
+Power names are matched without regard to capitalization. If you have not
+chosen a domain, use awaken <domain> at level 3. Your domain choice is
+permanent for this character, so review the list before deciding.
 
 The important idea: your power is not simply borrowed from a god. It is
 the shape your soul is becoming.`},
+	"inventory": {"inventory", `INVENTORY
+
+Use:
+  inv
+  inventory
+  i
+
+Your inventory lists carried items, their rarity, and their damage and armor
+bonuses. [EQUIPPED] marks gear currently in use; [SOUL RELIC] marks a relic
+that persists through rebirth.
+
+EQUIPPING ITEMS
+  wield <item name>   Equip a weapon.
+  equip <item name>   General equipment command.
+  wear <item name>    Equip armor.
+
+Item names support case-insensitive partial matching. For example:
+  wield heph
+
+If more than one item matches, the game displays numbered choices. Select
+one with the corresponding numbered equip command. Use eq to see what is
+currently equipped.`},
+	"equipment": {"equipment", `EQUIPMENT
+
+Use:
+  eq
+  equipment
+  gear
+
+This view shows your current weapon and armor.
+
+CHANGE YOUR GEAR
+  wield <item name>   Equip a weapon.
+  wear <item name>    Equip armor.
+  inv                 Review items you carry.
+
+Partial item names work (for example, wield heph). If several items match,
+choose from the numbered results. Equipment bonuses contribute to your
+combat attack and defense values.`},
+	"map": {"map", `MAPS & NAVIGATION
+
+  map                 Show the local map centered on your current room.
+  automap             Check whether automatic mapping is on or off.
+  automap on          Show the local map after every successful movement.
+  automap off         Stop showing the map automatically.
+  automap toggle      Switch automatic mapping on or off.
+  exits               List exits and their destination room names.
+  worldmap            Show the broader world overview.
+
+Automatic mapping is ON by default. When you move successfully, the room
+description is followed by a local map. The map marks your current room
+and shows connected destinations where available. You can still type map
+at any time when automatic mapping is off.`},
+	"automap": {"automap", `AUTOMATIC MAP
+
+Automatic mapping displays the local map after each successful movement.
+It is ON by default.
+
+Commands:
+  automap on
+  automap off
+  automap toggle
+  automap              Show the current on/off setting.
+  map                  Display the local map immediately.
+
+This setting applies to your current session. A new connection starts with
+automatic mapping enabled.`},
 	"items": {"items", `ITEMS & RARITY
 
 Item tiers:
@@ -268,5 +345,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","soul","invoke","shop","buy","tutorial"}
+	return []string{"start","movement","combat","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","soul","invoke","shop","buy","tutorial"}
 }
