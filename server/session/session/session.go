@@ -716,7 +716,13 @@ func (s *Session) look() {
 				s.WriteLine("         %s", compactText(n.Description, 88))
 			}
 		}
-		s.WriteLine("  \x1b[32mTalk:\x1b[0m talk <number> <topic>   \x1b[32mShop:\x1b[0m shop <number>")
+		s.WriteLine("  Talk: talk <number> <topic>   |   Hint: hint <number>")
+		for _, n := range npcs {
+			if n.HasShop() {
+				s.WriteLine("  Shop: shop <number>")
+				break
+			}
+		}
 	}
 
 	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID {
