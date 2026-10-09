@@ -7,7 +7,7 @@ func (w *World) MapText(cur string) string {
 		name string
 		ids  []string
 	}{
-		{"ANCIENT", []string{"village_square", "village_lane", "olympus_gates", "olympus_foothills", "oracle_path", "delphi_sanctum", "manticore_den", "temple_dawn", "ancient_athens", "olympus_road", "olympus_hall", "olympus_garden", "styx_shore", "underworld_crossroads", "fields_asphodel", "hall_judgment", "cerberus_gate", "tartarus_edge"}},
+		{"ANCIENT", []string{"village_square", "village_lane", "therons_forge", "olympus_gates", "olympus_foothills", "oracle_path", "delphi_sanctum", "manticore_den", "temple_dawn", "ancient_athens", "olympus_road", "olympus_hall", "olympus_garden", "styx_shore", "underworld_crossroads", "fields_asphodel", "hall_judgment", "cerberus_gate", "tartarus_edge"}},
 		{"MODERN", []string{"modern_crossroads", "modern_plaka", "modern_acropolis", "modern_metro", "modern_museum", "modern_rooftop", "modern_styx", "modern_sanctum"}},
 		{"LATER LIVES", []string{"future_city", "future_skyway", "future_moon", "far_era"}},
 	}
