@@ -778,3 +778,33 @@ func TestMyrtoAnswersAboutMuseumEcho(t *testing.T) {
 	got := s.persistentNPCGreeting(s.currentNPC(), "museum")
 	if !strings.Contains(got, "behind glass") { t.Fatalf("museum response = %q", got) }
 }
+
+
+// TestNewSessionEnablesAutomaticMap verifies the default for fresh connections.
+func TestNewSessionEnablesAutomaticMap(t *testing.T) {
+	server, client := net.Pipe()
+	t.Cleanup(func() { server.Close(); client.Close() })
+	go func() { _, _ = io.Copy(io.Discard, client) }()
+
+	s := New(nil, server, world.NewWorld())
+	if !s.AutoMap {
+		t.Fatal("automatic map should be enabled for new sessions")
+	}
+}
+
+// TestAutomaticMapCommandTogglesState verifies the automap command and aliases.
+func TestAutomaticMapCommandTogglesState(t *testing.T) {
+	s := newChoiceTestSession(t)
+	if s.AutoMap {
+		t.Fatal("test helper should start with the zero-value automap setting")
+	}
+
+	s.handleCommand("automap on")
+	if !s.AutoMap { t.Fatal("automap on did not enable automatic mapping") }
+	s.handleCommand("automap off")
+	if s.AutoMap { t.Fatal("automap off did not disable automatic mapping") }
+	s.handleCommand("automap toggle")
+	if !s.AutoMap { t.Fatal("automap toggle did not enable automatic mapping") }
+	s.handleCommand("maptoggle")
+	if s.AutoMap { t.Fatal("maptoggle alias did not toggle automatic mapping off") }
+}
