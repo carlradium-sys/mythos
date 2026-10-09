@@ -562,7 +562,7 @@ func (s *Session) localMap() {
 	if west != "" { left = cell(west) }
 	if east != "" { right = cell(east) }
 	s.WriteLine("%s%s%s", left, "← \x1b[1;32m★ YOU ★\x1b[0m → ", right)
-	s.WriteLine("          %s", cell(r.Name))
+	s.WriteLine("                %s", cell(r.Name))
 	if south != "" {
 		s.WriteLine("               ↓")
 		s.WriteLine("          %s", cell(south))
