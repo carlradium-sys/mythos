@@ -28,6 +28,38 @@ func newChoiceTestSession(t *testing.T) *Session {
 	return &Session{Character: c, Conn: server, World: world.NewWorld()}
 }
 
+func TestStoryIntroIsRecordedForFirstLife(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	s.TutorialStep = 0
+	s.storyIntro()
+	if !s.Character.HasStoryFlag("tutorial_intro_seen") {
+		t.Fatal("first-life story prologue should be recorded")
+	}
+	s.storyIntro()
+	if !s.Character.HasStoryFlag("tutorial_intro_seen") {
+		t.Fatal("story prologue flag should remain recorded")
+	}
+}
+
+func TestVillageTutorialRequiresHintBeforeRoadTopic(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 3
+	s.talk([]string{"1", "road"})
+	if s.TutorialStep != 3 {
+		t.Fatal("road topic should not bypass the hint lesson")
+	}
+	s.hint(nil)
+	if !s.Character.HasStoryFlag("tutorial_hint_used") {
+		t.Fatal("asking for an NPC hint should record tutorial hint use")
+	}
+	s.talk([]string{"1", "road"})
+	if s.TutorialStep != 4 {
+		t.Fatal("road topic after asking for a hint should unlock the next stage")
+	}
+}
+
 func TestOracleTrustChoiceLeavesPersistentOath(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.choose([]string{"trust"})
