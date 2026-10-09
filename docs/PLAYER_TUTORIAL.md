@@ -4,7 +4,7 @@ This is a separate beginner's guide for learning the game before following the s
 
 ## 1. The basic loop
 
-- `look` (or `l`) describes your current room, exits, and visible people.
+- `look` (or `l`) describes your current room, names each exit destination, numbers nearby NPCs, and shows active threats with their HP.
 - `exits` lists each available direction and the destination room's name.
 - `map` shows a local, active map centered on your current room and its connected exits.
 - `worldmap` shows the broader world overview.
@@ -14,7 +14,7 @@ This is a separate beginner's guide for learning the game before following the s
 
 ## 2. Combat without getting stuck
 
-Creatures in dangerous rooms are encounters. Use `attack` (also `kill` or `hit`) to strike. Some characters later unlock divine powers and can use `cast <power name>`.
+Creatures in dangerous rooms are encounters. Use `attack` (also `kill` or `hit`) to strike; `attack 1` selects the numbered threat shown by `look`, and you can also use its name. Some characters later unlock divine powers and can use `cast <power name>`.
 
 After a creature is defeated, it stays defeated while you remain in that room. You can inspect inventory, check quests, talk, or issue other commands without the creature instantly returning. Leaving the room and entering it again can start a new encounter.
 
@@ -32,9 +32,11 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 
 ## 4. Story and conversations
 
-- `talk` greets the person in the room.
-- `talk <topic>` asks about a topic, such as `talk fate`.
+- `talk` greets the first person in the room.
+- `talk <topic>` asks that person about a topic, such as `talk fate`.
+- `talk 1 <topic>` selects NPC 1 explicitly; use the NPC number shown by `look` when a room has multiple people.
 - `talk choices` asks Pythia about the choice she offers.
+- `shop` lists a merchant's wares with numbers; `buy 1` buys the first listed item, while `buy <part of name>` also works.
 - `choose trust` or `choose defy` makes that story choice. Choices may affect reputation, memories, oaths, and later scenes.
 - `quests` shows quest progress.
 - `journal` (also `quest` or `story`) gives the current story direction.
@@ -67,10 +69,12 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 | Exit destinations | `exits` |
 | World overview | `worldmap` |
 | Move | `north` / `n`, `south` / `s`, `east` / `e`, `west` / `w` |
-| Fight | `attack`, `kill`, `hit` |
+| Fight / target | `attack`, `attack 1`, `attack <enemy name>` |
 | Inventory | `inv`, `inventory`, `i` |
 | Equipped gear | `eq`, `equipment`, `gear` |
 | Equip by partial name | `wield heph`, `equip <name>`, `wear <name>` |
+| Talk to numbered NPC | `talk 1 <topic>` |
+| Shop / buy | `shop`, `buy 1`, `buy <item fragment>` |
 | Character stats | `score`, `stats` |
 | Quests/story | `quests`, `journal`, `soul` |
 | Powers | `powers`, `awaken <domain>`, `cast <power>` |
