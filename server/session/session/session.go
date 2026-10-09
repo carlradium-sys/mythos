@@ -432,7 +432,14 @@ func (s *Session) look() {
 	if s.Enemy==nil { s.spawnEnemy() }
 }
 
+func (s *Session) encounterDefeatedFlag(roomID string) string {
+	return fmt.Sprintf("enemy_defeated_life_%d_%s", s.Character.Life, roomID)
+}
+
 func (s *Session) spawnEnemy() {
+	if s.Character.HasStoryFlag(s.encounterDefeatedFlag(s.Character.RoomID)) {
+		return
+	}
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
 	switch s.Character.RoomID {
@@ -575,6 +582,7 @@ func (s *Session) defeatEnemy(divine bool) {
 		return
 	}
 	enemy := s.Enemy
+	s.Character.SetStoryFlag(s.encounterDefeatedFlag(s.Character.RoomID))
 	s.advanceQuestKill(enemy.Name)
 	s.awardExperience(enemy.XP)
 	if divine {
