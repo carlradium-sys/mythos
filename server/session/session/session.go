@@ -114,6 +114,7 @@ func (s *Session) handleCommand(input string) bool {
 		s.talk(parts[1:])
 	case "hint":
 		s.hint(parts[1:])
+		if s.TutorialStep == 5 && s.Character.HasStoryFlag("tutorial_hint_used") { s.advanceTutorial(6) }
 	case "choose":
 		s.choose(parts[1:])
 	case "shop", "wares":
