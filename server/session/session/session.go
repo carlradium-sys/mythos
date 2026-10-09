@@ -86,12 +86,20 @@ func (s *Session) handleCommand(input string) bool {
 		}
 	case "map":
 		s.localMap()
+		if s.TutorialStep == 5 {
+			s.Character.SetStoryFlag("tutorial_map_used")
+			if s.Character.HasStoryFlag("tutorial_exits_used") { s.advanceTutorial(6) }
+		}
 	case "automap", "mapauto", "maptoggle":
 		s.autoMap(parts[1:])
 	case "worldmap", "world-map":
 		s.WriteLine(s.World.MapText(s.Character.RoomID))
 	case "exits":
 		s.showExits()
+		if s.TutorialStep == 5 {
+			s.Character.SetStoryFlag("tutorial_exits_used")
+			if s.Character.HasStoryFlag("tutorial_map_used") { s.advanceTutorial(6) }
+		}
 	case "north","south","east","west","up","down","in","out","n","s","e","w","u","d":
 		s.move(parts[0])
 	case "who":
@@ -914,6 +922,10 @@ func (s *Session) move(direction string) {
 func (s *Session) attack(args []string) {
 	if s.Enemy == nil || s.Enemy.HP <= 0 {
 		s.WriteLine("There is nothing here to fight.")
+		return
+	}
+	if s.TutorialStep == 6 && s.Enemy.Name == "Harpy" && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
+		s.WriteLine("Before striking, inspect the creature with 'look Harpy'. Learn what you are facing.")
 		return
 	}
 	if s.TutorialStep == 6 && s.Enemy.Name == "Harpy" && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
