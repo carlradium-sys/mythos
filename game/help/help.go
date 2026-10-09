@@ -248,7 +248,8 @@ The First Thread:
   Something beyond the gates knows your name.
 
 CURRENT DIRECTION
-  Explore the foothills and discover why the creatures seem to recognize you.
+  Complete the village lessons, then explore the foothills and discover
+  why the creatures seem to recognize you.
 
 Remember: a journal objective is a thread, not a command. You can ignore it,
 explore elsewhere, hunt for equipment, or pursue another mystery. The story
@@ -327,9 +328,9 @@ opening teaches one action at a time:
   3. Conversation: talk 1 hello.
   4. Hint: use hint, then talk 1 road.
 
-The guide then opens the road toward the foothills. After the opening,
-use hint with any nearby NPC for a suggested topic or next step. The
-tutorial's progress is saved with your character.`},
+The guide then opens the road toward the foothills. Defeat the Harpy, use
+inv and eq to review your gear, then use quests or journal to finish the
+opening lessons. Tutorial progress is saved with your character.`},
 	"hint": {"hint", `NPC HINTS
 
 Use:
