@@ -22,7 +22,6 @@ func NewWorld() *World {
 	village.Exits["north"] = lane.ID
 	lane.Exits["south"] = village.ID
 	lane.Exits["north"] = foothills.ID
-	lane.Exits["east"] = foothills.ID
 	foothills.Exits["south"] = gates.ID
 	foothills.Exits["west"] = lane.ID
 	foothills.Exits["north"]=oracle.ID
