@@ -616,6 +616,21 @@ func TestVillageTutorialRouteAndGuideExist(t *testing.T) {
 	}
 }
 
+func TestVillageTutorialBlocksMountainRoadUntilGuideLessonCompletes(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 0
+	s.move("north")
+	if s.Character.RoomID != "village_lane" {
+		t.Fatalf("tutorial bypass moved to %q before lessons completed", s.Character.RoomID)
+	}
+	s.TutorialStep = 4
+	s.move("north")
+	if s.Character.RoomID != "olympus_foothills" {
+		t.Fatalf("completed tutorial moved to %q, want olympus_foothills", s.Character.RoomID)
+	}
+}
+
 func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.HP = 25
