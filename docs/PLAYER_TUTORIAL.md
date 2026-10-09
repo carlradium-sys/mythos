@@ -10,10 +10,11 @@ This is a separate beginner's guide for learning the game before following the s
 - `score`, `inv`, `eq`, and `quests` use separate headings and short labeled lines to make character information easier to scan.
 - `exits` lists each available direction and the destination room's name.
 - `map` shows a local, active map centered on your current room and its connected exits.
+- The local map appears automatically after every successful movement by default. Use `automap off` to hide it, `automap on` to restore it, and `automap toggle` to switch modes. `automap` by itself reports the current setting.
 - `worldmap` shows the broader world overview.
 - Move with `north`, `south`, `east`, `west`, `up`, or `down`; short forms `n`, `s`, `e`, `w`, `u`, and `d` work too.
 - `score` (or `stats`) shows health, mana, level, experience, and other character details.
-- `help` shows the available help topics. `help list` lists topics.
+- `help` shows the getting-started guide. `help list` lists every topic; use `help inventory`, `help powers`, `help equipment`, `help map`, or `help automap` for detailed instructions.
 
 ## 2. Combat without getting stuck
 
@@ -69,6 +70,8 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 |---|---|
 | Look around | `look`, `l` |
 | Nearby room map | `map` |
+| Automatic map after movement | `automap on`, `automap off`, `automap toggle` |
+| Detailed command help | `help inventory`, `help powers`, `help equipment`, `help map` |
 | Exit destinations | `exits` |
 | World overview | `worldmap` |
 | Move | `north` / `n`, `south` / `s`, `east` / `e`, `west` / `w` |
