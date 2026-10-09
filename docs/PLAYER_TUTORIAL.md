@@ -1,11 +1,13 @@
 # Fatewalker Player Tutorial
 
-This is a separate beginner's guide for learning the game before following the story. You can also type `tutorial` or `guide` in-game for a compact version.
+This is a separate beginner's guide for learning the game before following the story. You can also type `tutorial` or `guide` in-game for a compact version. The terminal UI uses short section headings, spacing, and color-coded labels to make room details easier to scan.
 
 ## 1. The basic loop
 
 - `look` (or `l`) describes your current room, names each exit destination, numbers nearby NPCs, and shows active threats with their HP.
+- The room view is grouped into **Paths**, **People to talk to**, **Other travelers**, and **Threats** so exits and targets are easy to spot.
 - Color legend: **green** `[NPC]` means an interactable NPC; **blue** means another player; **yellow** `[ENEMY]` means a hostile creature. Labels are included as well so the room remains understandable if terminal colors are unavailable.
+- `score`, `inv`, `eq`, and `quests` use separate headings and short labeled lines to make character information easier to scan.
 - `exits` lists each available direction and the destination room's name.
 - `map` shows a local, active map centered on your current room and its connected exits.
 - `worldmap` shows the broader world overview.
