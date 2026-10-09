@@ -1,6 +1,8 @@
 # Fatewalker Player Tutorial
 
-This is a separate beginner's guide for learning the game before following the story. You can also type `tutorial` or `guide` in-game for a compact version. The terminal UI keeps room descriptions, exits, NPCs, and threats compact. The color legend is not repeated on every screen, and automatic maps are off by default so the important text stays visible.
+Fatewalker is a Greek mythic fantasy about a soul that returns from death carrying a black thread tied to its fate. The gods are real, monsters still haunt ancient roads, and rebirth can carry the same soul into modern Athens and later ages. Choices, memories, and consequences persist across lives.
+
+The first journey begins in Asterion Village beneath Mount Olympus. Damon helps explain why you have returned, while the tutorial teaches the core commands in stages. Afterward, use `tutorial` or `help <topic>` only when you want a refresher. Room views are deliberately compact, and NPC hints appear only when requested with `hint`. Automatic maps are off by default.
 
 ## 1. The basic loop
 
@@ -37,7 +39,7 @@ Item names support case-insensitive partial matching. For example, `wield heph` 
 ## 4. Story and conversations
 
 - `talk` greets the first person in the room.
-- `hint` or `hint 2` asks a nearby NPC for a suggested conversation topic or next action.
+- `hint` or `hint 2` asks a nearby NPC for a suggested conversation topic or next action. Hints are optional and never repeat automatically.
 - `talk <topic>` asks that person about a topic, such as `talk fate`.
 - `talk 1 <topic>` selects NPC 1 explicitly; use the NPC number shown by `look` when a room has multiple people.
 - `talk choices` asks Pythia about the choice she offers.
@@ -66,7 +68,8 @@ The game starts in **Asterion Village**, not at Olympus. Follow the prompts in o
 5. **Combat:** travel north to the Foothills of Olympus, type `look` to inspect the Harpy, and use `attack 1` to fight. You cannot leave while it is alive.
 6. **Inventory and gear:** after victory, type `inv`, then `eq` to inspect your equipment.
 7. **Quests and story:** type `quests` or `journal`; use `score` to see your character progress. This completes the opening tutorial.
-8. Continue north to the Oracle Path. Use `hint` with Pythia if you are unsure what to ask, then follow the story choices and quest guidance.
+8. The apprentice has a separate forge east of the foothills. Visit him after the Harpy encounter if you want to inspect or buy equipment.
+9. Continue north to the Oracle Path. Ask Pythia about choices when you are ready; use `hint` only if you want a nudge.
 9. Use `journal` and `quests` as you explore and grow to level 10 before rebirth.
 
 ## Command quick reference
@@ -86,6 +89,7 @@ The game starts in **Asterion Village**, not at Olympus. Follow the prompts in o
 | Equip by partial name | `wield heph`, `equip <name>`, `wear <name>` |
 | Talk to numbered NPC | `talk 1 <topic>` |
 | Ask an NPC for guidance | `hint`, `hint 2` |
+| Visit the village smith | Travel east from the foothills to Theron's Forge |
 | Shop / buy | `shop`, `buy 1`, `buy <item fragment>` |
 | Character stats | `score`, `stats` |
 | Quests/story | `quests`, `journal`, `soul` |
