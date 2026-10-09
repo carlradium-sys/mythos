@@ -2,21 +2,33 @@
 
 Fatewalker is a Greek mythic fantasy about a soul that returns from death carrying a black thread tied to its fate. The gods are real, monsters still haunt ancient roads, and rebirth can carry the same soul into modern Athens and later ages. Choices, memories, and consequences persist across lives.
 
-The first journey begins in Asterion Village beneath Mount Olympus. Damon helps explain why you have returned, while the tutorial teaches the core commands in stages. Afterward, use `tutorial` or `help <topic>` only when you want a refresher. Room views are deliberately compact, and NPC hints appear only when requested with `hint`. Automatic maps are off by default.
+The first journey begins in Asterion Village beneath Mount Olympus. Damon helps explain why you have returned. The ten-lesson opening tutorial teaches navigation, inspection, conversation, combat, gear, and story tracking in stages. Use `tutorial` or `help <topic>` whenever you want a refresher. NPC hints are on demand, and room information does not repeat automatically after movement.
 
-## 1. The basic loop
+## 1. Room views and navigation
 
-- `look` (or `l`) describes your current room, names each exit destination, numbers nearby NPCs, and shows active threats with their HP.
-- The room view focuses on **Paths**, **People to talk to**, and **Threats** so exits and targets are easy to spot.
-- NPCs and enemies use color-coded labels, but the legend is not repeated on every room view. Player-presence detection is not implemented yet.
-- `score`, `inv`, `eq`, and `quests` use separate headings and short labeled lines to make character information easier to scan.
-- `exits` lists each available direction and the destination room's name.
-- `map` shows a local, active map centered on your current room and its connected exits.
-- Automatic mapping is off by default to reduce screen clutter. Use `automap on` to show a local map after movement, `automap off` to hide it, and `automap toggle` to switch modes. `map` always shows the current local map.
-- `worldmap` shows the broader world overview.
+- Enter a room, then type `look` when you want its description and a concise list of people, merchants, and active threats. Login and movement do not automatically print the room view.
+- Room summaries list NPC names and numbers, merchant labels, and threat names/health. They do not print full NPC or enemy descriptions or a path list.
+- Use `look Damon`, `look Harpy`, or `look 1` to inspect a person or creature in detail. Use `look east` (or `look e`) to read the destination room's description without moving there.
+- `exits` lists every available direction and destination room name.
+- `map` shows a compact local diagram of connected rooms. `worldmap` shows the broader world.
+- Automatic mapping is off by default. Use `automap on` to show the local map after movement, `automap off` to hide it, and `automap toggle` to switch modes. `map` always displays the local map when requested.
 - Move with `north`, `south`, `east`, `west`, `up`, or `down`; short forms `n`, `s`, `e`, `w`, `u`, and `d` work too.
-- `score` (or `stats`) shows health, mana, level, experience, and other character details.
-- `help` shows the getting-started guide. `help list` lists every topic; use `help inventory`, `help powers`, `help equipment`, `help map`, or `help automap` for detailed instructions.
+- `score`, `inv`, `eq`, and `quests` each show their own information without reprinting the room.
+
+## 2. The ten opening lessons
+
+1. **Orientation:** type `look` to read the opening room, then move north to the village lane.
+2. **Read the room:** type `look` again to learn how room summaries identify people and threats.
+3. **Inspect:** type `look Damon` or `look 1` for the guide's full description and interaction options.
+4. **Conversation:** use `talk 1 hello`, then `talk 1 village`. The lesson asks you to try both a greeting and a topic.
+5. **Hints:** type `hint` to request guidance, then `talk 1 road` to ask Damon about the mountain threat.
+6. **Navigation:** use both `exits` and `map`. Damon will not let you continue north until you have tried both tools.
+7. **Combat:** travel to the foothills, type `look` for the threat summary, then `look Harpy` to inspect the creature before `attack 1`.
+8. **Inventory:** use `inv` to review carried items. Possessing an item is different from equipping it.
+9. **Equipment:** use `eq` to review equipped gear. Later, `wield <item>` equips a weapon and `wear <item>` equips armor.
+10. **Story tracking:** use both `quests` and `journal` to review objectives and their story context. `score` shows your character's progress.
+
+Lessons advance only after their required actions. Tutorial progress is saved with the character. Once the opening is complete, you can explore freely; the guide remains available through `tutorial` and `help <topic>`.
 
 ## 2. Combat without getting stuck
 
