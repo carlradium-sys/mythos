@@ -281,6 +281,7 @@ Prefer targeting people by name:
   talk Pythia choices
 
 You can also use a number selector, such as talk 1 hello or talk 1 choices.
+Questions may be phrased naturally: 'talk Damon can you please tell me about the village?' and 'talk Damon where is the road?' resolve by matching topic keywords and aliases, not by requiring an exact sentence.
 NPC names and numbers are shown by look.
 
 Use:
