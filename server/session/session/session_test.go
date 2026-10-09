@@ -929,3 +929,39 @@ func TestAutomaticMapCommandTogglesState(t *testing.T) {
 	s.handleCommand("maptoggle")
 	if s.AutoMap { t.Fatal("maptoggle alias did not toggle automatic mapping off") }
 }
+
+
+// Natural-language dialogue should resolve to the same intent as short topics.
+func TestNPCDialogueMatchesNaturalLanguageQuestions(t *testing.T) {
+	w := world.NewWorld()
+	damon := w.NPCs["village_lane"][0]
+	for _, phrase := range []string{
+		"village",
+		"tell me more about the village",
+		"can you please tell me about the village",
+		"where is the village?",
+		"could you tell me about home",
+	} {
+		keyword, response := damon.MatchDialogue(phrase)
+		if keyword != "village" && keyword != "home" {
+			t.Errorf("phrase %q resolved to keyword %q", phrase, keyword)
+		}
+		if response == "" { t.Errorf("phrase %q did not resolve to a response", phrase) }
+	}
+}
+
+func TestTalkByFirstNameAndNaturalQuestionAdvancesTutorial(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 4
+	s.handleCommand("talk Damon, can you please tell me about the village?")
+	if s.TutorialStep != 5 {
+		t.Fatalf("natural-language village question left tutorial at step %d", s.TutorialStep)
+	}
+	s.Character.SetStoryFlag("tutorial_hint_used")
+	s.TutorialStep = 6
+	s.handleCommand("talk Damon, where is the village road?")
+	if s.TutorialStep != 7 {
+		t.Fatalf("natural-language road question left tutorial at step %d", s.TutorialStep)
+	}
+}
