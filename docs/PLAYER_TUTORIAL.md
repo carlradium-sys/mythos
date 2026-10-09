@@ -5,6 +5,7 @@ This is a separate beginner's guide for learning the game before following the s
 ## 1. The basic loop
 
 - `look` (or `l`) describes your current room, names each exit destination, numbers nearby NPCs, and shows active threats with their HP.
+- Color legend: **green** `[NPC]` means an interactable NPC; **blue** means another player; **yellow** `[ENEMY]` means a hostile creature. Labels are included as well so the room remains understandable if terminal colors are unavailable.
 - `exits` lists each available direction and the destination room's name.
 - `map` shows a local, active map centered on your current room and its connected exits.
 - `worldmap` shows the broader world overview.
