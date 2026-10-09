@@ -42,20 +42,18 @@ func (s *Session) WriteLine(format string,args ...any) { fmt.Fprintf(s.Conn,form
 
 func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("")
-	s.WriteLine("\x1b[1;35m========================================\x1b[0m")
-	s.WriteLine("\x1b[1;36m        FATEWALKER: BEYOND THE STYX\x1b[0m")
-	s.WriteLine("\x1b[1;35m========================================\x1b[0m")
-	s.WriteLine("")
-	s.WriteLine("\x1b[1;33mTHE THREAD REMEMBERS\x1b[0m")
-	s.WriteLine("Your soul is persistent. The server remembers your account, characters, lives, and history.")
-	s.WriteLine("")
+	s.WriteLine("\x1b[1;36mFATEWALKER: BEYOND THE STYX\x1b[0m")
+	s.WriteLine("\x1b[90mA Greek mythic fantasy of death, choice, and rebirth.\x1b[0m")
 	if !s.login(scanner) { return }
 	defer s.persist()
 	if !s.selectCharacter(scanner) { return }
 	s.prepareTutorial()
+	s.storyIntro()
 	s.look()
 	s.updateQuests()
-	s.tutorialHint()
+	if s.TutorialStep < 7 {
+		s.tutorialHint()
+	}
 	for {
 		s.WriteLine("")
 		s.WriteLine("%s",s.prompt())
@@ -449,10 +447,35 @@ func (s *Session) journal() {
 }
 
 func (s *Session) tutorial() {
-	s.WriteLine("\x1b[1;33mTHE FIRST THREAD — GUIDED TUTORIAL\x1b[0m")
-	s.tutorialHint()
-	s.WriteLine("Useful later: inv, eq, score, quests, journal, help <topic>, map, and hint.")
-	s.WriteLine("The tutorial is saved with your character. You can explore freely after completing these first lessons.")
+	s.WriteLine("\x1b[1;33mTHE FIRST THREAD — FIELD GUIDE\x1b[0m")
+	s.WriteLine("MOVEMENT   north/south/east/west (or n/s/e/w); 'exits' names every path.")
+	s.WriteLine("LOOK       'look' shows the room, paths, people, and active threat.")
+	s.WriteLine("TALK       'talk 1 hello' or 'talk 1 <topic>'; numbers come from the room view.")
+	s.WriteLine("HINTS      'hint' or 'hint 2' asks a nearby NPC for story guidance.")
+	s.WriteLine("COMBAT     'attack 1' or 'attack <enemy>'; 'flee' escapes; 'rest' heals when safe.")
+	s.WriteLine("GEAR       'inv' lists items; 'eq' shows equipped gear; 'wield <name>' / 'wear <name>' equips.")
+	s.WriteLine("STORY      'quests' tracks objectives; 'journal' summarizes direction; 'score' shows stats.")
+	s.WriteLine("WORLD      'map' shows local paths; 'worldmap' shows the wider world; 'help <topic>' explains a system.")
+	s.WriteLine("MERCHANTS  'shop 1' views wares; 'buy 1' purchases the first item.")
+	s.WriteLine("DIVINITY   at level 3 use 'awaken storm|tide|ember|aegis'; 'powers' lists abilities.")
+	s.WriteLine("REBIRTH    at level 10, use 'rebirth' to cross the Styx into a new era.")
+	s.WriteLine("Tutorial progress is saved with your character. These commands remain available through help.");
+}
+
+func (s *Session) storyIntro() {
+	if s.Character == nil || s.Character.HasStoryFlag("tutorial_intro_seen") ||
+		s.Character.Life != 1 || s.Character.Level > 1 ||
+		(s.Character.RoomID != "village_square" && s.Character.RoomID != "village_lane") {
+		return
+	}
+	s.Character.SetStoryFlag("tutorial_intro_seen")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;35mTHE THREAD REMEMBERS\x1b[0m")
+	s.WriteLine("You remember dying only as a cold pull beneath black water. You do not remember who you were, or why the river let you go.")
+	s.WriteLine("Three mornings ago, fishers found you on the shore below Asterion. At dawn you rose again, a dark thread wound around your wrist and tugging toward Mount Olympus.")
+	s.WriteLine("In this world, the gods are real, monsters walk old roads, and death is a crossing rather than an ending. Each rebirth may carry you into a changed age—but every choice leaves a mark on the soul.")
+	s.WriteLine("For now, learn the village and the road. Damon can tell you what has changed since you returned.")
+	s.WriteLine("")
 }
 
 func (s *Session) prepareTutorial() {
@@ -517,7 +540,8 @@ func (s *Session) tutorialHint() {
 	case 6:
 		s.WriteLine("\x1b[1;36mTUTORIAL 7/7 — QUESTS & STORY:\x1b[0m Type 'quests' or 'journal' to review your current goal. 'score' shows your character's progress.")
 	case 7:
-		s.WriteLine("\x1b[1;32mTUTORIAL COMPLETE:\x1b[0m Continue north to the Oracle Path. Use 'hint' whenever an NPC's next step is unclear.")
+		s.WriteLine("\x1b[1;32mTUTORIAL COMPLETE:\x1b[0m You know the essentials: move, look, talk, fight, manage gear, and follow quests.")
+		s.WriteLine("Use 'tutorial' or 'help <topic>' for the command guide. NPC hints are available when you ask with 'hint'.")
 	}
 }
 
@@ -729,7 +753,7 @@ func (s *Session) look() {
 
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", r.Name)
-	s.WriteLine("%s", compactText(r.Description, 125))
+	s.WriteLine("%s", compactText(r.Description, 108))
 
 	directions := []string{"north", "south", "east", "west", "up", "down", "in", "out"}
 	var visible []string
@@ -755,10 +779,10 @@ func (s *Session) look() {
 		for i, n := range npcs {
 			s.WriteLine("  \x1b[32m[NPC %d] %s\x1b[0m", i+1, n.Name)
 			if n.Description != "" {
-				s.WriteLine("         %s", compactText(n.Description, 88))
+				s.WriteLine("         %s", compactText(n.Description, 68))
 			}
 		}
-		s.WriteLine("  Talk: talk <number> <topic>   |   Hint: hint <number>")
+		s.WriteLine("  Talk: talk <number> <topic>")
 		for _, n := range npcs {
 			if n.HasShop() {
 				s.WriteLine("  Shop: shop <number>")
@@ -775,7 +799,7 @@ func (s *Session) look() {
 		s.WriteLine("\x1b[1;33mTHREATS\x1b[0m")
 		s.WriteLine("  \x1b[1;33m[ENEMY 1] %s\x1b[0m", s.Enemy.Name)
 		if s.Enemy.Description != "" {
-			s.WriteLine("           %s", compactText(s.Enemy.Description, 96))
+			s.WriteLine("           %s", compactText(s.Enemy.Description, 78))
 		}
 		s.WriteLine("           Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
 		s.WriteLine("  \x1b[33mFight:\x1b[0m attack 1  (or attack %s)", strings.ToLower(s.Enemy.Name))
