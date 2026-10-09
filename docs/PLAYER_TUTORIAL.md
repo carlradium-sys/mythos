@@ -5,7 +5,7 @@ This is a separate beginner's guide for learning the game before following the s
 ## 1. The basic loop
 
 - `look` (or `l`) describes your current room, names each exit destination, numbers nearby NPCs, and shows active threats with their HP.
-- The room view is grouped into **Paths**, **People to talk to**, **Other travelers**, and **Threats** so exits and targets are easy to spot.
+- The room view focuses on **Paths**, **People to talk to**, and **Threats** so exits and targets are easy to spot.
 - NPCs and enemies use color-coded labels, but the legend is not repeated on every room view. Player-presence detection is not implemented yet.
 - `score`, `inv`, `eq`, and `quests` use separate headings and short labeled lines to make character information easier to scan.
 - `exits` lists each available direction and the destination room's name.
