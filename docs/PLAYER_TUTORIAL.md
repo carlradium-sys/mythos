@@ -63,10 +63,11 @@ The game starts in **Asterion Village**, not at Olympus. Follow the prompts in o
 2. **Look:** type `look` to inspect the lane and find Damon, the village guide.
 3. **Conversation:** type `talk 1 hello`.
 4. **Hint:** type `hint`, then ask about the road with `talk 1 road`.
-5. **Continue:** the northern road now opens. Travel north to the Foothills of Olympus and defeat the Harpy with `attack 1`.
-6. After victory, try `inv`, `eq`, `score`, and `quests`. The Harpy stays defeated while you remain in the room.
-7. Continue north to the Oracle Path. Use `hint` with Pythia if you are unsure what to ask, then follow the story choices and quest guidance.
-8. Use `journal` and `quests` as you explore and grow to level 10 before rebirth.
+5. **Combat:** travel north to the Foothills of Olympus, type `look` to inspect the Harpy, and use `attack 1` to fight. You cannot leave while it is alive.
+6. **Inventory and gear:** after victory, type `inv`, then `eq` to inspect your equipment.
+7. **Quests and story:** type `quests` or `journal`; use `score` to see your character progress. This completes the opening tutorial.
+8. Continue north to the Oracle Path. Use `hint` with Pythia if you are unsure what to ask, then follow the story choices and quest guidance.
+9. Use `journal` and `quests` as you explore and grow to level 10 before rebirth.
 
 ## Command quick reference
 
