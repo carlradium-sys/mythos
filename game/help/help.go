@@ -324,18 +324,23 @@ You died beside the black river and woke again near Asterion, with a dark
 thread tied to your soul. The gods are real, monsters haunt old roads, and
 rebirth can carry you into another age. Your choices remain with you.
 
-The opening teaches the essential commands once, in stages:
-  1. Move north from the village square.
-  2. Use look to read paths, people, and threats.
-  3. Talk to Damon: talk 1 hello, then ask about the road.
-  4. Try hint to learn how NPC guidance works.
-  5. Travel to the foothills and defeat the Harpy with attack 1.
-  6. Use inv and eq to understand carried and equipped gear.
-  7. Use quests or journal to follow your story.
+The opening tutorial has ten deliberate lessons:
+  1. Type look to read your current room, then move north to the village lane.
+  2. Use look again to read the new room's summary.
+  3. Inspect Damon with look Damon or look 1 for his full description.
+  4. Talk 1 hello, then talk 1 village to practice a greeting and topic.
+  5. Use hint, then talk 1 road to learn about the mountain threat.
+  6. Use exits for the detailed route list and map for nearby connections.
+  7. At the foothills, look Harpy before using attack 1.
+  8. Use inv to inspect carried items.
+  9. Use eq to inspect equipped gear.
+ 10. Use both quests and journal to review objectives and story context.
 
-Afterward, explore freely. Room views stay compact; hints only appear when
-you request them. Use tutorial or help <topic> whenever you need a refresher.
-Tutorial progress is saved with your character.`},
+Room summaries do not print paths or full NPC descriptions. Use look <target>
+for details, exits for the full route list, and map for a local diagram.
+Room information is not printed automatically after movement; use look when
+you want to inspect your surroundings. Hints appear only when requested.
+Use tutorial or help <topic> whenever you need a refresher. Progress is saved.`},
 	"hint": {"hint", `NPC HINTS
 
 Use:
