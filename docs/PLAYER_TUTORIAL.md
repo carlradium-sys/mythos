@@ -6,7 +6,7 @@ This is a separate beginner's guide for learning the game before following the s
 
 - `look` (or `l`) describes your current room, names each exit destination, numbers nearby NPCs, and shows active threats with their HP.
 - The room view is grouped into **Paths**, **People to talk to**, **Other travelers**, and **Threats** so exits and targets are easy to spot.
-- Color legend: **green** `[NPC]` means an interactable NPC; **blue** means another player; **yellow** `[ENEMY]` means a hostile creature. Labels are included as well so the room remains understandable if terminal colors are unavailable.
+- Color legend: **green** `[NPC]` means an interactable NPC; **blue** is reserved for other players; **yellow** `[ENEMY]` means a hostile creature. Labels remain understandable without color. Player-presence detection is not implemented yet, and the room view says so rather than pretending it can see other players.
 - `score`, `inv`, `eq`, and `quests` use separate headings and short labeled lines to make character information easier to scan.
 - `exits` lists each available direction and the destination room's name.
 - `map` shows a local, active map centered on your current room and its connected exits.
