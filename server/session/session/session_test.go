@@ -698,6 +698,21 @@ func TestTutorialProgressesThroughInspectionConversationNavigationCombatAndStory
 	if s.TutorialStep != 10 || !s.Character.HasStoryFlag("tutorial_complete") { t.Fatal("quests and journal should complete the tutorial") }
 }
 
+func TestTutorialRequiresInspectionBeforeAttackingHarpy(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.TutorialStep = 6
+	s.Enemy = &combat.Enemy{Name: "Harpy", Level: 1, HP: 30, MaxHP: 30, Damage: 1, XP: 0}
+	s.attack(nil)
+	if s.Enemy.HP != 30 {
+		t.Fatal("tutorial should require inspecting the Harpy before the first attack")
+	}
+	s.lookTarget([]string{"Harpy"})
+	if !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
+		t.Fatal("look Harpy did not record inspection")
+	}
+}
+
 func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.HP = 25
