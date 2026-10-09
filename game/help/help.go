@@ -320,21 +320,30 @@ Stand near a merchant and use:
 Purchased equipment is added to your inventory and can be equipped normally.`},
 	"tutorial": {"tutorial", `THE FIRST THREAD — STORY TUTORIAL
 
-You begin in Asterion, a small village beneath Mount Olympus. The guided
-opening teaches one action at a time:
-  1. Movement: north to the village lane.
-  2. Look: inspect the lane and find Damon, the village guide.
-  3. Conversation: talk 1 hello.
-  4. Hint: use hint, then talk 1 road.
+You died beside the black river and woke again near Asterion, with a dark
+thread tied to your soul. The gods are real, monsters haunt old roads, and
+rebirth can carry you into another age. Your choices remain with you.
 
-The guide then opens the road toward the foothills. Defeat the Harpy, use
-inv and eq to review your gear, then use quests or journal to finish the
-opening lessons. Tutorial progress is saved with your character.`},
+The opening teaches the essential commands once, in stages:
+  1. Move north from the village square.
+  2. Use look to read paths, people, and threats.
+  3. Talk to Damon: talk 1 hello, then ask about the road.
+  4. Try hint to learn how NPC guidance works.
+  5. Travel to the foothills and defeat the Harpy with attack 1.
+  6. Use inv and eq to understand carried and equipped gear.
+  7. Use quests or journal to follow your story.
+
+Afterward, explore freely. Room views stay compact; hints only appear when
+you request them. Use tutorial or help <topic> whenever you need a refresher.
+Tutorial progress is saved with your character.`},
 	"hint": {"hint", `NPC HINTS
 
 Use:
   hint       Ask the first nearby NPC for a hint.
   hint 2     Ask NPC number 2 (use look to see NPC numbers).
+
+Hints are optional and only appear when you request them; room descriptions
+and shop views do not repeat tutorial instructions.
 
 Hints suggest a conversation topic or a practical next step. Examples:
   Damon: talk 1 road
