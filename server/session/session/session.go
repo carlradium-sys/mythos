@@ -1240,7 +1240,7 @@ func (s *Session) choose(args []string) {
 		s.WriteLine("Choose what? At the Oracle, try 'talk choices' first.")
 		return
 	}
-	n := s.currentNPC()
+	n := s.currentNPC(1)
 	if n == nil || n.ID != "pythia" || s.Character.RoomID != "oracle_path" {
 		s.WriteLine("There is no choice here for you to make.")
 		return
