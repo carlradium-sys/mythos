@@ -35,7 +35,7 @@ type Session struct {
 }
 
 func New(accounts *account.Store, conn net.Conn, w *world.World) *Session {
- return &Session{Accounts:accounts, Conn:conn, World:w, AutoMap:true}
+ return &Session{Accounts:accounts, Conn:conn, World:w, AutoMap:false}
 }
 
 func (s *Session) WriteLine(format string,args ...any) { fmt.Fprintf(s.Conn,format+"\r\n",args...) }
@@ -52,6 +52,7 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	if !s.login(scanner) { return }
 	defer s.persist()
 	if !s.selectCharacter(scanner) { return }
+	s.prepareTutorial()
 	s.look()
 	s.updateQuests()
 	s.tutorialHint()
@@ -80,7 +81,9 @@ func (s *Session) handleCommand(input string) bool {
 		s.tutorial()
 	case "look","l":
 		s.look()
-		s.advanceTutorial(1)
+		if s.TutorialStep == 1 {
+			s.advanceTutorial(2)
+		}
 	case "map":
 		s.localMap()
 	case "automap", "mapauto", "maptoggle":
@@ -103,6 +106,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.equip(parts[1:])
 	case "talk", "say":
 		s.talk(parts[1:])
+	case "hint":
+		s.hint(parts[1:])
 	case "choose":
 		s.choose(parts[1:])
 	case "shop", "wares":
@@ -405,14 +410,14 @@ func (s *Session) nextAvailableQuest() (quest.Quest, bool) {
 func (s *Session) journal() {
 	s.WriteLine("\x1b[1;33mFATEWALKER JOURNAL\x1b[0m")
 	s.WriteLine("\x1b[1;36mThe First Thread\x1b[0m")
-	s.WriteLine("You awakened at the Gates of Olympus with no memory of your death.")
+	s.WriteLine("You began in Asterion, a quiet village beneath the mountain.")
 	s.WriteLine("A black thread binds itself to your bronze sword.")
-	s.WriteLine("Something beyond the gates knows your name.")
+	s.WriteLine("Something beyond the village knows your name.")
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;33mCurrent thread\x1b[0m")
 	switch {
 	case s.Character.Life == 1 && s.Character.Level < 3:
-		s.WriteLine("Explore the foothills. Discover why the creatures seem to recognize you.")
+		s.WriteLine("Complete the village tutorial, then explore the foothills and discover why the creatures seem to recognize you.")
 	case s.Character.Life == 1 && s.Character.Level < 10:
 		s.WriteLine("Grow stronger, follow the Oracle's path, and uncover the meaning of the black thread.")
 	case s.Character.Life == 1:
@@ -435,39 +440,124 @@ func (s *Session) journal() {
 }
 
 func (s *Session) tutorial() {
-	s.WriteLine("\x1b[1;33mFATEWALKER — PLAYER TUTORIAL\x1b[0m")
-	s.WriteLine("1. Explore: look (l) shows named exits, nearby NPCs, and threats; use exits, map, or worldmap too.")
-	s.WriteLine("2. Fight: attack (kill/hit). Combat continues until you or the creature falls.")
-	s.WriteLine("3. After victory: the encounter stays cleared while you remain in that room.")
-	s.WriteLine("4. Gear: inv lists carried items; eq shows what you have equipped.")
-	s.WriteLine("5. Equip: wield heph matches item names partially. If several match, choose a number.")
-	s.WriteLine("6. Progress: score shows stats; quests/journal show your story; help lists commands.")
-	s.WriteLine("7. Divine path: reach level 3, then awaken storm, tide, ember, or aegis.")
-	s.WriteLine("8. Talk: talk <topic> or talk 1 <topic>; use look for NPC numbers, then choose trust or defy.")
-	s.WriteLine("9. Rest: rest recovers resources when it is safe. Flee escapes an active battle.")
-	s.WriteLine("10. Rebirth: at level 10, use rebirth to cross the Styx and enter a new era.")
-	s.WriteLine("")
-	s.WriteLine("Suggested first route: north to the foothills, defeat the Harpy, continue north, then meet Pythia.")
-	s.WriteLine("Tip: commands are case-insensitive. Use short unique item-name fragments; shop and buy support numbered wares.")
+	s.WriteLine("\x1b[1;33mTHE FIRST THREAD — GUIDED TUTORIAL\x1b[0m")
+	s.tutorialHint()
+	s.WriteLine("Useful later: inv, eq, score, quests, journal, help <topic>, map, and hint.")
+	s.WriteLine("The tutorial is saved with your character. You can explore freely after completing these first lessons.")
+}
+
+func (s *Session) prepareTutorial() {
+	if s.Character == nil {
+		return
+	}
+	if s.Character.Life == 1 && s.Character.Level <= 1 &&
+		s.Character.RoomID == "olympus_gates" &&
+		!s.Character.HasStoryFlag("room_discovered_olympus_foothills") &&
+		!s.Character.HasStoryFlag("tutorial_complete") {
+		s.Character.RoomID = "village_square"
+	}
+	switch {
+	case s.Character.HasStoryFlag("tutorial_complete"):
+		s.TutorialStep = 4
+	case s.Character.HasStoryFlag("tutorial_conversation_complete"):
+		s.TutorialStep = 3
+	case s.Character.HasStoryFlag("tutorial_look_complete"):
+		s.TutorialStep = 2
+	case s.Character.HasStoryFlag("tutorial_movement_complete"):
+		s.TutorialStep = 1
+	default:
+		s.TutorialStep = 0
+	}
 }
 
 func (s *Session) tutorialHint() {
 	switch s.TutorialStep {
 	case 0:
-		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m Type 'look' to study the place where your story begins.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 1/4 — MOVEMENT:\x1b[0m Type 'north' to walk from the village square into the village lane.")
 	case 1:
-		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m The black thread pulls north. Try 'north' when you are ready.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 2/4 — LOOK:\x1b[0m Type 'look' to inspect the lane, its exit, and the village guide.")
 	case 2:
-		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m A creature has noticed you. Try 'attack'.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 3/4 — CONVERSATION:\x1b[0m Speak to Damon, the guide. Type 'talk 1 hello'.")
 	case 3:
-		s.WriteLine("\x1b[1;36mTutorial:\x1b[0m You survived. Check 'inventory' and 'score', then continue exploring.")
+		s.WriteLine("\x1b[1;36mTUTORIAL 4/4 — ASK FOR A HINT:\x1b[0m Type 'hint', then ask Damon about the road with 'talk 1 road'.")
+	case 4:
+		s.WriteLine("\x1b[1;32mTUTORIAL COMPLETE:\x1b[0m The northern road leads to the foothills. Follow it when ready; use 'hint' whenever an NPC's next step is unclear.")
 	}
 }
 
 func (s *Session) advanceTutorial(step int) {
-	if step>s.TutorialStep {
-		s.TutorialStep=step
-		s.tutorialHint()
+	if step <= s.TutorialStep {
+		return
+	}
+	s.TutorialStep = step
+	switch step {
+	case 1:
+		s.Character.SetStoryFlag("tutorial_movement_complete")
+	case 2:
+		s.Character.SetStoryFlag("tutorial_look_complete")
+	case 3:
+		s.Character.SetStoryFlag("tutorial_conversation_complete")
+	case 4:
+		s.Character.SetStoryFlag("tutorial_complete")
+	}
+	s.tutorialHint()
+}
+
+func (s *Session) hint(args []string) {
+	index, _ := s.parseNPCSelection(args)
+	n := s.currentNPC(index)
+	if n == nil {
+		s.WriteLine("There is no one here to ask. Use 'look' to find nearby people.")
+		return
+	}
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("The %s is still a threat. Defeat it or use 'flee' before speaking.", s.Enemy.Name)
+		return
+	}
+	switch n.ID {
+	case "village_guide":
+		switch s.TutorialStep {
+		case 0:
+			s.WriteLine("Damon's hint: learn to move first. Type 'north' to enter the village lane.")
+		case 1:
+			s.WriteLine("Damon's hint: type 'look' to inspect your surroundings and find the person you can speak with.")
+		case 2:
+			s.WriteLine("Damon's hint: begin a conversation with 'talk 1 hello'.")
+		case 3:
+			s.WriteLine("Damon's hint: ask about the road. Type 'talk 1 road'.")
+		default:
+			s.WriteLine("Damon's hint: the northern road leads to the foothills. The guide can answer 'road' or 'village'.")
+		}
+	case "pythia":
+		if !s.Character.HasStoryFlag("oracle_choice_made") {
+			s.WriteLine("Pythia's hint: ask about the choice with 'talk 1 choices', then decide with 'choose trust' or 'choose defy'.")
+		} else if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") {
+			s.WriteLine("Pythia's hint: ask about 'trials'. The Delphi Sanctum lies farther along the path.")
+		} else if s.Character.HasStoryFlag("oracle_trust") && !s.Character.HasStoryFlag("quest_completed_oath_across_the_river") {
+			s.WriteLine("Pythia's hint: ask about the 'styx' and follow the river's trail in your journal.")
+		} else {
+			s.WriteLine("Pythia's hint: review 'quests' and 'journal' for the next unlocked story thread.")
+		}
+	case "hephaestus_apprentice":
+		if s.Character.Quests["black_thread"] < 1 {
+			s.WriteLine("Theron's hint: ask about the 'thread', then deal with the Harpy troubling the foothills. Use 'attack 1' when ready.")
+		} else {
+			s.WriteLine("Theron's hint: your weapon is only the beginning. Check 'inv' and 'shop 1', then follow 'journal' toward Delphi.")
+		}
+	case "athens_vendor":
+		if s.Character.HasStoryFlag("styx_memory_recovered") && !s.Character.HasStoryFlag("museum_echo_uncovered") {
+			s.WriteLine("Myrto's hint: ask about the 'museum'. Something old is waiting behind glass.")
+		} else {
+			s.WriteLine("Myrto's hint: ask about the 'ancient' past, then use 'quests' and 'journal' to follow the memory you recognize.")
+		}
+	default:
+		if q, ok := s.nextAvailableQuest(); ok {
+			s.WriteLine("%s seems to be connected to a story thread.", n.Name)
+			s.WriteLine("Hint: %s", q.Goal)
+			s.WriteLine("Try asking about a topic you noticed in the room description, or type 'quests' for the current thread.")
+		} else {
+			s.WriteLine("%s has no new hint right now. Try 'talk 1 hello', 'quests', or 'journal'.", n.Name)
+		}
 	}
 }
 
@@ -597,7 +687,7 @@ func (s *Session) look() {
 
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", r.Name)
-	s.WriteLine("%s", r.Description)
+	s.WriteLine("%s", compactText(r.Description, 125))
 
 	directions := []string{"north", "south", "east", "west", "up", "down", "in", "out"}
 	var visible []string
@@ -623,16 +713,11 @@ func (s *Session) look() {
 		for i, n := range npcs {
 			s.WriteLine("  \x1b[32m[NPC %d] %s\x1b[0m", i+1, n.Name)
 			if n.Description != "" {
-				s.WriteLine("         %s", n.Description)
+				s.WriteLine("         %s", compactText(n.Description, 88))
 			}
 		}
 		s.WriteLine("  \x1b[32mTalk:\x1b[0m talk <number> <topic>   \x1b[32mShop:\x1b[0m shop <number>")
 	}
-
-	// The server does not yet track other connected players by room.
-	s.WriteLine("")
-	s.WriteLine("\x1b[1;34mOTHER TRAVELERS\x1b[0m")
-	s.WriteLine("  Player visibility is not available in this build yet.")
 
 	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID {
 		s.spawnEnemy()
@@ -642,7 +727,7 @@ func (s *Session) look() {
 		s.WriteLine("\x1b[1;33mTHREATS\x1b[0m")
 		s.WriteLine("  \x1b[1;33m[ENEMY 1] %s\x1b[0m", s.Enemy.Name)
 		if s.Enemy.Description != "" {
-			s.WriteLine("           %s", s.Enemy.Description)
+			s.WriteLine("           %s", compactText(s.Enemy.Description, 96))
 		}
 		s.WriteLine("           Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
 		s.WriteLine("  \x1b[33mFight:\x1b[0m attack 1  (or attack %s)", strings.ToLower(s.Enemy.Name))
@@ -652,8 +737,17 @@ func (s *Session) look() {
 		s.WriteLine("  The area is quiet. The defeated creature has not returned.")
 	}
 
-	s.WriteLine("")
-	s.WriteLine("\x1b[90mLegend: \x1b[32mNPC = interactable\x1b[90m | \x1b[34mtraveler = player\x1b[90m | \x1b[33menemy = hostile\x1b[0m")
+}
+func compactText(value string, limit int) string {
+	value = strings.TrimSpace(value)
+	runes := []rune(value)
+	if len(runes) <= limit {
+		return value
+	}
+	if limit < 4 {
+		return string(runes[:limit])
+	}
+	return string(runes[:limit-1]) + "…"
 }
 func (s *Session) spawnEnemy() {
 	s.RelicWardSpent = false
@@ -690,7 +784,6 @@ func (s *Session) spawnEnemy() {
 	}
 	s.WriteLine("\x1b[1;31mA %s appears!\x1b[0m",s.Enemy.Name)
 	s.WriteLine("%s",s.Enemy.Description)
-	s.advanceTutorial(2)
 }
 
 func (s *Session) canEnter(id string) bool {
@@ -734,6 +827,10 @@ func (s *Session) move(direction string) {
 	if !ok {s.WriteLine("You cannot go that way.");return}
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
 	if !s.canEnter(next) { return }
+	if r.ID == "village_lane" && direction == "north" && s.TutorialStep < 4 {
+		s.WriteLine("Damon raises a hand. Finish the village lessons first: look, talk to the guide, use hint, then ask about the road.")
+		return
+	}
 	s.Character.RoomID=next
 	s.EncounterClearedRoom = ""
 	s.PendingEquip = nil
@@ -741,7 +838,9 @@ func (s *Session) move(direction string) {
 	s.look()
 	if s.AutoMap { s.localMap() }
 	s.updateQuests()
-	if s.Character.RoomID=="olympus_foothills" { s.advanceTutorial(2) }
+	if s.Character.RoomID == "village_lane" && s.TutorialStep == 0 {
+		s.advanceTutorial(1)
+	}
 }
 
 func (s *Session) attack(args []string) {
@@ -768,7 +867,6 @@ func (s *Session) attack(args []string) {
 		}
 	}
 	s.WriteLine("%s", result.Text)
-	s.advanceTutorial(3)
 	if result.Killed {
 		s.defeatEnemy(false)
 		return
@@ -1337,7 +1435,16 @@ func(s *Session) talk(args []string) {
  if topic=="hello"||topic=="greeting"{if greeting:=s.factionGreeting(n);greeting!=""{s.WriteLine("%s",greeting);return}}
  if n.ID=="pythia"&&(topic=="hello"||topic=="greeting"){switch{case s.Character.HasStoryFlag("oracle_trust"):s.WriteLine("\x1b[1;36mPythia smiles faintly. \"You kept the thread I gave you. The river will test that promise when you least expect it.\"\x1b[0m");return;case s.Character.HasStoryFlag("oracle_defied"):s.WriteLine("\x1b[1;36mPythia regards you without anger. \"Still walking your own road, I see. Even the Fates have learned to leave a little room for defiance.\"\x1b[0m");return}}
  if topic=="choice"||topic=="choices"{if n.ID=="pythia"{if s.Character.HasStoryFlag("oracle_choice_made"){s.WriteLine("Pythia studies you. \"The river has recorded your answer. You cannot make that choice unmade.\"");return};s.WriteLine("Pythia's voice falls to a whisper: \"When the Fates offer a thread, will you trust the pattern or cut your own path?\"");s.WriteLine("  choose trust — accept the Oracle's guidance and swear to remember it.");s.WriteLine("  choose defy  — reject prophecy and bear the consequences alone.");return}}
- if t:=n.DialogueFor(topic);t!=""{s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t);return};s.WriteLine("\x1b[1;36m%s:\x1b[0m \"Ask me about the things that matter here.\"",n.Name)
+ if t:=n.DialogueFor(topic);t!="" {
+		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t)
+		if n.ID == "village_guide" && s.TutorialStep == 2 && (topic == "hello" || topic == "greeting") {
+			s.advanceTutorial(3)
+		} else if n.ID == "village_guide" && s.TutorialStep == 3 && (topic == "road" || topic == "mountain" || topic == "north") {
+			s.advanceTutorial(4)
+		}
+		return
+	}
+	s.WriteLine("\x1b[1;36m%s:\x1b[0m \"Ask me about the things that matter here.\"",n.Name)
 }
 
 func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
