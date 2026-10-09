@@ -8,7 +8,7 @@ type World struct {
 }
 
 func NewWorld() *World {
-	village := NewRoom("village_square", "Asterion Village Square", "Olive trees shade a quiet square in a small Greek village. Potters and fishmongers prepare for the day while the mountain road waits beyond the cottages.")
+	village := NewRoom("village_square", "Asterion Village Square", "Olive trees shade Asterion square. At the well, black water reflects a starless sky beneath the morning sun.")
 	lane := NewRoom("village_lane", "The Village Lane", "Whitewashed cottages and blue shutters line a narrow stone lane. A local guide waits beside a weathered milestone pointing toward the mountain.")
 	smithy := NewRoom("therons_forge", "Theron's Forge", "A low stone workshop clings to the mountain road. Coals glow beneath a bronze anvil, and unfinished weapons hang from the rafters. The forge is warm, quiet, and separate from the road outside.")
 	gates := NewRoom("olympus_gates","The Gates of Olympus","Massive marble gates rise before you. Beyond them, Mount Olympus disappears into clouds illuminated by divine light. A weathered altar stands nearby, its inscription worn almost smooth: 'Every life begins with a choice.'")
