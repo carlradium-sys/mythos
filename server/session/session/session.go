@@ -49,7 +49,6 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	if !s.selectCharacter(scanner) { return }
 	s.prepareTutorial()
 	s.storyIntro()
-	s.look()
 	s.updateQuests()
 	if s.TutorialStep < 7 {
 		s.tutorialHint()
@@ -77,10 +76,13 @@ func (s *Session) handleCommand(input string) bool {
 		s.help(parts[1:])
 	case "tutorial", "guide":
 		s.tutorial()
-	case "look","l":
-		s.look()
-		if s.TutorialStep == 1 {
-			s.advanceTutorial(2)
+	case "look", "l":
+		if len(parts) > 1 {
+			s.lookTarget(parts[1:])
+			if s.TutorialStep == 2 { s.advanceTutorial(3) }
+		} else {
+			s.look()
+			if s.TutorialStep == 1 { s.advanceTutorial(2) }
 		}
 	case "map":
 		s.localMap()
@@ -747,67 +749,70 @@ func (s *Session) localMap() {
 }
 func (s *Session) look() {
 	r := s.World.GetRoom(s.Character.RoomID)
-	if r == nil {
-		s.WriteLine("\x1b[1;31mYou are nowhere.\x1b[0m The world has lost track of you.")
-		return
-	}
-
+	if r == nil { s.WriteLine("\x1b[1;31mYou are nowhere.\x1b[0m The world has lost track of you."); return }
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", r.Name)
-	s.WriteLine("%s", compactText(r.Description, 108))
-
-	directions := []string{"north", "south", "east", "west", "up", "down", "in", "out"}
-	var visible []string
-	for _, d := range directions {
-		if id, ok := r.Exits[d]; ok {
-			if dest := s.World.GetRoom(id); dest != nil {
-				visible = append(visible, fmt.Sprintf("%-5s → %s", strings.ToUpper(d), dest.Name))
-			}
-		}
-	}
-	if len(visible) > 0 {
-		s.WriteLine("")
-		s.WriteLine("\x1b[1;37mPATHS\x1b[0m")
-		for _, exit := range visible {
-			s.WriteLine("  \x1b[36m›\x1b[0m %s", exit)
-		}
-	}
-
+	s.WriteLine("%s", r.Description)
 	npcs := s.World.NPCs[s.Character.RoomID]
 	if len(npcs) > 0 {
 		s.WriteLine("")
-		s.WriteLine("\x1b[1;32mPEOPLE TO TALK TO\x1b[0m")
+		s.WriteLine("\x1b[1;37mPEOPLE & INTERACTABLES\x1b[0m")
 		for i, n := range npcs {
 			label := ""
-			if n.HasShop() {
-				label = " \x1b[33m[MERCHANT]\x1b[0m"
-			}
+			if n.HasShop() { label = " \x1b[33m[MERCHANT]\x1b[0m" }
 			s.WriteLine("  \x1b[32m[NPC %d] %s\x1b[0m%s", i+1, n.Name, label)
-			if n.Description != "" {
-				s.WriteLine("         %s", compactText(n.Description, 68))
-			}
 		}
 	}
-
-	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID {
-		s.spawnEnemy()
-	}
+	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID { s.spawnEnemy() }
 	if s.Enemy != nil && s.Enemy.HP > 0 {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;33mTHREATS\x1b[0m")
-		s.WriteLine("  \x1b[1;33m[ENEMY 1] %s\x1b[0m", s.Enemy.Name)
-		if s.Enemy.Description != "" {
-			s.WriteLine("           %s", compactText(s.Enemy.Description, 78))
-		}
-		s.WriteLine("           Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
-		s.WriteLine("  \x1b[33mFight:\x1b[0m attack 1  (or attack %s)", strings.ToLower(s.Enemy.Name))
+		s.WriteLine("  \x1b[1;33m[ENEMY 1] %s\x1b[0m — Health %d/%d", s.Enemy.Name, s.Enemy.HP, s.Enemy.MaxHP)
 	} else if s.EncounterClearedRoom == s.Character.RoomID {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;32mTHREATS\x1b[0m")
 		s.WriteLine("  The area is quiet. The defeated creature has not returned.")
 	}
-
+}func (s *Session) lookTarget(args []string) {
+	if s.Character == nil || len(args) == 0 { s.look(); return }
+	target := strings.ToLower(strings.TrimSpace(strings.Join(args, " ")))
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("You are nowhere."); return }
+	directions := map[string]string{"n":"north", "s":"south", "e":"east", "w":"west", "u":"up", "d":"down", "north":"north", "south":"south", "east":"east", "west":"west", "up":"up", "down":"down", "in":"in", "out":"out"}
+	if direction, ok := directions[target]; ok {
+		if id, exists := r.Exits[direction]; exists {
+			if destination := s.World.GetRoom(id); destination != nil {
+				s.WriteLine("\x1b[1;36m%s\x1b[0m", destination.Name)
+				s.WriteLine("%s", destination.Description)
+			} else { s.WriteLine("The path leads toward %s.", id) }
+		} else { s.WriteLine("There is no visible path %s from here.", direction) }
+		return
+	}
+	for i, n := range s.World.NPCs[s.Character.RoomID] {
+		name := strings.ToLower(n.Name)
+		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
+			s.WriteLine("\x1b[1;36m%s\x1b[0m", n.Name)
+			if n.Description != "" { s.WriteLine("%s", n.Description) }
+			if n.Faction != "" { s.WriteLine("Affiliation: %s", strings.ReplaceAll(n.Faction, "_", " ")) }
+			if n.HasShop() { s.WriteLine("This character trades in equipment. Use 'shop %d' to inspect their wares.", i+1) }
+			s.WriteLine("Speak with 'talk %d <topic>' or ask for guidance with 'hint %d'.", i+1, i+1)
+			return
+		}
+	}
+	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID { s.spawnEnemy() }
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		name := strings.ToLower(s.Enemy.Name)
+		if strings.Contains(name, target) || strings.Contains(target, name) || target == "enemy" || target == "threat" || target == "mob" {
+			s.WriteLine("\x1b[1;33m%s\x1b[0m", s.Enemy.Name)
+			if s.Enemy.Description != "" { s.WriteLine("%s", s.Enemy.Description) }
+			s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
+			s.WriteLine("It is hostile. Use 'attack 1' or 'attack %s' to engage.", strings.ToLower(s.Enemy.Name))
+			return
+		}
+	}
+	s.WriteLine("You see no person, creature, or path matching '%s'. Try 'look' for the room summary.", target)
 }
+
 func compactText(value string, limit int) string {
 	value = strings.TrimSpace(value)
 	runes := []rune(value)
@@ -901,11 +906,12 @@ func (s *Session) move(direction string) {
 		s.WriteLine("Damon raises a hand. Finish the village lessons first: look, talk to the guide, use hint, then ask about the road.")
 		return
 	}
-	s.Character.RoomID=next
+	s.Character.RoomID = next
 	s.EncounterClearedRoom = ""
 	s.PendingEquip = nil
 	s.recordDiscovery(next)
-	s.look()
+	s.WriteLine("You travel %s.", direction)
+	s.WriteLine("Type 'look' to inspect your surroundings.")
 	if s.AutoMap { s.localMap() }
 	s.updateQuests()
 	if s.Character.RoomID == "village_lane" && s.TutorialStep == 0 {
