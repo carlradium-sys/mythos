@@ -45,9 +45,9 @@ func TestStoryIntroIsRecordedForFirstLife(t *testing.T) {
 func TestVillageTutorialRequiresHintBeforeRoadTopic(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "village_lane"
-	s.TutorialStep = 4
+	s.TutorialStep = 6
 	s.talk([]string{"1", "road"})
-	if s.TutorialStep != 4 {
+	if s.TutorialStep != 6 {
 		t.Fatal("road topic should not bypass the hint lesson")
 	}
 	s.hint(nil)
@@ -55,8 +55,8 @@ func TestVillageTutorialRequiresHintBeforeRoadTopic(t *testing.T) {
 		t.Fatal("asking for an NPC hint should record tutorial hint use")
 	}
 	s.talk([]string{"1", "road"})
-	if s.TutorialStep != 5 {
-		t.Fatal("road topic after asking for a hint should unlock the navigation lesson")
+	if s.TutorialStep != 7 {
+		t.Fatal("road topic after asking for a hint should unlock the exits lesson")
 	}
 }
 
@@ -656,14 +656,14 @@ func TestVillageTutorialBlocksMountainRoadUntilGuideLessonCompletes(t *testing.T
 	if s.Character.RoomID != "village_lane" {
 		t.Fatalf("tutorial bypass moved to %q before lessons completed", s.Character.RoomID)
 	}
-	s.TutorialStep = 6
+	s.TutorialStep = 9
 	s.move("north")
 	if s.Character.RoomID != "olympus_foothills" {
 		t.Fatalf("completed tutorial moved to %q, want olympus_foothills", s.Character.RoomID)
 	}
 }
 
-func TestTutorialProgressesThroughInspectionConversationNavigationCombatAndStory(t *testing.T) {
+func TestTutorialProgressesOneActionAtATime(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "village_lane"
 	s.TutorialStep = 2
@@ -671,37 +671,39 @@ func TestTutorialProgressesThroughInspectionConversationNavigationCombatAndStory
 	if !s.Character.HasStoryFlag("tutorial_inspected_npc") { t.Fatal("inspecting Damon should record the inspection lesson") }
 	s.advanceTutorial(3)
 	s.talk([]string{"1", "hello"})
-	if s.TutorialStep != 3 { t.Fatal("greeting alone should not skip the conversation lesson") }
+	if s.TutorialStep != 4 { t.Fatal("greeting should advance to the village topic lesson") }
 	s.talk([]string{"1", "village"})
-	if s.TutorialStep != 4 || !s.Character.HasStoryFlag("tutorial_conversation_complete") { t.Fatal("greeting plus village topic should complete the conversation lesson") }
-	s.hint(nil)
+	if s.TutorialStep != 5 { t.Fatal("village topic should advance to the hint lesson") }
+	s.handleCommand("hint")
+	if s.TutorialStep != 6 || !s.Character.HasStoryFlag("tutorial_hint_used") { t.Fatal("hint should advance to the road topic lesson") }
 	s.talk([]string{"1", "road"})
-	if s.TutorialStep != 5 || !s.Character.HasStoryFlag("tutorial_hint_complete") { t.Fatal("road conversation after a hint should complete the hint lesson") }
+	if s.TutorialStep != 7 { t.Fatal("road topic should advance to the exits lesson") }
 	s.handleCommand("exits")
+	if s.TutorialStep != 8 { t.Fatal("exits should advance to the map lesson") }
 	s.handleCommand("map")
-	if s.TutorialStep != 6 || !s.Character.HasStoryFlag("tutorial_navigation_complete") { t.Fatal("using exits and map should complete the navigation lesson") }
+	if s.TutorialStep != 9 { t.Fatal("map should advance to the foothills lesson") }
 	s.Character.RoomID = "olympus_foothills"
+	s.TutorialStep = 10
 	s.Enemy = &combat.Enemy{Name: "Harpy", Description: "A test harpy.", Level: 1, HP: 20, MaxHP: 20, XP: 0}
-	s.lookTarget([]string{"Harpy"})
-	if !s.Character.HasStoryFlag("tutorial_enemy_inspected") { t.Fatal("inspecting the Harpy should record the combat preparation lesson") }
-	s.TutorialStep = 6
+	s.handleCommand("look Harpy")
+	if s.TutorialStep != 11 || !s.Character.HasStoryFlag("tutorial_enemy_inspected") { t.Fatal("inspecting the Harpy should advance to the fight lesson") }
 	s.Enemy.HP = 0
 	s.defeatEnemy(false)
-	if s.TutorialStep != 7 || !s.Character.HasStoryFlag("tutorial_combat_complete") { t.Fatal("Harpy victory did not complete the combat lesson") }
+	if s.TutorialStep != 12 || !s.Character.HasStoryFlag("tutorial_combat_complete") { t.Fatal("Harpy victory should advance to inventory") }
 	s.handleCommand("inv")
-	if s.TutorialStep != 8 || !s.Character.HasStoryFlag("tutorial_inventory_complete") { t.Fatal("inventory command did not complete the inventory lesson") }
+	if s.TutorialStep != 13 { t.Fatal("inventory should advance to equipment") }
 	s.handleCommand("eq")
-	if s.TutorialStep != 9 || !s.Character.HasStoryFlag("tutorial_equipment_complete") { t.Fatal("equipment command did not complete the equipment lesson") }
+	if s.TutorialStep != 14 { t.Fatal("equipment should advance to quests") }
 	s.handleCommand("quests")
-	if s.TutorialStep != 9 { t.Fatal("quests alone should not skip the journal portion of the story lesson") }
+	if s.TutorialStep != 15 { t.Fatal("quests should advance to journal") }
 	s.handleCommand("journal")
-	if s.TutorialStep != 10 || !s.Character.HasStoryFlag("tutorial_complete") { t.Fatal("quests and journal should complete the tutorial") }
+	if s.TutorialStep != 16 || !s.Character.HasStoryFlag("tutorial_complete") { t.Fatal("journal should complete the tutorial") }
 }
 
 func TestTutorialRequiresInspectionBeforeAttackingHarpy(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "olympus_foothills"
-	s.TutorialStep = 6
+	s.TutorialStep = 11
 	s.Enemy = &combat.Enemy{Name: "Harpy", Level: 1, HP: 30, MaxHP: 30, Damage: 1, XP: 0}
 	s.attack(nil)
 	if s.Enemy.HP != 30 {
