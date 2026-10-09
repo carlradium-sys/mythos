@@ -471,10 +471,10 @@ func (s *Session) storyIntro() {
 	s.Character.SetStoryFlag("tutorial_intro_seen")
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;35mTHE THREAD REMEMBERS\x1b[0m")
-	s.WriteLine("You remember dying only as a cold pull beneath black water. You do not remember who you were, or why the river let you go.")
-	s.WriteLine("Three mornings ago, fishers found you on the shore below Asterion. At dawn you rose again, a dark thread wound around your wrist and tugging toward Mount Olympus.")
-	s.WriteLine("In this world, the gods are real, monsters walk old roads, and death is a crossing rather than an ending. Each rebirth may carry you into a changed age—but every choice leaves a mark on the soul.")
-	s.WriteLine("For now, learn the village and the road. Damon can tell you what has changed since you returned.")
+	s.WriteLine("Death came as cold black water. You remember sinking, but not the prayer or crime that brought you there.")
+	s.WriteLine("Three mornings ago, Asterion fishers dragged your body from the river. At dawn, you opened your eyes.")
+	s.WriteLine("A black thread circled your wrist, pointing toward Olympus. The gods are real, monsters haunt old roads, and death is a crossing.")
+	s.WriteLine("Rebirth may carry you into a new age, but every choice follows the soul. Damon knows what happened after the river returned you.")
 	s.WriteLine("")
 }
 
