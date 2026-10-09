@@ -555,8 +555,8 @@ func (s *Session) localMap() {
 		return fmt.Sprintf("%-20s", "["+label+"]")
 	}
 	if north != "" {
-		s.WriteLine("          %s", cell(north))
-		s.WriteLine("               ↑")
+		s.WriteLine("                          ↑")
+		s.WriteLine("                %s", cell(north))
 	}
 	left, right := "                    ", "                    "
 	if west != "" { left = cell(west) }
@@ -564,8 +564,8 @@ func (s *Session) localMap() {
 	s.WriteLine("%s%s%s", left, "← \x1b[1;32m★ YOU ★\x1b[0m → ", right)
 	s.WriteLine("                %s", cell(r.Name))
 	if south != "" {
-		s.WriteLine("               ↓")
-		s.WriteLine("          %s", cell(south))
+		s.WriteLine("                          ↓")
+		s.WriteLine("                %s", cell(south))
 	}
 	if len(r.Exits) > 0 {
 		s.WriteLine("")
