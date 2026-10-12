@@ -328,34 +328,22 @@ Stand near a merchant and use:
   buy <item>
 
 Purchased equipment is added to your inventory and can be equipped normally.`},
-	"tutorial": {"tutorial", `THE FIRST THREAD — STORY TUTORIAL
+	"tutorial": {"tutorial", `THE FIRST THREAD — GUIDED PROLOGUE
 
-You died beside the black river and woke again near Asterion, with a dark
-thread tied to your soul. The gods are real, monsters haunt old roads, and
-rebirth can carry you into another age. Your choices remain with you.
+Newly created characters receive a one-time, 39-lesson tutorial before
+entering Asterion Village. The prologue teaches room descriptions, movement,
+NPC dialogue, exits, maps, combat, passive versus aggressive creatures,
+inventory, equipment, recovery, help files, quests, the journal, and
+character progression. Progress is saved between connections.
 
-The opening tutorial is deliberately paced. Each lesson gives one action:
-  1. Type look.
-  2. Move north to the village lane.
-  3. Inspect Damon with look Damon.
-  4. Greet him with talk Damon hello (or use the number selector: talk 1 hello).
-  5. Ask about the village with talk Damon village (or talk 1 village).
-  6. Type hint.
-  7. Ask about the road with talk Damon road (or talk 1 road).
-  8. Type exits for the detailed path list.
-  9. Type map for nearby connections.
- 10. Move north to the foothills.
- 11. Inspect the Harpy with look Harpy.
- 12. Type attack Harpy to fight (or use the number selector: attack 1).
- 13. Type inv to review carried items.
- 14. Type eq to review equipped gear.
- 15. Type quests to review objectives.
- 16. Type journal to read story context.
+Use tutorial to repeat the current instruction. Use help <topic> for details.
+Practice creatures are initially passive and defend themselves only after
+being attacked. Once slain, they are persistently flagged as defeated and
+will not respawn for that character.
 
-A room is described once when you first enter it. Type look to see it again.
-Room summaries stay concise and do not list paths or full NPC descriptions.
-Use look <target> for details and exits for the full route list. Hints appear
-only when requested. Use tutorial or help <topic> for a refresher. Progress is saved.`,},
+The Gate of First Steps is one-way. When you leave for Asterion Village,
+the tutorial is closed permanently for that character. Existing characters
+are not forced into it; it is assigned when a new character is created.`},
 	"hint": {"hint", `NPC HINTS
 
 Use:
