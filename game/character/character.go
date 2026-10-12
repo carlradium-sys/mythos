@@ -39,6 +39,7 @@ type Character struct {
 	LifeGiftUsed bool
 	AutoCombat bool
 	CombatModeSet bool
+	Quicklist [4]string
 }
 
 func New(name string) *Character {
