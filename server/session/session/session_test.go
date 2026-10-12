@@ -1283,14 +1283,23 @@ func TestQuicklistRejectsLockedPowerAndInvalidSlot(t *testing.T) {
 }
 
 
-func TestCompleteQuestAwardsConfiguredGold(t *testing.T) {
+func TestQuestGoldRewardIsGrantedOnlyOnce(t *testing.T) {
 	s := newChoiceTestSession(t)
+	s.Character.RoomID = "therons_forge"
+	s.Character.SetStoryFlag("forge_discovered")
+	s.Character.SetStoryFlag("crafted_any_gear")
 	before := s.Character.Gold
-	s.completeQuest(quest.Quest{ID: "test_gold", Name: "A Test of Fortune", RewardGold: 17})
-	if got := s.Character.Gold; got != before+17 {
-		t.Fatalf("gold after quest completion = %d, want %d", got, before+17)
+
+	s.updateQuests()
+	afterFirstCompletion := s.Character.Gold
+	if afterFirstCompletion != before+17 {
+		t.Fatalf("gold after forge quest = %d, want %d", afterFirstCompletion, before+17)
 	}
-	if !s.Character.HasStoryFlag("quest_completed_test_gold") {
-		t.Fatal("quest completion should still be recorded")
+	s.updateQuests()
+	if s.Character.Gold != afterFirstCompletion {
+		t.Fatalf("rechecking completed quests changed gold to %d; want %d", s.Character.Gold, afterFirstCompletion)
+	}
+	if !s.Character.HasStoryFlag("quest_completed_forge_remembers") {
+		t.Fatal("forge quest completion should be recorded")
 	}
 }
