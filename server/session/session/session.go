@@ -1003,6 +1003,7 @@ func (s *Session) canEnter(id string) bool {
 }
 
 func (s *Session) recordDiscovery(roomID string) {
+	if strings.HasPrefix(roomID, "tutorial_") { return }
 	flag := "room_discovered_" + roomID
 	if s.Character.HasStoryFlag(flag) {
 		return
