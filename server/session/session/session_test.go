@@ -1281,3 +1281,16 @@ func TestQuicklistRejectsLockedPowerAndInvalidSlot(t *testing.T) {
 	s.handleCommand("ql set 9 Stormspark")
 	if s.Character.Quicklist[0] != "" { t.Fatal("invalid slot should not be assigned") }
 }
+
+
+func TestCompleteQuestAwardsConfiguredGold(t *testing.T) {
+	s := newChoiceTestSession(t)
+	before := s.Character.Gold
+	s.completeQuest(quest.Quest{ID: "test_gold", Name: "A Test of Fortune", RewardGold: 17})
+	if got := s.Character.Gold; got != before+17 {
+		t.Fatalf("gold after quest completion = %d, want %d", got, before+17)
+	}
+	if !s.Character.HasStoryFlag("quest_completed_test_gold") {
+		t.Fatal("quest completion should still be recorded")
+	}
+}
