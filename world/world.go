@@ -17,6 +17,25 @@ func NewWorld() *World {
 	den := NewRoom("manticore_den","The Manticore Den","Broken columns and old offerings surround a dark cavern. Something large has disturbed the dust. Ancient claw marks cross a wall beside a half-erased image of a three-headed hound.")
 	crossroads := NewRoom("modern_crossroads","The Crossroads of Athens","Neon signs glow beside ancient stones. Cars hiss over wet pavement while, somewhere above the city, an impossible thunderclap answers your arrival.")
 
+	// Isolated, one-way prologue rooms for newly created characters.
+	tutShore := NewRoom("tutorial_shore", "The Shore Between Heartbeats", "You wake on pale sand beside a still pool of black water. The sky holds no sun, yet a warm dawn glows behind the hills. A narrow path leads north toward a lantern-lit shelter. Your hands are empty of memory, but a dark thread circles your wrist.")
+	tutCamp := NewRoom("tutorial_camp", "The Wayfarer's Shelter", "A weathered shelter stands beneath olive branches. A guide has prepared a table with a map, a pack, and a practice blade. Nothing here is dangerous; this is a place to learn before the world begins testing you.")
+	tutYard := NewRoom("tutorial_yard", "The Training Courtyard", "A low stone wall encloses a courtyard marked with chalk circles. A small training shade waits in the center, motionless and watchful. It will not strike first. Beyond the northern arch, a quiet grove offers a more realistic lesson.")
+	tutGrove := NewRoom("tutorial_grove", "The Quiet Practice Grove", "Olive trees shade a ring of worn stones. A young satyr stands in the clearing with its staff lowered. It watches you but will not attack unless you attack it first. This is a controlled lesson, not a real ambush.")
+	tutStore := NewRoom("tutorial_storehouse", "The Wayfarer's Storehouse", "A tidy storehouse holds a rack for weapons and a chest of practice supplies. Labels explain how carried items differ from equipped items. A marble gate to the north leads out of the lesson and into the living world.")
+	tutGate := NewRoom("tutorial_gate", "The Gate of First Steps", "The tutorial ends at a pale marble gate. Beyond it, the road descends toward Asterion Village and the first true choices of your life. This threshold opens only once. Once you leave, the way back will be sealed.")
+	tutShore.Exits["north"] = tutCamp.ID
+	tutCamp.Exits["south"] = tutShore.ID
+	tutCamp.Exits["east"] = tutYard.ID
+	tutYard.Exits["west"] = tutCamp.ID
+	tutYard.Exits["north"] = tutGrove.ID
+	tutYard.Exits["east"] = tutStore.ID
+	tutGrove.Exits["south"] = tutYard.ID
+	tutStore.Exits["west"] = tutYard.ID
+	tutStore.Exits["north"] = tutGate.ID
+	tutGate.Exits["south"] = tutStore.ID
+	tutGate.Exits["north"] = village.ID
+
 	gates.Exits["north"] = foothills.ID
 	village.Exits["north"] = lane.ID
 	lane.Exits["south"] = village.ID
@@ -32,8 +51,17 @@ func NewWorld() *World {
 
 	w:=&World{Rooms:map[string]*Room{
 		village.ID:village, lane.ID:lane, smithy.ID:smithy, gates.ID:gates, foothills.ID:foothills, oracle.ID:oracle, den.ID:den, crossroads.ID:crossroads,
+		tutShore.ID:tutShore, tutCamp.ID:tutCamp, tutYard.ID:tutYard, tutGrove.ID:tutGrove, tutStore.ID:tutStore, tutGate.ID:tutGate,
 	}}
 	w.NPCs=map[string][]*NPC{}
+	tutGuide := NewNPC("tutorial_guide", "Ianthe, Wayfarer Guide", "A calm traveler in a faded blue cloak. She speaks as if she has guided many souls through their first uncertain steps.", 1, 100, 0, 0)
+	tutGuide.AddDialogue([]string{"hello", "greeting", "name"}, `Ianthe smiles gently. "Welcome, wayfarer. You do not need to know everything at once. I will teach you one skill at a time. Read each room, try each command, and remember that help is always available."`)
+	tutGuide.AddDialogue([]string{"movement", "move", "directions", "exits"}, `"Movement follows named exits. Use north, south, east, west, up, or down; short forms such as n and e work too. 'exits' lists routes and 'map' shows how nearby rooms connect. Looking at a path does not move you."`)
+	tutGuide.AddDialogue([]string{"combat", "fight", "enemy", "monster"}, `"Inspect a creature before attacking. Some beings are hostile; others are wary but peaceful until harmed. 'attack <name>' starts a fight. Watch both health totals, use 'rest' only when safe, and remember that 'flee' is a legitimate survival choice."`)
+	tutGuide.AddDialogue([]string{"inventory", "items", "equipment", "gear"}, `"Inventory is what you carry; equipment is what you have ready. Use 'inv' to inspect your pack and 'eq' to see your weapon and armor. Carrying a sword does not always mean it is the sword you have equipped."`)
+	tutGuide.AddDialogue([]string{"story", "quests", "journal", "help"}, `"The journal gives broad story direction; quests track objectives. 'help <topic>' explains a system in depth, and 'tutorial' repeats the current lesson. You may explore beyond the obvious road later. This prologue is a safe place to practice."`)
+	w.NPCs["tutorial_camp"] = append(w.NPCs["tutorial_camp"], tutGuide)
+
 	guide := NewNPC("village_guide", "Damon, Village Guide", "A patient local leans on a walking stick beside the milestone.", 1, 100, 5, 0)
 	guide.AddDialogue([]string{"hello", "greeting"}, `Damon studies the black thread at your wrist. "Three mornings ago, the river left you on our shore with no pulse and no name. At dawn you stood up again. The village has been kind, but the mountain has noticed. Learn the roads here before you follow that thread."`)
 	guide.AddDialogue([]string{"road", "mountain", "north"}, `Damon points beyond the cottages. "The Harpy has driven travelers off the mountain road. Theron keeps a forge just east of the foothills if you need better steel, but first make sure you know how to read a room, fight, and check your pack."`)
