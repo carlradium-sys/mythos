@@ -82,7 +82,8 @@ FLEE
 
 Fleeing gives the enemy one final chance to strike before you escape. It
 ends the encounter without victory XP, gold, or loot. If the strike defeats
-you, normal recovery occurs instead.
+you, normal recovery occurs instead. Controlled tutorial practice fights
+cannot be fled; complete the lesson encounter to keep the prologue moving.
 
 REST
   rest
