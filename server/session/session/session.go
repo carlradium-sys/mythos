@@ -90,9 +90,7 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 			if s.Character != nil && s.Character.AutoCombat && s.Enemy != nil && s.Enemy.HP > 0 && s.EnemyAggressive {
 				s.automaticCombatRound()
 				s.persist()
-				if s.Enemy != nil && s.Enemy.HP > 0 {
-					s.WriteLine("%s", s.prompt())
-				}
+				s.WriteLine("%s", s.prompt())
 			}
 		}
 	}
