@@ -105,6 +105,19 @@ Some battles are meant to be escaped. Survival is part of the sandbox.
 
 VICTORY
 Defeated enemies grant XP and gold. Use gold in shops for gear.`},
+
+	"combatmode": {"combatmode", `COMBAT MODE
+
+  pc                 Toggle automatic combat on or off.
+  pc on              Enable automatic follow-up weapon attacks.
+  pc off             Require a typed attack for every weapon swing.
+  combatmode         Show the current setting.
+  combatmode on/off  Set the mode explicitly.
+
+Automatic mode is the default. After you start a fight, weapon attacks
+continue every 2.5 seconds until the enemy is defeated, you flee, or you
+switch to manual mode. Divine powers and defensive actions remain available.
+The preference is saved separately for each character.`},
 	"powers": {"powers", `DIVINE POWERS
 
 At level 3, use:
