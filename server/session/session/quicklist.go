@@ -1,7 +1,6 @@
 package session
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -98,4 +97,3 @@ func (s *Session) showQuicklist() {
 	s.WriteLine("Cast with: ql <slot> <target>  |  Add: ql add <power>  |  Remove: ql remove <slot>")
 }
 
-var _ = fmt.Sprintf
