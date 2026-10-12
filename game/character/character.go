@@ -37,6 +37,8 @@ type Character struct {
 	StoryFlags map[string]bool
 	LifeGift string
 	LifeGiftUsed bool
+	AutoCombat bool
+	CombatModeSet bool
 }
 
 func New(name string) *Character {
@@ -49,7 +51,7 @@ func New(name string) *Character {
 		StoryFlags: map[string]bool{},
 		Reputation: map[string]int{"olympians":0,"delphi":0,"underworld":0},
 		Gold: 50,
-		LifeGift: "Thread Sense",
+		LifeGift: "Thread Sense", AutoCombat: true, CombatModeSet: true,
 		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}, item.StarterArmor()},
 	}
 }
