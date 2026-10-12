@@ -1114,3 +1114,18 @@ func TestCraftingRequiresForgeAndEnoughGold(t *testing.T) {
 		t.Fatal("crafting without sufficient gold should not consume ingredients")
 	}
 }
+
+
+func TestGuardReducesIncomingDamageAndIsConsumed(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = 100
+	s.Enemy = &combat.Enemy{Name: "Test Foe", Level: 1, HP: 50, MaxHP: 50, Damage: 20}
+	s.EnemyAggressive = true
+	s.guard()
+	if s.Guarding {
+		t.Fatal("guard should be consumed by the enemy's next turn")
+	}
+	if s.Character.HP < 90 || s.Character.HP > 100 {
+		t.Fatalf("guarded health = %d; expected at most 10 damage", s.Character.HP)
+	}
+}
