@@ -1056,6 +1056,12 @@ func (s *Session) move(direction string) {
 	if s.AutoMap { s.localMap() }
 	s.updateQuests()
 	s.look()
+	// Aggressive world encounters get an opening action as soon as they engage.
+	// Tutorial creatures explicitly set EnemyAggressive=false and never ambush.
+	if s.Enemy != nil && s.Enemy.HP > 0 && s.EnemyAggressive {
+		s.WriteLine("The %s lunges before you can settle into the room.", s.Enemy.Name)
+		s.enemyTurn()
+	}
 	if s.Character.RoomID == "village_square" && r.ID == "tutorial_gate" && s.Character.HasStoryFlag("tutorial_available") {
 		s.Character.SetStoryFlag("tutorial_complete")
 		s.Character.SetStoryFlag("tutorial_finished")
