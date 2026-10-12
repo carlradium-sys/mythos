@@ -100,6 +100,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.attack()
 	case "cast":
 		s.cast(parts[1:])
+	case "ql", "quicklist":
+		s.quicklist(parts[1:])
 	case "powers","power":
 		s.powers()
 	case "awaken":
