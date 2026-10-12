@@ -1079,6 +1079,7 @@ func TestConsumableUseCostsEnemyTurnDuringAggressiveCombat(t *testing.T) {
 func TestCraftingConsumesMaterialAndGoldAtTheForge(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "therons_forge"
+	s.Character.SetStoryFlag("forge_discovered")
 	s.Character.Gold = 100
 	s.Character.Inventory = append(s.Character.Inventory, item.Item{
 		Name: "harpy feather", Kind: "material",
@@ -1094,6 +1095,7 @@ func TestCraftingConsumesMaterialAndGoldAtTheForge(t *testing.T) {
 	}
 	if !foundArmor { t.Fatal("crafted armor was not added to inventory") }
 	if foundMaterial { t.Fatal("crafting ingredient was not consumed") }
+	if s.Character.Quests["forge_remembers"] != 1 { t.Fatal("crafting should complete The Forge Remembers quest") }
 }
 
 func TestCraftingRequiresForgeAndEnoughGold(t *testing.T) {
