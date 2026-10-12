@@ -1561,7 +1561,8 @@ func (s *Session) powers() {
 	s.WriteLine("\x1b[1;35m%s Domain — Divinity %d\x1b[0m",s.Character.Domain,s.Character.Divinity)
 	for _,p:=range power.ForDomain(s.Character.Domain) {
 		status:="LOCKED"; if s.Character.Level>=p.UnlockLevel {status="UNLOCKED"}
-		s.WriteLine("  %s — level %d — %s",p.Name,p.UnlockLevel,status)
+		s.WriteLine("  %s — level %d — %s — %d mana — %d base damage",p.Name,p.UnlockLevel,status,p.ManaCost,p.Damage)
+		s.WriteLine("    %s",p.Description)
 	}
 }
 
