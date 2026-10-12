@@ -397,6 +397,21 @@ does not award the same discovery reward every time you revisit it.
 
 Read descriptions carefully. Landmarks, unusual objects, NPC dialogue, and
 small details can hint at quests, secrets, and the consequences of a choice.`},
+	"status": {"status", `CHARACTER STATUS
+
+Use 'score' or 'stats' to review your character. HP is health; at zero you
+recover at the Gates of Olympus. Mana fuels divine powers. XP is accumulated
+experience. Level describes growth in this life, while Life and Rebirths
+track how often your soul has begun again.
+
+Attack contributes to weapon attacks. The equipped weapon supplies damage.
+Defense helps you avoid attacks, and armor increases your defense value.
+Gold pays for merchant goods and crafting. Domain identifies your awakened
+divine path; an empty domain means you have not chosen one. Divinity tracks
+the soul's growth across lives.
+
+For details, combine 'score' with 'inv', 'eq', 'powers', 'quests', 'journal',
+and 'soul'.`},
 	"crafting": {"crafting", `CRAFTING AT THERON'S FORGE
 
 Defeated monsters can leave materials. Materials are marked [MATERIAL] in
@@ -474,5 +489,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","guard","progression","economy","world","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
+	return []string{"start","movement","combat","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
 }
