@@ -967,3 +967,51 @@ func TestTalkByFirstNameAndNaturalQuestionAdvancesTutorial(t *testing.T) {
 		t.Fatalf("natural-language road question left tutorial at step %d", s.TutorialStep)
 	}
 }
+
+
+func TestTutorialPracticeEnemiesArePassiveAndPersistentlyDefeated(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("tutorial_available")
+	s.Character.RoomID = "tutorial_yard"
+	s.PrologueStep = 11
+	s.look()
+	if s.Enemy == nil || s.Enemy.Name != "Training Shade" {
+		t.Fatal("tutorial courtyard should spawn the training shade")
+	}
+	if s.EnemyAggressive {
+		t.Fatal("tutorial creature should not be aggressive before the player attacks")
+	}
+	hp := s.Character.HP
+	s.enemyTurn()
+	if s.Character.HP != hp {
+		t.Fatal("passive tutorial creature attacked without being attacked")
+	}
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	if !s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_yard") {
+		t.Fatal("defeated tutorial creature should be persisted as slain")
+	}
+	s.look()
+	if s.Enemy != nil {
+		t.Fatal("slain tutorial creature respawned after looking at the room")
+	}
+}
+
+func TestTutorialProgressIsSavedAsCharacterFlag(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("tutorial_available")
+	s.Character.RoomID = "tutorial_shore"
+	s.PrologueStep = 0
+	s.advancePrologueForCommand([]string{"look"})
+	if s.PrologueStep != 1 || !s.Character.HasStoryFlag("tutorial_lesson_1") {
+		t.Fatal("completing a tutorial lesson should persist the next lesson flag")
+	}
+}
+
+func TestTutorialRoomsAreLockedForCompletedCharacters(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("tutorial_complete")
+	if s.canEnter("tutorial_shore") {
+		t.Fatal("completed characters must not be allowed back into tutorial rooms")
+	}
+}
