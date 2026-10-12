@@ -75,6 +75,16 @@ AUTOMATIC OR MANUAL COMBAT
   combatmode          Display the current setting.
   combatmode on/off   Set the mode explicitly.
 
+COMBAT QUICKLIST
+  ql                  List your four quick slots.
+  ql set 1 Stormspark Assign a currently unlocked power.
+  ql 1 Harpy          Cast slot 1 at the current target.
+  ql clear 1          Clear a slot.
+
+Quicklist assignments are saved per character. Slots only contain powers
+unlocked in your current divine domain; casts still cost mana and use normal
+combat retaliation. Basic attacks continue automatically in automatic mode.
+
 Automatic combat is on by default. After your first attack, your character
 continues making basic weapon attacks every 2.5 seconds while you are in
 combat. You can still cast powers, use items, guard, or flee. The setting
