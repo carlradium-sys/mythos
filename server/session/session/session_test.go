@@ -1230,7 +1230,7 @@ func TestAutomaticCombatRoundAttacksAndRetaliates(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.AutoCombat = true
 	s.Character.HP = 100
-	s.Enemy = &combat.Enemy{Name: "Training Foe", Level: 1, HP: 500, MaxHP: 500, Damage: 1}
+	s.Enemy = &combat.Enemy{Name: "Training Foe", Level: 1, HP: 500, MaxHP: 500, Damage: 20}
 	s.EnemyAggressive = true
 	before := s.Enemy.HP
 	s.automaticCombatRound()
