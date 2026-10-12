@@ -264,7 +264,7 @@ func TestDialogueMatchesLongerNaturalLanguageTopics(t *testing.T) {
 
 func TestFactionStandingChangesNPCGreeting(t *testing.T) {
 	s := newChoiceTestSession(t)
-	s.Character.RoomID = "olympus_foothills"
+	s.Character.RoomID = "therons_forge"
 	n := s.currentNPC(1)
 	s.Character.Reputation["olympians"] = 3
 	if got := s.factionGreeting(n); got == "" {
@@ -598,6 +598,7 @@ func TestStyxRecoveryRestoresCharacterAtGates(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.HP = 1
 	s.Enemy = &combat.Enemy{Name: "Test Colossus", Level: 99, Damage: 1000, HP: 500, MaxHP: 500}
+	s.EnemyAggressive = true
 	s.enemyTurn()
 	if s.Character.HP != s.Character.MaxHP || s.Character.Mana != s.Character.MaxMana { t.Fatal("recovery did not restore resources") }
 	if s.Character.RoomID != "olympus_gates" || s.Enemy != nil { t.Fatalf("recovery state = room %q, enemy %#v", s.Character.RoomID, s.Enemy) }
