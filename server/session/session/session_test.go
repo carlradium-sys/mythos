@@ -1045,12 +1045,16 @@ func TestConsumableDoesNotOverhealOrWasteItemAtFullHealth(t *testing.T) {
 	if s.Character.HP != s.Character.MaxHP {
 		t.Fatalf("health = %d, want max %d", s.Character.HP, s.Character.MaxHP)
 	}
-	if len(s.Character.Inventory) != 3 {
-		t.Fatalf("inventory length = %d, expected starter items plus unused consumable", len(s.Character.Inventory))
+	if len(s.Character.Inventory) != 2 {
+		t.Fatalf("inventory length = %d, want 2 after effective use", len(s.Character.Inventory))
 	}
-	s.useItem([]string{"ambrosia", "draught"})
+
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "second ambrosia draught", Kind: "consumable", Healing: 45,
+	})
+	s.useItem([]string{"second", "ambrosia"})
 	if len(s.Character.Inventory) != 3 {
-		t.Fatal("an ineffective consumable should not be consumed")
+		t.Fatal("an ineffective consumable should not be consumed at full health")
 	}
 }
 
