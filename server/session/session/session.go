@@ -1438,6 +1438,10 @@ func (s *Session) flee() {
 		s.WriteLine("You are not in combat.")
 		return
 	}
+	if s.Character.HasStoryFlag("tutorial_available") && strings.HasPrefix(s.Character.RoomID, "tutorial_") {
+		s.WriteLine("This is a controlled practice encounter. Stay with the lesson and defeat the %s to continue.", s.Enemy.Name)
+		return
+	}
 	name := s.Enemy.Name
 	s.WriteLine("You turn to break away from the %s. It gets one last chance to strike.", name)
 	s.enemyTurn()
@@ -1445,6 +1449,7 @@ func (s *Session) flee() {
 		// The enemy's parting attack defeated the character; recovery already ran.
 		return
 	}
+	s.EncounterClearedRoom = s.Character.RoomID
 	s.Enemy = nil
 	s.Guarding = false
 	s.RelicWardSpent = false
