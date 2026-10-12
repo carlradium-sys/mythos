@@ -26,6 +26,7 @@ BASIC LOOP
   inventory             Review carried items and their bonuses.
   wield / wear <item>  Equip a weapon or armor.
   use <item>           Consume a healing or mana-restoration item.
+  craft <recipe>       Make gear at Theron's forge from monster materials.
   map                  Show the local map now.
   automap on/off       Show or hide the local map after movement.
   help <topic>         Read a detailed help file (try inventory or powers).
@@ -339,6 +340,23 @@ Stand near a merchant and use:
   buy <item>
 
 Purchased equipment is added to your inventory and can be equipped normally.`},
+	"crafting": {"crafting", `CRAFTING AT THERON'S FORGE
+
+Defeated monsters can leave materials. Materials are marked [MATERIAL] in
+your inventory and are ingredients, not weapons or armor. Carry the required
+ingredient and enough gold to Theron's Forge, east of the Olympus foothills,
+then use 'craft <recipe>'.
+
+RECIPES
+  craft stormguard cuirass — 1 Harpy Feather + 60 gold; rare armor (+7)
+  craft laurel spear      — 1 Satyr Horn + 55 gold; rare spear (23 damage)
+  craft manticore mantle  — 1 Manticore Spine + 90 gold; epic armor (+10)
+
+Crafting consumes one required material and the recipe's gold, then adds
+the finished item to your inventory. It never consumes ingredients or gold
+when the recipe requirements are not met. Equip the result with 'wear' or
+'wield' as appropriate. Type 'craft' at the forge to see recipes. Crafting
+is only available at Theron's Forge.`},
 	"consumables": {"consumables", `CONSUMABLES AND COMBAT RESOURCES
 
 Use 'inv' to see what you carry. Consumables display their healing or mana
