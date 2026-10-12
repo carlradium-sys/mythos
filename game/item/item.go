@@ -19,6 +19,8 @@ type Item struct {
 	Kind   string
 	Price  int
 	Relic  bool
+	Healing int
+	ManaRestore int
 }
 
 func (i Item) TierName() string {
