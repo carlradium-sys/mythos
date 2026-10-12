@@ -1202,3 +1202,54 @@ func TestTutorialPracticeEncounterCannotBeFled(t *testing.T) {
 		t.Fatal("tutorial encounter should not be marked cleared by fleeing")
 	}
 }
+
+func TestCombatModeCanToggleOnTheFly(t *testing.T) {
+	s := newChoiceTestSession(t)
+	if !s.Character.AutoCombat {
+		t.Fatal("new characters should start with automatic combat enabled")
+	}
+	s.combatMode(nil, true)
+	if s.Character.AutoCombat {
+		t.Fatal("pc should toggle automatic combat off")
+	}
+	s.combatMode([]string{"on"}, true)
+	if !s.Character.AutoCombat {
+		t.Fatal("pc on should enable automatic combat")
+	}
+	s.combatMode([]string{"off"}, false)
+	if s.Character.AutoCombat {
+		t.Fatal("combatmode off should disable automatic combat")
+	}
+	s.combatMode([]string{"toggle"}, false)
+	if !s.Character.AutoCombat {
+		t.Fatal("combatmode toggle should enable automatic combat")
+	}
+}
+
+func TestAutomaticCombatRoundAttacksAndRetaliates(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.AutoCombat = true
+	s.Character.HP = 100
+	s.Enemy = &combat.Enemy{Name: "Training Foe", Level: 1, HP: 500, MaxHP: 500, Damage: 1}
+	s.EnemyAggressive = true
+	before := s.Enemy.HP
+	s.automaticCombatRound()
+	if s.Enemy == nil || s.Enemy.HP >= before {
+		t.Fatal("automatic combat round should deal player weapon damage")
+	}
+	if s.Character.HP >= 100 {
+		t.Fatal("automatic combat round should include the enemy's response")
+	}
+}
+
+func TestManualCombatModeSuppressesAutomaticRound(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.AutoCombat = false
+	s.Enemy = &combat.Enemy{Name: "Training Foe", Level: 1, HP: 500, MaxHP: 500, Damage: 1}
+	s.EnemyAggressive = true
+	before := s.Enemy.HP
+	s.automaticCombatRound()
+	if s.Enemy.HP != before {
+		t.Fatal("manual combat mode should not auto-attack")
+	}
+}
