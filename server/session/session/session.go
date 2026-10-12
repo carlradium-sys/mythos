@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"fatewalker/game/character"
 	"fatewalker/game/combat"
@@ -59,11 +60,36 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	} else if s.TutorialStep < 16 {
 		s.tutorialHint()
 	}
+	// Read input asynchronously so the combat ticker can keep fighting while
+	// the player is deciding what to do, just like a traditional MUD.
+	commands := make(chan string)
+	done := make(chan struct{})
+	go func() {
+		defer close(commands)
+		for scanner.Scan() {
+			select {
+			case commands <- scanner.Text():
+			case <-done:
+				return
+			}
+		}
+	}()
+	defer close(done)
+	combatTicker := time.NewTicker(2500 * time.Millisecond)
+	defer combatTicker.Stop()
 	for {
-		s.WriteLine("")
-		s.WriteLine("%s",s.prompt())
-		if !scanner.Scan(){return}
-		if !s.handleCommand(strings.TrimSpace(scanner.Text())) {return}
+		select {
+		case line, ok := <-commands:
+			if !ok { return }
+			s.WriteLine("")
+			s.WriteLine("%s", s.prompt())
+			if !s.handleCommand(strings.TrimSpace(line)) { return }
+		case <-combatTicker.C:
+			if s.Character != nil && s.Character.AutoCombat && s.Enemy != nil && s.Enemy.HP > 0 && s.EnemyAggressive {
+				s.automaticCombatRound()
+				s.persist()
+			}
+		}
 	}
 }
 
@@ -136,6 +162,10 @@ func (s *Session) handleCommand(input string) bool {
 		s.useItem(parts[1:])
 	case "attack","kill","hit":
 		s.attack(parts[1:])
+	case "pc":
+		s.combatMode(parts[1:], true)
+	case "combatmode", "combat-mode":
+		s.combatMode(parts[1:], false)
 	case "cast":
 		s.cast(parts[1:])
 	case "powers","power":
@@ -207,14 +237,14 @@ func (s *Session) selectCharacter(scanner *bufio.Scanner) bool {
   case "create":
    if len(p)<2{s.WriteLine("Create which character?");continue}
    rec,err:=s.Account.NewCharacter(strings.Join(p[1:]," "));if err!=nil{s.WriteLine("Cannot create character: %s",err);continue}
-   s.Account.Characters=append(s.Account.Characters,*rec);s.persist();s.Character=rec.Character;s.WriteLine("%s created.",s.Character.Name);return true
+   s.Account.Characters=append(s.Account.Characters,*rec);s.persist();s.Character=rec.Character;s.initializeCombatMode();s.WriteLine("%s created.",s.Character.Name);return true
   case "delete":
    if len(p)!=2{s.WriteLine("Delete which character number?");continue}
    n,err:=strconv.Atoi(p[1]);if err!=nil||n<1||n>len(s.Account.Characters){s.WriteLine("Invalid character number.");continue}
    s.Account.Characters=append(s.Account.Characters[:n-1],s.Account.Characters[n:]...);s.persist();s.WriteLine("Character deleted.")
   default:
    n,err:=strconv.Atoi(p[0]);if err!=nil||n<1||n>len(s.Account.Characters){s.WriteLine("Choose a character number.");continue}
-   s.Character=s.Account.Characters[n-1].Character;s.Character.EnsureLifeGift();s.WriteLine("Welcome back, %s.",s.Character.Name);return true
+   s.Character=s.Account.Characters[n-1].Character;s.Character.EnsureLifeGift();s.initializeCombatMode();s.WriteLine("Welcome back, %s.",s.Character.Name);return true
   }
  }
 }
@@ -1110,21 +1140,77 @@ func (s *Session) attack(args []string) {
 	}
 	if len(args)>0{target:=strings.Join(args," ");if target!="1"&&!strings.Contains(strings.ToLower(s.Enemy.Name),target){s.WriteLine("Your current target is %s. Use 'attack 1' or 'attack %s'.",s.Enemy.Name,strings.ToLower(s.Enemy.Name));return}}
 	s.EnemyAggressive = true
+	s.basicAttackRound()
+}
+
+
+func (s *Session) initializeCombatMode() {
+	if s.Character == nil { return }
+	// Characters created before this preference existed default to automatic
+	// combat the first time they are loaded after this update.
+	if !s.Character.CombatModeSet {
+		s.Character.AutoCombat = true
+		s.Character.CombatModeSet = true
+	}
+}
+
+func (s *Session) combatMode(args []string, short bool) {
+	if s.Character == nil { return }
+	if len(args) == 0 {
+		if short {
+			s.Character.AutoCombat = !s.Character.AutoCombat
+			s.Character.CombatModeSet = true
+		} else {
+			s.WriteLine("Combat mode is %s. Use 'combatmode on/off' or 'pc' to toggle.", combatModeName(s.Character.AutoCombat))
+			return
+		}
+	} else {
+		switch strings.ToLower(args[0]) {
+		case "on", "auto", "automatic":
+			s.Character.AutoCombat = true
+		case "off", "manual", "nonautomatic", "non-automatic":
+			s.Character.AutoCombat = false
+		case "toggle":
+			s.Character.AutoCombat = !s.Character.AutoCombat
+		case "status", "show":
+			s.WriteLine("Combat mode is %s.", combatModeName(s.Character.AutoCombat))
+			return
+		default:
+			s.WriteLine("Use 'pc' to toggle, 'pc on/off', or 'combatmode on/off/status'.")
+			return
+		}
+		s.Character.CombatModeSet = true
+	}
+	s.WriteLine("Combat mode: %s. %s", combatModeName(s.Character.AutoCombat), map[bool]string{true:"Your attacks continue automatically after you engage an enemy.", false:"You must type attack for each basic attack."}[s.Character.AutoCombat])
+	s.persist()
+}
+
+func combatModeName(automatic bool) string {
+	if automatic { return "AUTOMATIC" }
+	return "MANUAL"
+}
+
+// automaticCombatRound is called by the live combat ticker while the player
+// is idle. It stops naturally when the enemy is defeated or the player falls.
+func (s *Session) automaticCombatRound() {
+	if s.Character == nil || !s.Character.AutoCombat || s.Enemy == nil || s.Enemy.HP <= 0 || !s.EnemyAggressive { return }
+	s.basicAttackRound()
+}
+
+// basicAttackRound resolves one player weapon swing and the enemy's response.
+func (s *Session) basicAttackRound() {
+	if s.Enemy == nil || s.Enemy.HP <= 0 { return }
 	w := s.currentWeapon()
 	result := combat.Attack(s.Character.Name, w, s.Enemy, s.Character.AttackPower())
 	if result.Damage > 0 {
 		totalDamage, bonus := s.applySoulRelicStrike(result.Damage)
 		if bonus > 0 {
 			s.Enemy.HP -= bonus
-			if s.Enemy.HP < 0 {
-				s.Enemy.HP = 0
-			}
+			if s.Enemy.HP < 0 { s.Enemy.HP = 0 }
 			result.Damage = totalDamage
 			result.Killed = s.Enemy.HP == 0
-			result.Text += fmt.Sprintf("\nThe %s answers your strike, adding %d damage. (%d total damage)", s.soulRelicStrikeName(), bonus, totalDamage)
-			if result.Killed {
-				result.Text += " The " + s.Enemy.Name + " collapses."
-			}
+			result.Text += fmt.Sprintf("\\nThe %s answers your strike, adding %d damage. (%d total damage)", s.soulRelicStrikeName(), bonus, totalDamage)
+			if result.Killed { result.Text += " The " + s.Enemy.Name + " collapses." }
 		}
 	}
 	s.WriteLine("%s", result.Text)
