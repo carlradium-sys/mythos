@@ -1015,3 +1015,58 @@ func TestTutorialRoomsAreLockedForCompletedCharacters(t *testing.T) {
 		t.Fatal("completed characters must not be allowed back into tutorial rooms")
 	}
 }
+
+
+func TestConsumableRestoresHealthAndIsConsumed(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	s.Character.HP = 40
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "laurel poultice", Kind: "consumable", Healing: 20,
+	})
+	s.useItem([]string{"laurel", "poultice"})
+	if s.Character.HP != 60 {
+		t.Fatalf("health after poultice = %d, want 60", s.Character.HP)
+	}
+	for _, it := range s.Character.Inventory {
+		if it.Name == "laurel poultice" {
+			t.Fatal("consumable remained in inventory after use")
+		}
+	}
+}
+
+func TestConsumableDoesNotOverhealOrWasteItemAtFullHealth(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = s.Character.MaxHP - 5
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "ambrosia draught", Kind: "consumable", Healing: 45,
+	})
+	s.useItem([]string{"ambrosia", "draught"})
+	if s.Character.HP != s.Character.MaxHP {
+		t.Fatalf("health = %d, want max %d", s.Character.HP, s.Character.MaxHP)
+	}
+	if len(s.Character.Inventory) != 3 {
+		t.Fatalf("inventory length = %d, expected starter items plus unused consumable", len(s.Character.Inventory))
+	}
+	s.useItem([]string{"ambrosia", "draught"})
+	if len(s.Character.Inventory) != 3 {
+		t.Fatal("an ineffective consumable should not be consumed")
+	}
+}
+
+func TestConsumableUseCostsEnemyTurnDuringAggressiveCombat(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = 20
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "ambrosia draught", Kind: "consumable", Healing: 45,
+	})
+	s.Enemy = &combat.Enemy{Name: "Practice Foe", Level: 1, HP: 50, MaxHP: 50, Damage: 10}
+	s.EnemyAggressive = true
+	s.useItem([]string{"ambrosia", "draught"})
+	if len(s.Character.Inventory) != 2 {
+		t.Fatal("used consumable should be removed from inventory")
+	}
+	if s.Character.HP >= 65 {
+		t.Fatalf("enemy did not take its turn after the item was used; HP = %d", s.Character.HP)
+	}
+}
