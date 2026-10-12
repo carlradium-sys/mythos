@@ -1064,7 +1064,7 @@ func TestConsumableUseCostsEnemyTurnDuringAggressiveCombat(t *testing.T) {
 	s.Character.Inventory = append(s.Character.Inventory, item.Item{
 		Name: "ambrosia draught", Kind: "consumable", Healing: 45,
 	})
-	s.Enemy = &combat.Enemy{Name: "Practice Foe", Level: 1, HP: 50, MaxHP: 50, Damage: 10}
+	s.Enemy = &combat.Enemy{Name: "Practice Foe", Level: 20, HP: 50, MaxHP: 50, Damage: 10}
 	s.EnemyAggressive = true
 	s.useItem([]string{"ambrosia", "draught"})
 	if len(s.Character.Inventory) != 2 {
