@@ -1343,9 +1343,9 @@ func (s *Session) enemyTurn() {
 		if result.Damage > 0 {
 			before := result.Damage
 			result.Damage = (result.Damage + 1) / 2
-			result.Text += fmt.Sprintf("\\nYou hold your guard and reduce the blow from %d to %d damage.", before, result.Damage)
+			result.Text += fmt.Sprintf("\nYou hold your guard and reduce the blow from %d to %d damage.", before, result.Damage)
 		} else {
-			result.Text += "\\nYour guard holds; the attack finds no opening."
+			result.Text += "\nYour guard holds; the attack finds no opening."
 		}
 		s.Guarding = false
 	}
