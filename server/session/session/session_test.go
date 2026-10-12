@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fatewalker/game/power"
 	"io"
 	"net"
 	"strings"
