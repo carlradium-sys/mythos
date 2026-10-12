@@ -1074,3 +1074,41 @@ func TestConsumableUseCostsEnemyTurnDuringAggressiveCombat(t *testing.T) {
 		t.Fatalf("enemy did not take its turn after the item was used; HP = %d", s.Character.HP)
 	}
 }
+
+
+func TestCraftingConsumesMaterialAndGoldAtTheForge(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "therons_forge"
+	s.Character.Gold = 100
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "harpy feather", Kind: "material",
+	})
+	s.craft([]string{"stormguard", "cuirass"})
+	if s.Character.Gold != 40 {
+		t.Fatalf("gold after crafting = %d, want 40", s.Character.Gold)
+	}
+	foundArmor, foundMaterial := false, false
+	for _, it := range s.Character.Inventory {
+		if it.Name == "stormguard cuirass" && it.Armor == 7 { foundArmor = true }
+		if it.Name == "harpy feather" { foundMaterial = true }
+	}
+	if !foundArmor { t.Fatal("crafted armor was not added to inventory") }
+	if foundMaterial { t.Fatal("crafting ingredient was not consumed") }
+}
+
+func TestCraftingRequiresForgeAndEnoughGold(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	s.Character.Gold = 100
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name:"harpy feather", Kind:"material"})
+	s.craft([]string{"stormguard", "cuirass"})
+	if s.Character.Gold != 100 || len(s.Character.Inventory) != 3 {
+		t.Fatal("crafting outside the forge should not consume gold or materials")
+	}
+	s.Character.RoomID = "therons_forge"
+	s.Character.Gold = 10
+	s.craft([]string{"stormguard", "cuirass"})
+	if s.Character.Gold != 10 || len(s.Character.Inventory) != 3 {
+		t.Fatal("crafting without sufficient gold should not consume ingredients")
+	}
+}
