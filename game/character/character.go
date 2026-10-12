@@ -27,6 +27,7 @@ type Character struct {
 	Weapon     string
 	Armor      string
 	Inventory  []item.Item
+	Quicklist  []string
 	Memories   []string
 	Scars      []string
 	Oaths      []string
