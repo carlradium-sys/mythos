@@ -77,17 +77,22 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	defer close(done)
 	combatTicker := time.NewTicker(2500 * time.Millisecond)
 	defer combatTicker.Stop()
+	s.WriteLine("")
+	s.WriteLine("%s", s.prompt())
 	for {
 		select {
 		case line, ok := <-commands:
 			if !ok { return }
+			if !s.handleCommand(strings.TrimSpace(line)) { return }
 			s.WriteLine("")
 			s.WriteLine("%s", s.prompt())
-			if !s.handleCommand(strings.TrimSpace(line)) { return }
 		case <-combatTicker.C:
 			if s.Character != nil && s.Character.AutoCombat && s.Enemy != nil && s.Enemy.HP > 0 && s.EnemyAggressive {
 				s.automaticCombatRound()
 				s.persist()
+				if s.Enemy != nil && s.Enemy.HP > 0 {
+					s.WriteLine("%s", s.prompt())
+				}
 			}
 		}
 	}
