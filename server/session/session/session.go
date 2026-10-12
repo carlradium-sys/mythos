@@ -125,6 +125,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.shop(parts[1:])
 	case "buy":
 		s.buy(parts[1:])
+	case "craft", "forge":
+		s.craft(parts[1:])
 	case "use", "drink", "consume":
 		s.useItem(parts[1:])
 	case "attack","kill","hit":
@@ -1144,6 +1146,66 @@ func (s *Session) cast(args []string) {
 	s.enemyTurn()
 }
 
+func (s *Session) craft(args []string) {
+	if s.Character.RoomID != "therons_forge" {
+		s.WriteLine("Crafting requires Theron's forge. Travel east from the Olympus foothills.")
+		return
+	}
+	if len(args) == 0 {
+		s.WriteLine("FORGE RECIPES")
+		s.WriteLine("  craft stormguard cuirass — 1 Harpy Feather + 60 gold; rare armor (+7)")
+		s.WriteLine("  craft laurel spear      — 1 Satyr Horn + 55 gold; rare spear (23 damage)")
+		s.WriteLine("  craft manticore mantle  — 1 Manticore Spine + 90 gold; epic armor (+10)")
+		return
+	}
+	name := strings.ToLower(strings.Join(args, " "))
+	type recipe struct {
+		name, material string
+		cost int
+		output item.Item
+	}
+	recipes := []recipe{
+		{name:"stormguard cuirass", material:"harpy feather", cost:60, output:item.Item{Name:"stormguard cuirass", Tier:item.Rare, Armor:7, Kind:"armor"}},
+		{name:"laurel spear", material:"satyr horn", cost:55, output:item.Item{Name:"laurel spear", Tier:item.Rare, Damage:23, Kind:"spear"}},
+		{name:"manticore mantle", material:"manticore spine", cost:90, output:item.Item{Name:"manticore mantle", Tier:item.Epic, Armor:10, Kind:"armor"}},
+	}
+	var chosen *recipe
+	for i := range recipes {
+		if strings.EqualFold(recipes[i].name, name) || strings.Contains(recipes[i].name, name) {
+			if chosen != nil {
+				s.WriteLine("That matches more than one recipe. Use the full recipe name.")
+				return
+			}
+			chosen = &recipes[i]
+		}
+	}
+	if chosen == nil {
+		s.WriteLine("Theron does not know that recipe. Type 'craft' to list available recipes.")
+		return
+	}
+	materialIndex := -1
+	for i, it := range s.Character.Inventory {
+		if strings.EqualFold(it.Name, chosen.material) {
+			materialIndex = i
+			break
+		}
+	}
+	if materialIndex < 0 {
+		s.WriteLine("You need 1 %s before Theron can make that.", chosen.material)
+		return
+	}
+	if s.Character.Gold < chosen.cost {
+		s.WriteLine("You need %d gold; you currently have %d.", chosen.cost, s.Character.Gold)
+		return
+	}
+	s.Character.Gold -= chosen.cost
+	s.Character.Inventory = append(s.Character.Inventory[:materialIndex], s.Character.Inventory[materialIndex+1:]...)
+	s.Character.Inventory = append(s.Character.Inventory, chosen.output)
+	s.WriteLine("Theron works the material over the anvil. Sparks leap like tiny stars.")
+	s.WriteLine("Crafted %s (%s). Gold remaining: %d.", chosen.output.Name, chosen.output.TierName(), s.Character.Gold)
+	s.Character.SetStoryFlag("crafted_" + strings.ReplaceAll(chosen.output.Name, " ", "_"))
+}
+
 func (s *Session) defeatEnemy(divine bool) {
 	if s.Enemy == nil {
 		return
@@ -1154,6 +1216,19 @@ func (s *Session) defeatEnemy(divine bool) {
 	}
 	s.advanceQuestKill(enemy.Name)
 	s.awardExperience(enemy.XP)
+	var material item.Item
+	switch enemy.Name {
+	case "Harpy":
+		material = item.Item{Name:"harpy feather", Tier:item.Common, Kind:"material"}
+	case "Satyr":
+		material = item.Item{Name:"satyr horn", Tier:item.Common, Kind:"material"}
+	case "Manticore":
+		material = item.Item{Name:"manticore spine", Tier:item.Uncommon, Kind:"material"}
+	}
+	if material.Name != "" {
+		s.Character.Inventory = append(s.Character.Inventory, material)
+		s.WriteLine("Harvested crafting material: %s.", material.Name)
+	}
 	if divine {
 		s.WriteLine("\x1b[1;32mDivine victory! +%d XP.\x1b[0m", enemy.XP)
 	} else {
