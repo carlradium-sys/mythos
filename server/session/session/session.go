@@ -1502,6 +1502,7 @@ func (s *Session) inventory() {
 		if it.Relic {
 			tags += "  \x1b[1;35m[SOUL RELIC]\x1b[0m"
 		}
+		if it.Kind == "material" { tags += "  \\x1b[1;33m[MATERIAL]\\x1b[0m" }
 		s.WriteLine("  %2d. %s%s%s%s", i+1, s.color(it.TierColor()), it.Name, s.color("0"), tags)
 		details := fmt.Sprintf("%s  |  Armor +%d  |  Damage +%d", it.TierName(), it.Armor, it.Damage)
 		if it.Healing > 0 { details += fmt.Sprintf("  |  Heals %d", it.Healing) }
