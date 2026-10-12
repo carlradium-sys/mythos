@@ -139,6 +139,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.awaken(parts[1:])
 	case "flee":
 		s.flee()
+	case "guard", "defend":
+		s.guard()
 	case "rest":
 		s.rest()
 	case "rebirth":
@@ -1209,6 +1211,8 @@ func (s *Session) craft(args []string) {
 	s.Character.SetStoryFlag("crafted_" + strings.ReplaceAll(chosen.output.Name, " ", "_"))
 	s.Character.SetStoryFlag("crafted_any_gear")
 	s.updateQuests()
+	s.Character.SetStoryFlag("crafted_any_gear")
+	s.updateQuests()
 }
 
 func (s *Session) defeatEnemy(divine bool) {
@@ -1321,9 +1325,29 @@ func (s *Session) applySoulRelicStrike(damage int) (int, int) {
 	return damage + bonus, bonus
 }
 
+func (s *Session) guard() {
+	if s.Enemy == nil || s.Enemy.HP <= 0 || !s.EnemyAggressive {
+		s.WriteLine("There is no aggressive enemy to defend against.")
+		return
+	}
+	s.Guarding = true
+	s.WriteLine("You brace behind your guard, watching the enemy's shoulders and waiting for the strike.")
+	s.enemyTurn()
+}
+
 func (s *Session) enemyTurn() {
 	if s.Enemy==nil || s.Enemy.HP<=0 || !s.EnemyAggressive{return}
 	result:=combat.EnemyAttack(s.Enemy,s.Character.DefensePower())
+	if s.Guarding {
+		if result.Damage > 0 {
+			before := result.Damage
+			result.Damage = (result.Damage + 1) / 2
+			result.Text += fmt.Sprintf("\\nYou hold your guard and reduce the blow from %d to %d damage.", before, result.Damage)
+		} else {
+			result.Text += "\\nYour guard holds; the attack finds no opening."
+		}
+		s.Guarding = false
+	}
 	if result.Damage>0 {
 		finalDamage, absorbed := s.applySoulRelicWard(result.Damage)
 		if absorbed > 0 {
