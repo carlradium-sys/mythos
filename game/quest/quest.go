@@ -11,6 +11,7 @@ type Quest struct {
  RewardXP int
  RequiredFlag string
  RequiredQuest string
+ CompletionFlag string
 }
 
 var all=[]Quest{
