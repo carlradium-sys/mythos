@@ -1,6 +1,11 @@
 package help
 
-import "strings"
+import (
+	"strings"
+	"fmt"
+
+	"fatewalker/game/power"
+)
 
 type Topic struct {
 	Name string
@@ -96,6 +101,16 @@ Every damaging action ends with its damage in parentheses:
 CAST
   cast Stormspark
   cast Thunderfall
+
+COMBAT QUICKLIST
+  ql                         Show your quicklist.
+  ql add <power>             Add an unlocked power.
+  ql remove <slot>           Remove a slot.
+  ql clear                   Clear the list.
+  ql 1 <target>              Cast slot 1 at that target.
+
+Example: ql add Stormspark, then ql 1 Harpy. The list is saved with
+your character, and only currently unlocked powers can be added.
 
 Divine powers cost mana and unlock as you grow.
 
@@ -546,8 +561,18 @@ your current story progress.`},
 func Get(name string) (Topic, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" { name = "start" }
-	t, ok := topics[name]
-	return t, ok
+	if t, ok := topics[name]; ok {
+		return t, true
+	}
+	compact := strings.ReplaceAll(name, " ", "")
+	for _, domain := range []power.Domain{power.Storm, power.Tide, power.Ember, power.Aegis} {
+		for _, p := range power.ForDomain(domain) {
+			if strings.ToLower(strings.ReplaceAll(p.Name, " ", "")) == compact {
+				return Topic{Name: p.Name, Text: fmt.Sprintf("%s\n\nDOMAIN: %s\nUNLOCK: Level %d\nMANA COST: %d\nBASE DAMAGE: %d\n\n%s\n\nUse 'awaken %s' at level 3 to choose this domain. Once your domain is awakened and you reach the unlock level, use:\n  cast %s\n\nYou can also place this power on your combat quicklist with:\n  ql add %s\n  ql 1 <target>", p.Name, p.Domain, p.UnlockLevel, p.ManaCost, p.Damage, p.Description, strings.ToLower(string(p.Domain)), p.Name, p.Name)}, true
+			}
+		}
+	}
+	return Topic{}, false
 }
 
 func Names() []string {
