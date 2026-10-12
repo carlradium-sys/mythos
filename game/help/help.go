@@ -62,6 +62,11 @@ ATTACK
 Your weapon determines the style of the attack. Combat descriptions can
 target different body locations and may trigger special effects.
 
+Aggressive creatures can strike as you enter their room. Passive creatures,
+including the tutorial's practice enemies, wait until you attack them first.
+A successful attack, divine cast, or consumable use gives an aggressive
+enemy a chance to retaliate. A consumable is not a free combat turn.
+
 Every damaging action ends with its damage in parentheses:
   Your bronze sword slashes the harpy's wing. (14 damage)
 
@@ -114,8 +119,13 @@ Use:
   i
 
 Your inventory lists carried items, their rarity, and their damage and armor
-bonuses. [EQUIPPED] marks gear currently in use; [SOUL RELIC] marks a relic
-that persists through rebirth.
+bonuses. Consumables also show their healing or mana restoration values.
+[EQUIPPED] marks gear currently in use; [SOUL RELIC] marks a relic that
+persists through rebirth.
+
+Use 'use <item name>' to consume a healing or mana-restoration item. An item
+is not wasted if it would have no effect because you are already at full
+health or mana. During aggressive combat, the enemy acts after the item use.
 
 EQUIPPING ITEMS
   wield <item name>   Equip a weapon.
