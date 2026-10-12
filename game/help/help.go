@@ -1,6 +1,11 @@
 package help
 
-import "strings"
+import (
+	"strings"
+	"fmt"
+
+	"fatewalker/game/power"
+)
 
 type Topic struct {
 	Name string
@@ -263,10 +268,23 @@ You may simply discover the story in a different order.`},
 func Get(name string) (Topic, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" { name = "start" }
-	t, ok := topics[name]
-	return t, ok
+	if t, ok := topics[name]; ok {
+		return t, true
+	}
+
+	// Spell help is generated from the same power catalogue used by combat,
+	// so help remains accurate as domains gain new powers.
+	compact := strings.ReplaceAll(name, " ", "")
+	for _, domain := range []power.Domain{power.Storm, power.Tide, power.Ember, power.Aegis} {
+		for _, p := range power.ForDomain(domain) {
+			if strings.ToLower(strings.ReplaceAll(p.Name, " ", "")) == compact {
+				return Topic{Name: p.Name, Text: fmt.Sprintf("%s\n\nDOMAIN: %s\nUNLOCK: Level %d\nMANA COST: %d\nBASE DAMAGE: %d\n\n%s\n\nUse 'awaken %s' at level 3 to choose this domain. Once your domain is awakened and you reach the unlock level, use:\n  cast %s\n\nYou can also place this power on your combat quicklist with:\n  ql add %s\n  ql 1 <target>", p.Name, p.Domain, p.UnlockLevel, p.ManaCost, p.Damage, p.Description, strings.ToLower(string(p.Domain)), p.Name, p.Name)}, true
+			}
+		}
+	}
+	return Topic{}, false
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","soul","invoke","shop","buy","tutorial"}
+	return []string{"start","movement","combat","powers","items","story","journal","quests","rebirth","talk","soul","invoke","shop","buy","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
 }
