@@ -69,6 +69,16 @@ CAST
   cast Stormspark
   cast Thunderfall
 
+COMBAT QUICKLIST
+  ql                         Show your quicklist.
+  ql add <power>             Add an unlocked power.
+  ql remove <slot>           Remove a slot.
+  ql clear                   Clear the list.
+  ql 1 <target>              Cast slot 1 at that target.
+
+Example: ql add Stormspark, then ql 1 Harpy. The list is saved with
+your character, and only currently unlocked powers can be added.
+
 Divine powers cost mana and unlock as you grow.
 
 FLEE
