@@ -28,6 +28,7 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Tactical item use: aggressive enemies take their turn after you consume a supply
 - Consumable use is bounded by maximum health/mana and ineffective use does not waste the item
 - Monster materials and a forge crafting loop with three equipment recipes
+- Story conversations with Charon, an Asphodel shade, a modern museum curator, and the Lunar Oracle
 
 ## Run a local demo (Termux or Linux)
 
