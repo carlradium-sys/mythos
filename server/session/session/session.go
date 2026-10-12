@@ -125,6 +125,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.shop(parts[1:])
 	case "buy":
 		s.buy(parts[1:])
+	case "use", "drink", "consume":
+		s.useItem(parts[1:])
 	case "attack","kill","hit":
 		s.attack(parts[1:])
 	case "cast":
@@ -1259,6 +1261,53 @@ func (s *Session) enemyTurn() {
 	}
 }
 
+func (s *Session) useItem(args []string) {
+	if len(args) == 0 {
+		s.WriteLine("Use what? Try 'inv' to inspect your pack, then 'use <item name>'.")
+		return
+	}
+	query := strings.ToLower(strings.Join(args, " "))
+	selected := -1
+	var matches []int
+	for i, it := range s.Character.Inventory {
+		if it.Healing <= 0 && it.ManaRestore <= 0 { continue }
+		name := strings.ToLower(it.Name)
+		if name == query { selected = i; break }
+		if strings.Contains(name, query) { matches = append(matches, i) }
+	}
+	if selected < 0 && len(matches) == 1 { selected = matches[0] }
+	if selected < 0 && len(matches) > 1 {
+		s.WriteLine("Several consumables match '%s'. Choose one by its full name:", query)
+		for _, i := range matches { s.WriteLine("  %d) %s", i+1, s.Character.Inventory[i].Name) }
+		return
+	}
+	if selected < 0 {
+		s.WriteLine("You do not carry a usable consumable matching '%s'. Check 'inv' or visit a merchant.", query)
+		return
+	}
+	it := s.Character.Inventory[selected]
+	healed, restored := 0, 0
+	if it.Healing > 0 {
+		healed = it.Healing
+		if s.Character.HP+healed > s.Character.MaxHP { healed = s.Character.MaxHP-s.Character.HP }
+		if healed < 0 { healed = 0 }
+		s.Character.HP += healed
+	}
+	if it.ManaRestore > 0 {
+		restored = it.ManaRestore
+		if s.Character.Mana+restored > s.Character.MaxMana { restored = s.Character.MaxMana-s.Character.Mana }
+		if restored < 0 { restored = 0 }
+		s.Character.Mana += restored
+	}
+	if healed == 0 && restored == 0 {
+		s.WriteLine("%s would have no effect right now.", it.Name)
+		return
+	}
+	s.Character.Inventory = append(s.Character.Inventory[:selected], s.Character.Inventory[selected+1:]...)
+	s.WriteLine("You use %s: restored %d health and %d mana. The item is consumed.", it.Name, healed, restored)
+	if s.Enemy != nil && s.Enemy.HP > 0 && s.EnemyAggressive { s.enemyTurn() }
+}
+
 func (s *Session) rest() {
 	if s.Enemy != nil && s.Enemy.HP > 0 {
 		s.WriteLine("You cannot rest while %s is still hunting you.", s.Enemy.Name)
@@ -1373,7 +1422,10 @@ func (s *Session) inventory() {
 			tags += "  \x1b[1;35m[SOUL RELIC]\x1b[0m"
 		}
 		s.WriteLine("  %2d. %s%s%s%s", i+1, s.color(it.TierColor()), it.Name, s.color("0"), tags)
-		s.WriteLine("      %s  |  Armor +%d  |  Damage +%d", it.TierName(), it.Armor, it.Damage)
+		details := fmt.Sprintf("%s  |  Armor +%d  |  Damage +%d", it.TierName(), it.Armor, it.Damage)
+		if it.Healing > 0 { details += fmt.Sprintf("  |  Heals %d", it.Healing) }
+		if it.ManaRestore > 0 { details += fmt.Sprintf("  |  Restores %d mana", it.ManaRestore) }
+		s.WriteLine("      %s", details)
 	}
 	s.WriteLine("")
 	s.WriteLine("  Equip: wield <name>  |  Armor: wear <name>")
