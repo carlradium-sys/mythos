@@ -58,3 +58,35 @@ func TestMapNamesCurrentAndFutureLocations(t *testing.T) {
 		t.Fatal("map should use named locations rather than anonymous placeholders")
 	}
 }
+
+
+func TestStoryNPCsExistAcrossEras(t *testing.T) {
+	w := NewWorld()
+	cases := []struct {
+		room string
+		id string
+		keyword string
+	}{
+		{"styx_shore", "charon", "memory"},
+		{"fields_asphodel", "asphodel_shade", "judgment"},
+		{"modern_museum", "museum_curator", "artifact"},
+		{"future_moon", "lunar_oracle", "rebirth"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.id, func(t *testing.T) {
+			var found *NPC
+			for _, npc := range w.NPCs[tc.room] {
+				if npc.ID == tc.id {
+					found = npc
+					break
+				}
+			}
+			if found == nil {
+				t.Fatalf("expected story NPC %q in room %q", tc.id, tc.room)
+			}
+			if _, text := found.MatchDialogue(tc.keyword); text == "" {
+				t.Errorf("NPC %q has no dialogue for keyword %q", tc.id, tc.keyword)
+			}
+		})
+	}
+}
