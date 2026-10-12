@@ -472,7 +472,7 @@ func (s *Session) tutorial() {
 	s.WriteLine("MERCHANTS    inspect a merchant, use 'shop 1' to view wares, and 'buy 1' to purchase the first item.")
 	s.WriteLine("DIVINITY     at level 3 choose one: 'awaken storm', 'awaken tide', 'awaken ember', or 'awaken aegis'.")
 	s.WriteLine("REBIRTH      at level 10, use 'rebirth' to cross the Styx into a new era.")
-	s.WriteLine("The guide remains available at any time. Each lesson advances after its required action; the tutorial is intentionally paced.")
+	s.WriteLine("This field guide remains available at any time; the one-time tutorial location itself cannot be revisited after departure.")
 }
 
 func (s *Session) storyIntro() {
