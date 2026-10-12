@@ -1087,8 +1087,8 @@ func TestCraftingConsumesMaterialAndGoldAtTheForge(t *testing.T) {
 		Name: "harpy feather", Kind: "material",
 	})
 	s.craft([]string{"stormguard", "cuirass"})
-	if s.Character.Gold != 40 {
-		t.Fatalf("gold after crafting = %d, want 40", s.Character.Gold)
+	if s.Character.Gold != 57 {
+		t.Fatalf("gold after crafting and quest reward = %d, want 57", s.Character.Gold)
 	}
 	foundArmor, foundMaterial := false, false
 	for _, it := range s.Character.Inventory {
