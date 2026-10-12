@@ -27,6 +27,7 @@ type Session struct {
  World *world.World
  Enemy *combat.Enemy
  EnemyAggressive bool
+ Guarding bool
  PrologueStep int
  RelicWardSpent bool
  RelicStrikeSpent bool
