@@ -1130,3 +1130,39 @@ func TestGuardReducesIncomingDamageAndIsConsumed(t *testing.T) {
 		t.Fatalf("guarded health = %d; expected at most 10 damage", s.Character.HP)
 	}
 }
+
+
+// TestTutorialSatyrStaysDefeatedAndAllowsThePlayerToLeave verifies the
+// tutorial encounter cannot respawn after victory and block the south exit.
+func TestTutorialSatyrStaysDefeatedAndAllowsThePlayerToLeave(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_grove"
+	s.Character.SetStoryFlag("tutorial_available")
+	s.PrologueStep = 20
+	s.Enemy = &combat.Enemy{
+		Name: "Practice Satyr", HP: 0, MaxHP: 28, Level: 1, Damage: 3, XP: 0,
+	}
+
+	s.defeatEnemy(false)
+	if !s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_grove") {
+		t.Fatal("defeating the practice satyr should record the tutorial victory")
+	}
+
+	s.advancePrologueForCommand([]string{"attack", "satyr"})
+	if s.PrologueStep != 21 {
+		t.Fatalf("prologue step after satyr victory = %d, want 21", s.PrologueStep)
+	}
+	s.look()
+	if s.Enemy != nil {
+		t.Fatalf("practice satyr respawned after victory: %#v", s.Enemy)
+	}
+
+	s.advancePrologueForCommand([]string{"look"})
+	if s.PrologueStep != 22 {
+		t.Fatalf("prologue step after looking at cleared grove = %d, want 22", s.PrologueStep)
+	}
+	s.move("south")
+	if s.Character.RoomID != "tutorial_yard" {
+		t.Fatalf("room after leaving cleared grove = %q, want tutorial_yard", s.Character.RoomID)
+	}
+}
