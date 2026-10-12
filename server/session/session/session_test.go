@@ -1166,3 +1166,39 @@ func TestTutorialSatyrStaysDefeatedAndAllowsThePlayerToLeave(t *testing.T) {
 		t.Fatalf("room after leaving cleared grove = %q, want tutorial_yard", s.Character.RoomID)
 	}
 }
+
+
+func TestFleeDoesNotImmediatelyRespawnEnemy(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "oracle_path"
+	s.Character.HP = s.Character.MaxHP
+	s.Enemy = &combat.Enemy{Name: "Satyr", Level: 1, HP: 40, MaxHP: 40, Damage: 1}
+	s.EnemyAggressive = true
+
+	s.flee()
+	if s.Enemy != nil {
+		t.Fatalf("enemy should be cleared after a successful escape, got %#v", s.Enemy)
+	}
+	if s.EncounterClearedRoom != "oracle_path" {
+		t.Fatalf("cleared encounter room = %q, want oracle_path", s.EncounterClearedRoom)
+	}
+	s.look()
+	if s.Enemy != nil {
+		t.Fatalf("enemy respawned immediately after flee: %#v", s.Enemy)
+	}
+}
+
+func TestTutorialPracticeEncounterCannotBeFled(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_grove"
+	s.Character.SetStoryFlag("tutorial_available")
+	s.Enemy = &combat.Enemy{Name: "Practice Satyr", Level: 1, HP: 20, MaxHP: 28, Damage: 3}
+
+	s.flee()
+	if s.Enemy == nil || s.Enemy.HP != 20 {
+		t.Fatal("fleeing should not remove or damage the controlled tutorial opponent")
+	}
+	if s.EncounterClearedRoom == "tutorial_grove" {
+		t.Fatal("tutorial encounter should not be marked cleared by fleeing")
+	}
+}
