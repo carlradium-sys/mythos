@@ -88,6 +88,41 @@ func NewWorld() *World {
 	merchant.Shop=[]item.Item{{Name:"city knife",Tier:item.Common,Damage:14,Kind:"sword",Price:60},{Name:"reinforced jacket",Tier:item.Uncommon,Armor:4,Kind:"armor",Price:80},{Name:"ambrosia draught",Tier:item.Uncommon,Kind:"consumable",Price:40,Healing:45},{Name:"blue lotus tonic",Tier:item.Common,Kind:"consumable",Price:28,ManaRestore:20},{Name:"laurel poultice",Tier:item.Common,Kind:"consumable",Price:20,Healing:20}}
 	w.NPCs["modern_crossroads"]=append(w.NPCs["modern_crossroads"],merchant)
 	expandWorld(w.Rooms)
+
+	// Story NPCs live in later regions so exploration reveals lore, not just
+	// room descriptions. These figures are guides and witnesses, not required
+	// combat encounters.
+	charon := NewNPC("charon", "Charon, Ferryman of the Styx", "A narrow boat waits at the bank. The ferryman's face is hidden beneath a hood sewn with tiny silver stars; his pole never touches the riverbed.", 20, 999, 0, 0)
+	charon.Faction = "underworld"
+	charon.AddDialogue([]string{"hello", "greeting"}, `Charon holds out one pale hand. "A fare is not always paid in coin. Tell me what you are willing to remember."`)
+	charon.AddDialogue([]string{"fare", "coin", "pay"}, `"Gold buys passage for the dead. The living pay in certainty. You may cross, but you will not cross unchanged."`)
+	charon.AddDialogue([]string{"memory", "remember", "rebirth"}, `The ferryman taps the black thread at your wrist. "The river takes the shape of what you surrender. Keep one true memory, and it may become a shore when all others vanish."`)
+	charon.AddDialogue([]string{"cerberus", "hound", "tartarus"}, `"Three heads guard one gate, but each listens for a different fear. Do not mistake a single blade for three answers."`)
+	w.NPCs["styx_shore"] = append(w.NPCs["styx_shore"], charon)
+
+	shade := NewNPC("asphodel_shade", "The Unremembered Shade", "A translucent figure kneels among pale flowers, turning an old clay token over and over as if its markings might restore a lost name.", 8, 100, 0, 0)
+	shade.Faction = "underworld"
+	shade.AddDialogue([]string{"hello", "greeting"}, `The shade looks up. "I remember a doorway, a song, and someone calling me home. The rest has gone into the water."`)
+	shade.AddDialogue([]string{"name", "memory", "remember"}, `"If you meet a living person who has forgotten you, do not call it proof that you never mattered. The river is a thief, not a judge."`)
+	shade.AddDialogue([]string{"judgment", "judge", "asphodel"}, `"The judges weigh what you chose when another choice was possible. They cannot weigh what you never knew."`)
+	w.NPCs["fields_asphodel"] = append(w.NPCs["fields_asphodel"], shade)
+
+	curator := NewNPC("museum_curator", "Dr. Eleni Vassos", "A night curator stands beside a glass case whose bronze contents fog the inside of the glass despite the cold gallery.", 5, 100, 0, 0)
+	curator.Faction = "mortals"
+	curator.AddDialogue([]string{"hello", "greeting"}, `"The museum is closed," Eleni says, without looking away from the case. "For ordinary visitors, at least. You have the expression of someone an artifact has been waiting for."`)
+	curator.AddDialogue([]string{"artifact", "bronze", "relic"}, `"The catalogue calls it a votive mirror from the fifth century BCE. The mirror calls itself a door. I stopped correcting it after the reflection began moving first."`)
+	curator.AddDialogue([]string{"thread", "fate", "past"}, `Eleni lowers her voice. "We have records of people appearing in portraits centuries apart, always with the same dark thread at the wrist. The official explanation is restoration error."`)
+	curator.AddDialogue([]string{"metro", "tunnel", "styx"}, `"There is a service stair beneath the old station. It is not on any city plan. Every camera pointed at it records the same frame: black water and a single coin."`)
+	w.NPCs["modern_museum"] = append(w.NPCs["modern_museum"], curator)
+
+	oracle := NewNPC("lunar_oracle", "The Oracle Beneath the Moon", "A blind oracle sits inside a sanctuary carved into pale lunar stone. Constellations drift across the ceiling although no sky lies above it.", 30, 999, 0, 0)
+	oracle.Faction = "olympians"
+	oracle.AddDialogue([]string{"hello", "greeting"}, `"You have arrived before your own beginning," the oracle says. "That is why the stars cannot agree on your name."`)
+	oracle.AddDialogue([]string{"future", "fate", "rebirth"}, `"Each life is not a rung on a ladder. It is a world that could have been. Carry your choices forward, and the worlds will begin to answer one another."`)
+	oracle.AddDialogue([]string{"moon", "lunar", "prophecy"}, `The oracle traces a constellation that resembles your black thread. "When the last dawn comes, the sea will cover the oldest road. Find the shore that remembers the first choice."`)
+	oracle.AddDialogue([]string{"past", "memory", "lives"}, `"Your former selves are not ghosts to command. They are witnesses. Listen, and you may learn why one of them refused the gods."`)
+	w.NPCs["future_moon"] = append(w.NPCs["future_moon"], oracle)
+
 	return w
 }
 
