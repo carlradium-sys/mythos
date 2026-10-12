@@ -1,6 +1,11 @@
 package help
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"fatewalker/game/power"
+)
 
 type Topic struct {
 	Name string
@@ -546,10 +551,27 @@ your current story progress.`},
 func Get(name string) (Topic, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" { name = "start" }
-	t, ok := topics[name]
-	return t, ok
+	if t, ok := topics[name]; ok {
+		return t, true
+	}
+
+	// Resolve spell help from the combat power catalogue so that the details
+	// shown here remain aligned with the actual ability definitions.
+	compact := strings.ReplaceAll(name, " ", "")
+	for _, domain := range []power.Domain{power.Storm, power.Tide, power.Ember, power.Aegis} {
+		for _, p := range power.ForDomain(domain) {
+			if strings.ToLower(strings.ReplaceAll(p.Name, " ", "")) != compact {
+				continue
+			}
+			return Topic{Name: p.Name, Text: fmt.Sprintf(
+				"%s\n\nDOMAIN: %s\nUNLOCK LEVEL: %d\nMANA COST: %d\nBASE DAMAGE: %d\n\n%s\n\nCASTING\n  cast %s\n\nCOMBAT QUICKLIST\n  ql set 1 %s\n  ql 1 <target>\n\nThe power must be unlocked for your current domain and character level. Casting consumes its normal mana cost and follows normal combat rules.",
+				p.Name, p.Domain, p.UnlockLevel, p.ManaCost, p.Damage, p.Description, p.Name, p.Name,
+			), true
+		}
+	}
+	return Topic{}, false
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
+	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
 }
