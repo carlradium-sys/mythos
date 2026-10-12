@@ -1,5 +1,63 @@
 # Fatewalker Player Tutorial
 
+## The First Thread: one-time guided prologue (about 30 minutes)
+
+Every newly created character begins in an isolated, safe tutorial zone. This is a one-time part of character creation, not a normal world region. The game saves each completed lesson. Logging out and returning resumes the prologue; it does not reset it. After the final gate opens and you leave, the tutorial is permanently closed for that character and has no route back from the main world.
+
+Read the room text and each instruction rather than racing through commands. A first playthrough should take roughly 25–35 minutes if you read descriptions, talk to the guide, and read the combat help.
+
+### The 39 guided lessons
+
+1. **Orient yourself:** type `look`. Read the room description slowly; it establishes where you are and what matters.
+2. **Read your character sheet:** type `score`. Learn health, mana, level, experience, life, and era.
+3. **Inspect your pack:** type `inv`. Inventory means everything carried, not necessarily everything equipped.
+4. **Move to the shelter:** type `north`. Directions follow exits, not coordinates.
+5. **Inspect the guide:** type `look Ianthe`. Inspecting a named person reveals more than the room summary.
+6. **Greet the guide:** type `talk Ianthe hello`. Dialogue is topic-based and accepts meaningful keywords.
+7. **Ask about movement:** type `talk Ianthe movement`. Learn the difference between previewing a route and taking it.
+8. **List exits:** type `exits`. This gives precise route names and destinations.
+9. **Read the local map:** type `map`. The map is an overview; exits is the precise route list.
+10. **Preview a destination:** type `look east`. You can inspect a connected room without entering it.
+11. **Enter the courtyard:** type `east`. Read the new room heading and description.
+12. **Inspect the training shade:** type `look Training Shade`. Identify a creature before engaging it.
+13. **Fight the training shade:** type `attack Training Shade`. Combat text reports damage. It is passive until attacked.
+14. **Verify your pack:** type `inv`. Checking inventory or looking around must never resurrect a slain tutorial monster.
+15. **Check equipped gear:** type `eq`. Your weapon affects attacks; armor contributes to defense.
+16. **Practice recovery:** type `rest`. Rest restores health and mana when you are safe.
+17. **Enable automatic mapping:** type `automap on`. The local map appears after successful movement.
+18. **Disable automatic mapping:** type `automap off`. Control how much map output you want.
+19. **Enter the grove:** type `north`. The next creature is wary but not aggressive.
+20. **Inspect the satyr:** type `look Satyr`. Inspection is information gathering, not an attack.
+21. **Choose to engage:** type `attack Satyr`. It defends itself only after you strike first.
+22. **Confirm persistence:** type `look`. The slain satyr stays defeated for this character.
+23. **Return to the courtyard:** type `south`. Retracing a route is normal exploration.
+24. **Enter the storehouse:** type `east`. Review your equipment and help systems before leaving.
+25. **Review inventory:** type `inv`. Read item names, rarity, and bonuses.
+26. **Review equipment:** type `eq`. Know which weapon and armor are active.
+27. **Read combat help:** type `help combat`. Help files explain mechanics in more depth than short prompts.
+28. **View the wider map:** type `worldmap`. Later destinations may be locked by life, level, or story progression.
+29. **Return to the courtyard:** type `west`. Move through exits rather than teleporting.
+30. **Return to the shelter:** type `west`. NPCs shown by `look` can be targeted by name or number.
+31. **Ask about combat:** type `talk Ianthe combat`. Ask an NPC for advice instead of guessing.
+32. **Review quests:** type `quests`. Quests track objectives, progress, rewards, and locked story branches.
+33. **Read the journal:** type `journal`. The journal offers direction, not a forced checklist.
+34. **Check progress again:** type `score`. Level 3 opens domain awakening; level 10 opens rebirth.
+35. **Revisit the courtyard:** type `east`.
+36. **Revisit the storehouse:** type `east`.
+37. **Approach the gate:** type `north`. It remains sealed until the review lessons are complete.
+38. **Preview the real world:** type `look north`. This reveals Asterion Village without moving you.
+39. **Depart:** type `north`. The gate is one-way. Completion is saved, and the tutorial cannot be revisited.
+
+### Tutorial combat rules
+
+Tutorial creatures have persistent defeat flags keyed to their tutorial room. Once slain, the flag prevents that creature from spawning again for that character, including after logout and reconnect. Tutorial creatures do not initiate attacks; they become aggressive only after the player attacks them. These rules are intentionally safer than ordinary hostile encounters in the main world.
+
+### After the prologue
+
+Use `look` to read a room, `look <target>` to inspect a person or creature, `exits` to list routes, `map` for local navigation, `inv` for carried items, `eq` for equipped gear, `quests` for objectives, and `journal` for story direction. Use `help list` to see detailed help topics. The sandbox opens up after the one-way gate, but the tutorial remains closed.
+
+---
+
 Fatewalker is a Greek mythic fantasy about a soul that returns from death carrying a black thread tied to its fate. The gods are real, monsters still haunt ancient roads, and rebirth can carry the same soul into modern Athens and later ages. Choices, memories, and consequences persist across lives.
 
 The first journey begins in Asterion Village beneath Mount Olympus. Damon helps explain why you have returned. The opening tutorial is deliberately paced: it presents one action at a time, then gives the next instruction after you complete the current one. Use `tutorial` or `help <topic>` whenever you want a refresher.
