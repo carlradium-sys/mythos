@@ -1430,11 +1430,22 @@ func (s *Session) rest() {
 }
 
 func (s *Session) flee() {
-	if s.Enemy==nil || s.Enemy.HP<=0 {s.WriteLine("You are not in combat.");return}
-	s.Enemy=nil
+	if s.Enemy == nil || s.Enemy.HP <= 0 {
+		s.WriteLine("You are not in combat.")
+		return
+	}
+	name := s.Enemy.Name
+	s.WriteLine("You turn to break away from the %s. It gets one last chance to strike.", name)
+	s.enemyTurn()
+	if s.Enemy == nil {
+		// The enemy's parting attack defeated the character; recovery already ran.
+		return
+	}
+	s.Enemy = nil
+	s.Guarding = false
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
-	s.WriteLine("You break away from the battle and retreat. Sometimes survival is the wiser path.")
+	s.WriteLine("You escape the %s and retreat. You gain no victory reward; survival is the prize.", name)
 }
 
 func (s *Session) currentWeapon() item.Item {
