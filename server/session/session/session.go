@@ -95,7 +95,11 @@ func (s *Session) handleCommand(input string) bool {
 		s.localMap()
 		if s.TutorialStep == 8 { s.advanceTutorial(9) }
 	case "automap", "mapauto", "maptoggle":
-		s.autoMap(parts[1:])
+		if parts[0] == "maptoggle" && len(parts) == 1 {
+			s.autoMap([]string{"toggle"})
+		} else {
+			s.autoMap(parts[1:])
+		}
 	case "worldmap", "world-map":
 		s.WriteLine(s.World.MapText(s.Character.RoomID))
 	case "exits":
@@ -922,7 +926,7 @@ func (s *Session) lookTarget(args []string) {
 		if strings.Contains(name, target) || strings.Contains(target, name) || target == "enemy" || target == "threat" || target == "mob" {
 			s.WriteLine("\x1b[1;33m%s\x1b[0m", s.Enemy.Name)
 			if s.Enemy.Description != "" { s.WriteLine("%s", s.Enemy.Description) }
-			if s.TutorialStep == 10 && s.Enemy.Name == "Harpy" { s.Character.SetStoryFlag("tutorial_enemy_inspected") }
+			if (s.TutorialStep == 10 || s.TutorialStep == 11) && s.Enemy.Name == "Harpy" { s.Character.SetStoryFlag("tutorial_enemy_inspected") }
 			s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
 			s.WriteLine("It is hostile. Use 'attack 1' or 'attack %s' to engage.", strings.ToLower(s.Enemy.Name))
 			return
