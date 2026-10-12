@@ -79,13 +79,13 @@ func NewWorld() *World {
 	armorer.Faction = "olympians"
 	armorer.AddDialogue([]string{"hello","greeting"}, `Theron nods. "If that sword remembers you, traveler, perhaps I should make it worth remembering."`)
 	armorer.AddDialogue([]string{"thread","fate"}, `"I've seen strange metal before. Never metal that seemed to know its owner's name."`)
-	armorer.Shop=[]item.Item{{Name:"ash spear",Tier:item.Uncommon,Damage:16,Kind:"spear",Price:75},{Name:"bronze aegis",Tier:item.Uncommon,Armor:5,Kind:"armor",Price:90}}
+	armorer.Shop=[]item.Item{{Name:"ash spear",Tier:item.Uncommon,Damage:16,Kind:"spear",Price:75},{Name:"bronze aegis",Tier:item.Uncommon,Armor:5,Kind:"armor",Price:90},{Name:"ambrosia draught",Tier:item.Uncommon,Kind:"consumable",Price:35,Healing:45},{Name:"blue lotus tonic",Tier:item.Common,Kind:"consumable",Price:25,ManaRestore:20},{Name:"laurel poultice",Tier:item.Common,Kind:"consumable",Price:18,Healing:20}}
 	w.NPCs["therons_forge"]=append(w.NPCs["therons_forge"],armorer)
 	merchant:=NewNPC("athens_vendor","Myrto","A modern Athens street vendor watches the crowds with an amused smile. Ancient coins hang from her stall beside things that absolutely should not exist.",2,80,5,0)
 	merchant.Faction = "underworld"
 	merchant.AddDialogue([]string{"hello","greeting"}, `Myrto smiles. "You look like someone who has been away from Athens for a very, very long time."`)
 	merchant.AddDialogue([]string{"ancient","past"}, `"Don't ask me how I get the old things. Ask yourself why you recognize them."`)
-	merchant.Shop=[]item.Item{{Name:"city knife",Tier:item.Common,Damage:14,Kind:"sword",Price:60},{Name:"reinforced jacket",Tier:item.Uncommon,Armor:4,Kind:"armor",Price:80}}
+	merchant.Shop=[]item.Item{{Name:"city knife",Tier:item.Common,Damage:14,Kind:"sword",Price:60},{Name:"reinforced jacket",Tier:item.Uncommon,Armor:4,Kind:"armor",Price:80},{Name:"ambrosia draught",Tier:item.Uncommon,Kind:"consumable",Price:40,Healing:45},{Name:"blue lotus tonic",Tier:item.Common,Kind:"consumable",Price:28,ManaRestore:20},{Name:"laurel poultice",Tier:item.Common,Kind:"consumable",Price:20,Healing:20}}
 	w.NPCs["modern_crossroads"]=append(w.NPCs["modern_crossroads"],merchant)
 	expandWorld(w.Rooms)
 	return w
