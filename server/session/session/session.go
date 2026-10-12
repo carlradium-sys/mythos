@@ -356,7 +356,9 @@ func (s *Session) updateQuests() {
  for _,q:=range quest.All() {
   if !s.questUnlocked(q) {continue}
   if s.Character.Quests[q.ID]>=q.Required {continue}
-  if q.TargetRoom!="" && q.TargetEnemy=="" && s.Character.RoomID==q.TargetRoom {
+  goalReached := q.TargetRoom!="" && q.TargetEnemy=="" && s.Character.RoomID==q.TargetRoom
+  if q.CompletionFlag!="" && s.Character.HasStoryFlag(q.CompletionFlag) { goalReached = true }
+  if goalReached {
    old:=s.Character.Quests[q.ID];s.Character.Quests[q.ID]=q.Required
    if old<q.Required {s.WriteLine("\x1b[1;33mQuest advanced: %s\x1b[0m",q.Name)}
    if q.RewardXP>0 {s.completeQuest(q);s.WriteLine("\x1b[1;32mQuest complete! +%d XP.\x1b[0m",q.RewardXP)}
@@ -1007,6 +1009,7 @@ func (s *Session) canEnter(id string) bool {
 }
 
 func (s *Session) recordDiscovery(roomID string) {
+	if roomID == "therons_forge" { s.Character.SetStoryFlag("forge_discovered") }
 	if strings.HasPrefix(roomID, "tutorial_") { return }
 	flag := "room_discovered_" + roomID
 	if s.Character.HasStoryFlag(flag) {
@@ -1204,6 +1207,8 @@ func (s *Session) craft(args []string) {
 	s.WriteLine("Theron works the material over the anvil. Sparks leap like tiny stars.")
 	s.WriteLine("Crafted %s (%s). Gold remaining: %d.", chosen.output.Name, chosen.output.TierName(), s.Character.Gold)
 	s.Character.SetStoryFlag("crafted_" + strings.ReplaceAll(chosen.output.Name, " ", "_"))
+	s.Character.SetStoryFlag("crafted_any_gear")
+	s.updateQuests()
 }
 
 func (s *Session) defeatEnemy(divine bool) {
