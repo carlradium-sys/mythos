@@ -1024,6 +1024,13 @@ func (s *Session) recordDiscovery(roomID string) {
 func (s *Session) move(direction string) {
 	aliases:=map[string]string{"n":"north","s":"south","e":"east","w":"west","u":"up","d":"down"}
 	if v,ok:=aliases[direction];ok{direction=v}
+	if s.Character.HasStoryFlag("tutorial_available") {
+		allowed := map[int]string{3:"north",10:"east",18:"north",22:"south",23:"east",28:"west",29:"west",34:"east",35:"east",36:"north",38:"north"}
+		if expected, ok := allowed[s.PrologueStep]; !ok || expected != direction {
+			s.WriteLine("Follow the current tutorial instruction first. Type 'tutorial' to review it.")
+			return
+		}
+	}
 	r:=s.World.GetRoom(s.Character.RoomID)
 	if r==nil{return}
 	next,ok:=r.Exits[direction]
@@ -1065,6 +1072,16 @@ func (s *Session) attack(args []string) {
 	if s.Enemy == nil || s.Enemy.HP <= 0 {
 		s.WriteLine("There is nothing here to fight.")
 		return
+	}
+	if s.Character.HasStoryFlag("tutorial_available") {
+		if s.Character.RoomID == "tutorial_yard" && s.PrologueStep < 12 {
+			s.WriteLine("Inspect the Training Shade first with 'look Training Shade'.")
+			return
+		}
+		if s.Character.RoomID == "tutorial_grove" && s.PrologueStep < 20 {
+			s.WriteLine("Inspect the Practice Satyr first with 'look Satyr'.")
+			return
+		}
 	}
 	if s.TutorialStep == 11 && s.Enemy.Name == "Harpy" && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
 		s.WriteLine("Before striking, inspect the creature with 'look Harpy'. Learn what you are facing.")
