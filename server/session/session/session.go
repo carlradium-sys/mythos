@@ -2082,6 +2082,18 @@ func(s *Session) talk(args []string) {
 	}
  if t:=dialogueText;t!="" {
 		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t)
+		// These story flags turn optional conversations into a small, persistent
+		// quest chain without making the main route depend on it.
+		if n.ID == "charon" && (matchedTopic == "memory" || matchedTopic == "remember" || matchedTopic == "rebirth") {
+			if !s.Character.HasStoryFlag("charon_memory_heard") {
+				s.Character.SetStoryFlag("charon_memory_heard")
+				s.WriteLine("\x1b[1;33mA new story thread has appeared: A Memory for the Dead.\x1b[0m")
+			}
+		}
+		if n.ID == "asphodel_shade" && s.Character.HasStoryFlag("charon_memory_heard") &&
+			(matchedTopic == "memory" || matchedTopic == "remember" || matchedTopic == "name" || matchedTopic == "judgment") {
+			s.Character.SetStoryFlag("asphodel_memory_returned")
+		}
 		if n.ID == "village_guide" && s.TutorialStep == 3 && (topic == "hello" || topic == "greeting") {
 			s.advanceTutorial(4)
 		} else if n.ID == "village_guide" && s.TutorialStep == 4 && (topic == "village" || topic == "home") {
@@ -2089,6 +2101,7 @@ func(s *Session) talk(args []string) {
 		} else if n.ID == "village_guide" && s.TutorialStep == 6 && (topic == "road" || topic == "mountain" || topic == "north") && s.Character.HasStoryFlag("tutorial_hint_used") {
 			s.advanceTutorial(7)
 		}
+		s.updateQuests()
 		return
 	}
 	s.WriteLine("\x1b[1;36m%s:\x1b[0m \"Ask me about the things that matter here.\"",n.Name)
