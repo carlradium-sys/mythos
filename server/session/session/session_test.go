@@ -1208,19 +1208,19 @@ func TestCombatModeCanToggleOnTheFly(t *testing.T) {
 	if !s.Character.AutoCombat {
 		t.Fatal("new characters should start with automatic combat enabled")
 	}
-	s.combatMode(nil, true)
+	s.handleCommand("pc")
 	if s.Character.AutoCombat {
 		t.Fatal("pc should toggle automatic combat off")
 	}
-	s.combatMode([]string{"on"}, true)
+	s.handleCommand("pc on")
 	if !s.Character.AutoCombat {
 		t.Fatal("pc on should enable automatic combat")
 	}
-	s.combatMode([]string{"off"}, false)
+	s.handleCommand("combatmode off")
 	if s.Character.AutoCombat {
 		t.Fatal("combatmode off should disable automatic combat")
 	}
-	s.combatMode([]string{"toggle"}, false)
+	s.handleCommand("combatmode toggle")
 	if !s.Character.AutoCombat {
 		t.Fatal("combatmode toggle should enable automatic combat")
 	}
