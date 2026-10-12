@@ -80,6 +80,10 @@ Divine powers cost mana and unlock as you grow.
 FLEE
   flee
 
+Fleeing gives the enemy one final chance to strike before you escape. It
+ends the encounter without victory XP, gold, or loot. If the strike defeats
+you, normal recovery occurs instead.
+
 REST
   rest
 
