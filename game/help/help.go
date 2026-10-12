@@ -340,6 +340,63 @@ Stand near a merchant and use:
   buy <item>
 
 Purchased equipment is added to your inventory and can be equipped normally.`},
+	"guard": {"guard", `GUARDING
+
+Use 'guard' or 'defend' while an aggressive enemy is alive. You brace for
+the next strike. If it hits, a successful guard reduces that hit's damage
+by about half. If the enemy misses, the guard still protects you for that
+exchange. Guarding spends your action and does not deal damage or restore
+health. It is consumed by the next enemy turn and does not stack.
+
+Use guard when your health is low, when you need to survive one more blow,
+or before making a tactical choice. A guard cannot provoke a passive
+creature; tutorial creatures remain passive until you attack them first.`},
+	"progression": {"progression", `PROGRESSION AND DIVINE AWAKENING
+
+Defeating enemies, discovering rooms, and completing quests grant experience.
+Your level is derived from accumulated XP. Level-ups improve maximum health,
+maximum mana, attack, and defense, and restore your health and mana.
+
+At level 3, use 'awaken <domain>' to choose one path:
+  storm — lightning and explosive force
+  tide  — crushing water and deep currents
+  ember — ancient fire and direct destructive power
+  aegis — protective force turned into offense
+
+Use 'powers' to see the abilities available to your domain and level. Powers
+have unlock levels and mana costs. At level 10, 'rebirth' becomes available.
+Your first rebirth leads to modern Athens; later lives offer more destinations.
+Read 'help rebirth_paths' and 'soul' before choosing a later path.`},
+	"economy": {"economy", `GOLD, MERCHANTS, AND CRAFTING
+
+Victories and quests can reward gold. Find NPCs marked [MERCHANT], then use
+'shop' to inspect stock and 'buy <item>' to purchase. A purchase requires
+enough gold and adds the item to your inventory. Check 'inv' afterward.
+Use 'wield <name>' for weapons and 'wear <name>' for armor.
+
+Certain monsters leave crafting materials, marked [MATERIAL] in inventory.
+At Theron's Forge, type 'craft' to see recipes. 'craft <recipe>' consumes
+the listed ingredient and gold only when all requirements are met. Crafted
+gear goes into your inventory; it must be equipped to affect combat.
+
+Consumables are sold by merchants. Read 'help consumables' for health and
+mana supplies. Consider whether a supply or a lasting equipment upgrade is
+the better use of your early gold.`},
+	"world": {"world", `WORLD EXPLORATION
+
+Fatewalker is a connected world of rooms, routes, eras, and story gates.
+Use north, south, east, west, up, and down; short forms n, s, e, w, u, and d
+also work. 'exits' lists routes, 'map' shows nearby connections, and
+'worldmap' gives a broader view.
+
+A route can be blocked by a story condition or an unresolved encounter. If
+movement fails, read the response rather than repeating the command blindly.
+Some enemies attack as you enter a room; tutorial creatures wait for you to
+initiate combat. First-time room discovery can grant experience, but a room
+does not award the same discovery reward every time you revisit it.
+
+Read descriptions carefully. Landmarks, unusual objects, NPC dialogue, and
+small details can hint at quests, secrets, and the consequences of a choice.`},
 	"crafting": {"crafting", `CRAFTING AT THERON'S FORGE
 
 Defeated monsters can leave materials. Materials are marked [MATERIAL] in
@@ -417,5 +474,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","tutorial"}
+	return []string{"start","movement","combat","guard","progression","economy","world","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
 }
