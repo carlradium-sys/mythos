@@ -25,6 +25,7 @@ BASIC LOOP
   score                Review your character.
   inventory             Review carried items and their bonuses.
   wield / wear <item>  Equip a weapon or armor.
+  use <item>           Consume a healing or mana-restoration item.
   map                  Show the local map now.
   automap on/off       Show or hide the local map after movement.
   help <topic>         Read a detailed help file (try inventory or powers).
