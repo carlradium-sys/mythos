@@ -397,6 +397,16 @@ does not award the same discovery reward every time you revisit it.
 
 Read descriptions carefully. Landmarks, unusual objects, NPC dialogue, and
 small details can hint at quests, secrets, and the consequences of a choice.`},
+	"invoke": {"invoke", `LIFE-GIFTS
+
+Use 'soul' to inspect your life-gift and whether it is ready. 'invoke' or
+'gift' calls on that gift once during the current life. The gift is distinct
+from your chosen divine domain and from ordinary powers.
+
+Each gift has a different effect, tied to the era or destination of your
+current life. It refreshes after rebirth. If it has already answered you
+once, the soul view reports that it is spent until your next life. Consider
+saving it for a moment when its effect will be useful.`},
 	"status": {"status", `CHARACTER STATUS
 
 Use 'score' or 'stats' to review your character. HP is health; at zero you
