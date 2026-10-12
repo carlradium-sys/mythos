@@ -265,7 +265,7 @@ func TestDialogueMatchesLongerNaturalLanguageTopics(t *testing.T) {
 func TestFactionStandingChangesNPCGreeting(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "olympus_foothills"
-	n := s.currentNPC()
+	n := s.currentNPC(1)
 	s.Character.Reputation["olympians"] = 3
 	if got := s.factionGreeting(n); got == "" {
 		t.Fatal("friendly faction standing should change the merchant greeting")
@@ -321,7 +321,7 @@ func TestMyrtoRecognizesPersistentStyxMemory(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "modern_crossroads"
 	s.Character.SetStoryFlag("styx_memory_recovered")
-	n := s.currentNPC()
+	n := s.currentNPC(1)
 	if n == nil || n.ID != "athens_vendor" {
 		t.Fatal("expected Myrto in modern crossroads")
 	}
@@ -338,7 +338,7 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "modern_crossroads"
 	s.Character.SetStoryFlag("quest_completed_oracle_whisper")
-	n := s.currentNPC()
+	n := s.currentNPC(1)
 	greeting := s.persistentNPCGreeting(n, "greeting")
 	if greeting == "" || !strings.Contains(greeting, "old prophecy") {
 		t.Fatalf("Myrto greeting = %q, want her to recognize the Oracle prophecy", greeting)
@@ -543,7 +543,7 @@ func TestMyrtoGreetingReflectsOracleTrust(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.SetStoryFlag("oracle_trust")
 	s.Character.RebirthTo("modern", "modern_crossroads")
-	got := s.persistentNPCGreeting(s.currentNPC(), "hello")
+	got := s.persistentNPCGreeting(s.currentNPC(1), "hello")
 	if !strings.Contains(got, "trusted you with a warning") {
 		t.Fatalf("unexpected modern greeting: %q", got)
 	}
@@ -554,7 +554,7 @@ func TestMyrtoGreetingReflectsOracleDefiance(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.SetStoryFlag("oracle_defied")
 	s.Character.RebirthTo("modern", "modern_crossroads")
-	got := s.persistentNPCGreeting(s.currentNPC(), "hello")
+	got := s.persistentNPCGreeting(s.currentNPC(1), "hello")
 	if !strings.Contains(got, "mistake prophecy for permission") {
 		t.Fatalf("unexpected modern greeting: %q", got)
 	}
@@ -897,7 +897,7 @@ func TestMyrtoAnswersAboutMuseumEcho(t *testing.T) {
 	s.Character.RoomID = "modern_crossroads"
 	s.Character.SetStoryFlag("museum_echo_uncovered")
 	for _, question := range []string{"museum", "can you tell me about the museum?", "tell me about artifacts"} {
-		got := s.persistentNPCGreeting(s.currentNPC(), question)
+		got := s.persistentNPCGreeting(s.currentNPC(1), question)
 		if !strings.Contains(got, "behind glass") { t.Errorf("museum question %q response = %q", question, got) }
 	}
 }
