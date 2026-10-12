@@ -100,7 +100,7 @@ func NewWorld() *World {
 	charon.AddDialogue([]string{"cerberus", "hound", "tartarus"}, `"Three heads guard one gate, but each listens for a different fear. Do not mistake a single blade for three answers."`)
 	w.NPCs["styx_shore"] = append(w.NPCs["styx_shore"], charon)
 
-	shade := NewNPC("asphodel_shade", "The Unremembered Shade", "A translucent figure kneels among pale flowers, turning an old clay token over and over as if its markings might restore a lost name.", 8, 100, 0, 0)
+	shade := NewNPC("asphodel_shade", "Unremembered Shade", "A translucent figure kneels among pale flowers, turning an old clay token over and over as if its markings might restore a lost name.", 8, 100, 0, 0)
 	shade.Faction = "underworld"
 	shade.AddDialogue([]string{"hello", "greeting"}, `The shade looks up. "I remember a doorway, a song, and someone calling me home. The rest has gone into the water."`)
 	shade.AddDialogue([]string{"name", "memory", "remember"}, `"If you meet a living person who has forgotten you, do not call it proof that you never mattered. The river is a thief, not a judge."`)
