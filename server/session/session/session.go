@@ -306,6 +306,10 @@ func (s *Session) awardExperience(amount int) {
 
 func (s *Session) completeQuest(q quest.Quest) {
 	s.awardExperience(q.RewardXP)
+	if q.RewardGold > 0 {
+		s.Character.Gold += q.RewardGold
+		s.WriteLine("You receive %d gold for completing %s.", q.RewardGold, q.Name)
+	}
 	s.Character.SetStoryFlag("quest_completed_" + q.ID)
 	switch q.ID {
 	case "oracle_whisper":
@@ -442,7 +446,7 @@ func (s *Session) questList() {
 			s.WriteLine("    Progress: %d of %d", p, q.Required)
 		}
 		if q.RewardXP > 0 && status != "LOCKED" {
-			s.WriteLine("    Reward: %d XP", q.RewardXP)
+			s.WriteLine("    Reward: %d XP, %d gold", q.RewardXP, q.RewardGold)
 		}
 		if status == "LOCKED" {
 			if q.RequiredFlag != "" && !s.Character.HasStoryFlag(q.RequiredFlag) {
