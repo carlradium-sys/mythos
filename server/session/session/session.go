@@ -171,6 +171,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.combatMode(parts[1:], false)
 	case "cast":
 		s.cast(parts[1:])
+	case "ql", "quicklist":
+		s.quicklist(parts[1:])
 	case "powers","power":
 		s.powers()
 	case "awaken":
@@ -1225,11 +1227,26 @@ func (s *Session) basicAttackRound() {
 }
 
 func (s *Session) cast(args []string) {
+	if len(args)==0 { s.WriteLine("Cast which power? Try 'powers'."); return }
+	powerName:=strings.Join(args," ")
+	// A final argument matching the current enemy is treated as an optional target.
+	if s.Enemy != nil && len(args)>1 {
+		target:=strings.ToLower(args[len(args)-1])
+		if target=="1" || strings.Contains(strings.ToLower(s.Enemy.Name),target) {
+			powerName=strings.Join(args[:len(args)-1]," ")
+		} else if strings.Contains(strings.ToLower(strings.Join(args," ")),strings.ToLower(s.Enemy.Name)) {
+			powerName=strings.Replace(strings.ToLower(strings.Join(args," ")),strings.ToLower(s.Enemy.Name),"",1)
+			powerName=strings.TrimSpace(powerName)
+		}
+	}
+	s.castPower(powerName)
+}
+
+func (s *Session) castPower(powerName string) {
 	if s.Enemy==nil || s.Enemy.HP<=0 {s.WriteLine("There is no enemy to target.");return}
 	if s.Character.Domain=="" {s.WriteLine("You have no awakened divine domain. Try 'awaken storm'.");return}
-	if len(args)==0 {s.WriteLine("Cast which power? Try 'powers'.");return}
+	if powerName=="" {s.WriteLine("Cast which power? Try 'powers'.");return}
 	var chosen *power.Power
-	powerName:=strings.Join(args," ")
 	for _,p:=range power.Unlocked(s.Character.Domain,s.Character.Level) {
 		if strings.EqualFold(p.Name,powerName) || strings.EqualFold(strings.ReplaceAll(p.Name," ",""),strings.ReplaceAll(powerName," ","")) {q:=p;chosen=&q;break}
 	}
@@ -1238,11 +1255,59 @@ func (s *Session) cast(args []string) {
 	s.Character.Mana-=chosen.ManaCost
 	result:=combat.Cast(s.Character.Name,chosen.Name,chosen.Damage,string(chosen.Domain),s.Enemy)
 	s.WriteLine("\x1b[1;35m%s\x1b[0m",result.Text)
-	if result.Killed {
-		s.defeatEnemy(true)
+	if result.Killed { s.defeatEnemy(true); return }
+	s.enemyTurn()
+}
+
+func (s *Session) quicklist(args []string) {
+	if s.Character == nil { return }
+	if len(args)==0 {
+		s.WriteLine("COMBAT QUICKLIST")
+		for i:=0;i<len(s.Character.Quicklist);i++ {
+			name:=s.Character.Quicklist[i]
+			if name=="" { name="(empty)" }
+			s.WriteLine("  ql %d <target>  — %s",i+1,name)
+		}
+		s.WriteLine("Set: ql set <slot> <power name> | Clear: ql clear <slot>")
 		return
 	}
-	s.enemyTurn()
+	if strings.EqualFold(args[0],"set") {
+		if len(args)<3 { s.WriteLine("Use: ql set <slot> <power name>"); return }
+		slot,err:=strconv.Atoi(args[1])
+		if err!=nil || slot<1 || slot>len(s.Character.Quicklist) { s.WriteLine("Choose a quicklist slot from 1 to %d.",len(s.Character.Quicklist)); return }
+		name:=strings.Join(args[2:]," ")
+		if s.Character.Domain=="" { s.WriteLine("Choose a divine domain first with 'awaken'."); return }
+		valid:=false
+		for _,p:=range power.Unlocked(s.Character.Domain,s.Character.Level) {
+			if strings.EqualFold(p.Name,name) || strings.EqualFold(strings.ReplaceAll(p.Name," ",""),strings.ReplaceAll(name," ","")) { name=p.Name; valid=true; break }
+		}
+		if !valid { s.WriteLine("That power is not currently unlocked. Check 'powers'."); return }
+		s.Character.Quicklist[slot-1]=name
+		s.WriteLine("Quicklist slot %d set to %s.",slot,name)
+		s.persist()
+		return
+	}
+	if strings.EqualFold(args[0],"clear") {
+		if len(args)!=2 { s.WriteLine("Use: ql clear <slot>"); return }
+		slot,err:=strconv.Atoi(args[1])
+		if err!=nil || slot<1 || slot>len(s.Character.Quicklist) { s.WriteLine("Choose a quicklist slot from 1 to %d.",len(s.Character.Quicklist)); return }
+		s.Character.Quicklist[slot-1]=""
+		s.WriteLine("Quicklist slot %d cleared.",slot)
+		s.persist()
+		return
+	}
+	slot,err:=strconv.Atoi(args[0])
+	if err!=nil || slot<1 || slot>len(s.Character.Quicklist) { s.WriteLine("Use 'ql' to list slots, 'ql set <slot> <power>', or 'ql <slot> <target>'."); return }
+	name:=s.Character.Quicklist[slot-1]
+	if name=="" { s.WriteLine("Quicklist slot %d is empty. Set it with 'ql set %d <power name>'.",slot,slot); return }
+	if len(args)>1 && s.Enemy!=nil {
+		target:=strings.ToLower(strings.Join(args[1:]," "))
+		if target!="1" && !strings.Contains(strings.ToLower(s.Enemy.Name),target) {
+			s.WriteLine("Your current target is %s. Use 'ql %d %s'.",s.Enemy.Name,slot,strings.ToLower(s.Enemy.Name))
+			return
+		}
+	}
+	s.castPower(name)
 }
 
 func (s *Session) craft(args []string) {
