@@ -23,6 +23,7 @@ var all=[]Quest{
  {ID:"museum_echo",Name:"Museum Echo",Description:"An old object seems to recognize you.",Goal:"Explore the modern museum.",TargetRoom:"modern_museum",Required:1,RewardXP:180,RequiredFlag:"styx_memory_recovered"},
  {ID:"delphi_trials",Name:"Trials of the Seer",Description:"Pythia tests whether you can hear the truth beneath a prophecy.",Goal:"Explore the Delphi Sanctum and listen to what remains.",TargetRoom:"delphi_sanctum",Required:1,RewardXP:90},
  {ID:"gate_of_three",Name:"The Gate of Three",Description:"Defeat the guardian beneath the river.",Goal:"Defeat Cerberus.",TargetRoom:"cerberus_gate",TargetEnemy:"Cerberus",Required:1,RewardXP:400,RequiredFlag:"styx_memory_recovered"},
+ {ID:"forge_remembers",Name:"The Forge Remembers",Description:"Theron believes the monsters of Olympus leave behind materials that can be shaped into protection.",Goal:"Craft one piece of equipment at Theron's Forge.",Required:1,RewardXP:140,RequiredFlag:"forge_discovered",CompletionFlag:"crafted_any_gear"},
 }
 
 func All() []Quest { return append([]Quest(nil),all...) }
