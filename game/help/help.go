@@ -128,6 +128,18 @@ Automatic mode is the default. After you start a fight, weapon attacks
 continue every 2.5 seconds until the enemy is defeated, you flee, or you
 switch to manual mode. Divine powers and defensive actions remain available.
 The preference is saved separately for each character.`},
+
+	"quicklist": {"quicklist", `COMBAT QUICKLIST
+
+  ql                       Display the four quick slots.
+  ql set 1 Stormspark      Assign an unlocked divine power to slot 1.
+  ql 1 Harpy               Cast the slot 1 power at the current enemy.
+  ql clear 1               Empty slot 1.
+
+Use slots 1 through 4. Assignments are saved with your character.
+Only powers unlocked in your current domain can be assigned. Casting still
+costs the power's normal mana and gives an aggressive enemy its normal turn.
+With automatic combat enabled, your weapon attacks continue between powers.`},
 	"powers": {"powers", `DIVINE POWERS
 
 At level 3, use:
@@ -539,5 +551,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","combatmode","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
+	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
 }
