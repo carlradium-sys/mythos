@@ -26,6 +26,8 @@ type Session struct {
  Conn net.Conn
  World *world.World
  Enemy *combat.Enemy
+ EnemyAggressive bool
+ PrologueStep int
  RelicWardSpent bool
  RelicStrikeSpent bool
  TutorialStep int
@@ -51,7 +53,9 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.storyIntro()
 	s.updateQuests()
 	s.look()
-	if s.TutorialStep < 16 {
+	if s.Character.HasStoryFlag("tutorial_available") {
+		s.prologueHint()
+	} else if s.TutorialStep < 16 {
 		s.tutorialHint()
 	}
 	for {
@@ -148,6 +152,7 @@ func (s *Session) handleCommand(input string) bool {
 	default:
 		s.WriteLine("Unknown command. Type 'help' for help.")
 	}
+	if s.Character.HasStoryFlag("tutorial_available") { s.advancePrologueForCommand(parts) }
 	s.persist()
 	return true
 }
@@ -449,6 +454,11 @@ func (s *Session) journal() {
 }
 
 func (s *Session) tutorial() {
+	if s.Character != nil && s.Character.HasStoryFlag("tutorial_available") {
+		s.prologueHint()
+		s.WriteLine("Your prologue progress is saved. Complete the gate lesson to enter the main world; the gate is one-way.")
+		return
+	}
 	s.WriteLine("\x1b[1;33mTHE FIRST THREAD — FIELD GUIDE\x1b[0m")
 	s.WriteLine("LOOK         'look' describes your current room. It does not list paths; use 'exits' for the detailed route list.")
 	s.WriteLine("INSPECT      'look Damon', 'look Harpy', or 'look east' reveals details about a person, creature, or destination.")
@@ -483,6 +493,18 @@ func (s *Session) storyIntro() {
 
 func (s *Session) prepareTutorial() {
 	if s.Character == nil { return }
+	if s.Character.HasStoryFlag("tutorial_available") && !s.Character.HasStoryFlag("tutorial_complete") {
+		if !s.Character.HasStoryFlag("tutorial_started") {
+			s.Character.SetStoryFlag("tutorial_started")
+			s.Character.RoomID = "tutorial_shore"
+		}
+		s.PrologueStep = 0
+		for step := 1; step <= 38; step++ {
+			if s.Character.HasStoryFlag(fmt.Sprintf("tutorial_lesson_%d", step)) { s.PrologueStep = step }
+		}
+		s.TutorialStep = 16
+		return
+	}
 	if s.Character.Life == 1 && s.Character.Level <= 1 && s.Character.RoomID == "olympus_gates" &&
 		!s.Character.HasStoryFlag("room_discovered_olympus_foothills") && !s.Character.HasStoryFlag("tutorial_complete") {
 		s.Character.RoomID = "village_square"
@@ -505,7 +527,116 @@ func (s *Session) prepareTutorial() {
 	default: s.TutorialStep = 0
 	}
 }
+
+func (s *Session) prologueHint() {
+	lessons := []string{
+		"LESSON 1/39 — ORIENTATION: Type 'look'. Read the room description slowly; it tells you where you are and what matters.",
+		"LESSON 2/39 — CHARACTER SHEET: Type 'score'. Learn to read level, health, mana, experience, life, and your current era.",
+		"LESSON 3/39 — YOUR PACK: Type 'inv'. Inventory means everything carried, not necessarily everything equipped.",
+		"LESSON 4/39 — FIRST MOVEMENT: Type 'north' to reach the Wayfarer's Shelter. Movement follows exits, not coordinates.",
+		"LESSON 5/39 — INSPECT A PERSON: Type 'look Ianthe'. Inspecting a named person reveals more than the room summary.",
+		"LESSON 6/39 — GREET THE GUIDE: Type 'talk Ianthe hello'. NPC dialogue is topic-based; meaningful keywords matter more than exact sentences.",
+		"LESSON 7/39 — ASK ABOUT MOVEMENT: Type 'talk Ianthe movement'. Learn the difference between looking at a route and taking it.",
+		"LESSON 8/39 — READ EXITS: Type 'exits'. This lists each route and names the destination.",
+		"LESSON 9/39 — READ THE MAP: Type 'map'. The map is a quick overview; exits is the precise route list.",
+		"LESSON 10/39 — PREVIEW A ROUTE: Type 'look east'. Inspect a destination without entering it.",
+		"LESSON 11/39 — ENTER THE YARD: Type 'east'. Read the new room heading and description.",
+		"LESSON 12/39 — INSPECT THE SHADE: Type 'look Training Shade'. Identify a creature before engaging it.",
+		"LESSON 13/39 — FIRST ATTACK: Type 'attack Training Shade'. Damage appears in combat text. It is passive until attacked.",
+		"LESSON 14/39 — VERIFY YOUR PACK: Type 'inv'. Commands must not resurrect a slain tutorial monster.",
+		"LESSON 15/39 — EQUIPPED GEAR: Type 'eq'. Your weapon and armor are separate from your inventory list.",
+		"LESSON 16/39 — SAFE RECOVERY: Type 'rest'. Rest restores health and mana only when you are safe.",
+		"LESSON 17/39 — AUTOMAP ON: Type 'automap on'. The local map appears after successful movement.",
+		"LESSON 18/39 — AUTOMAP OFF: Type 'automap off'. Control how much map output you want.",
+		"LESSON 19/39 — ENTER THE GROVE: Type 'north'. The next creature is wary but not aggressive.",
+		"LESSON 20/39 — INSPECT THE SATYR: Type 'look Satyr'. Inspection is information gathering, not an attack.",
+		"LESSON 21/39 — CHOOSE TO ENGAGE: Type 'attack Satyr'. It defends itself only after you strike first.",
+		"LESSON 22/39 — CONFIRM PERSISTENCE: Type 'look'. The slain satyr stays defeated for this character.",
+		"LESSON 23/39 — RETURN TO THE YARD: Type 'south'. Retracing a route is normal exploration.",
+		"LESSON 24/39 — ENTER THE STOREHOUSE: Type 'east'. Review your equipment and help systems before leaving.",
+		"LESSON 25/39 — INVENTORY REVIEW: Type 'inv'. Read item names, rarity, and bonuses.",
+		"LESSON 26/39 — EQUIPMENT REVIEW: Type 'eq'. Your weapon affects attacks; armor contributes to defense.",
+		"LESSON 27/39 — READ COMBAT HELP: Type 'help combat'. Help files explain mechanics in more depth than short prompts.",
+		"LESSON 28/39 — WIDER NAVIGATION: Type 'worldmap'. Later destinations unlock through life, level, or story progress.",
+		"LESSON 29/39 — RETURN TO THE YARD: Type 'west'. You move through real exits rather than teleporting.",
+		"LESSON 30/39 — RETURN TO THE SHELTER: Type 'west'. NPCs shown by 'look' can be targeted by name or number.",
+		"LESSON 31/39 — ASK ABOUT COMBAT: Type 'talk Ianthe combat'. Ask an NPC for advice instead of guessing.",
+		"LESSON 32/39 — QUEST TRACKING: Type 'quests'. Quests track objectives, progress, rewards, and locked story branches.",
+		"LESSON 33/39 — STORY CONTEXT: Type 'journal'. The journal offers direction, not a forced checklist.",
+		"LESSON 34/39 — CHECK PROGRESS: Type 'score'. Level 3 opens domain awakening; level 10 opens rebirth.",
+		"LESSON 35/39 — REVISIT THE COURTYARD: Type 'east'. Use the route you learned.",
+		"LESSON 36/39 — REVISIT THE STOREHOUSE: Type 'east'. The final route begins here.",
+		"LESSON 37/39 — APPROACH THE GATE: Type 'north'. It remains sealed until the review lessons are complete.",
+		"LESSON 38/39 — PREVIEW THE REAL WORLD: Type 'look north'. This reveals Asterion Village without moving you.",
+		"LESSON 39/39 — DEPART: Type 'north'. The gate is one-way; after departure the tutorial cannot be revisited.",
+	}
+	if s.PrologueStep >= len(lessons) { s.WriteLine("The prologue is complete. Continue into Fatewalker proper."); return }
+	s.WriteLine("\x1b[1;36mTHE FIRST THREAD — GUIDED PROLOGUE (%d/39)\x1b[0m", s.PrologueStep+1)
+	s.WriteLine("%s", lessons[s.PrologueStep])
+	s.WriteLine("Progress is saved automatically. Type 'tutorial' to repeat this instruction, or 'help <topic>' for more detail.")
+}
+
+func (s *Session) advancePrologueForCommand(p []string) {
+	if len(p)==0 || s.Character==nil || !s.Character.HasStoryFlag("tutorial_available") { return }
+	cmd, args, room := p[0], strings.Join(p[1:], " "), s.Character.RoomID
+	has := func(words ...string) bool { for _, w := range words { if strings.Contains(strings.ToLower(args), w) { return true } }; return false }
+	next := -1
+	switch s.PrologueStep {
+	case 0: if cmd=="look" && len(p)==1 && room=="tutorial_shore" { next=1 }
+	case 1: if (cmd=="score"||cmd=="stats") && room=="tutorial_shore" { next=2 }
+	case 2: if (cmd=="inv"||cmd=="inventory"||cmd=="i") && room=="tutorial_shore" { next=3 }
+	case 3: if (cmd=="north"||cmd=="n") && room=="tutorial_camp" { next=4 }
+	case 4: if cmd=="look" && has("ianthe","guide") && room=="tutorial_camp" { next=5 }
+	case 5: if (cmd=="talk"||cmd=="say") && has("hello","greeting") && room=="tutorial_camp" { next=6 }
+	case 6: if (cmd=="talk"||cmd=="say") && has("movement","move","directions","exits") && room=="tutorial_camp" { next=7 }
+	case 7: if cmd=="exits" && room=="tutorial_camp" { next=8 }
+	case 8: if cmd=="map" && room=="tutorial_camp" { next=9 }
+	case 9: if cmd=="look" && has("east"," e") && room=="tutorial_camp" { next=10 }
+	case 10: if (cmd=="east"||cmd=="e") && room=="tutorial_yard" { next=11 }
+	case 11: if cmd=="look" && has("shade","training") && room=="tutorial_yard" { next=12 }
+	case 12: if (cmd=="attack"||cmd=="kill"||cmd=="hit") && room=="tutorial_yard" && s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_yard") { next=13 }
+	case 13: if (cmd=="inv"||cmd=="inventory"||cmd=="i") && room=="tutorial_yard" { next=14 }
+	case 14: if (cmd=="eq"||cmd=="equipment"||cmd=="gear") && room=="tutorial_yard" { next=15 }
+	case 15: if cmd=="rest" && room=="tutorial_yard" { next=16 }
+	case 16: if cmd=="automap" && has("on") && room=="tutorial_yard" { next=17 }
+	case 17: if cmd=="automap" && has("off") && room=="tutorial_yard" { next=18 }
+	case 18: if (cmd=="north"||cmd=="n") && room=="tutorial_grove" { next=19 }
+	case 19: if cmd=="look" && has("satyr") && room=="tutorial_grove" { next=20 }
+	case 20: if (cmd=="attack"||cmd=="kill"||cmd=="hit") && room=="tutorial_grove" && s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_grove") { next=21 }
+	case 21: if cmd=="look" && len(p)==1 && room=="tutorial_grove" { next=22 }
+	case 22: if (cmd=="south"||cmd=="s") && room=="tutorial_yard" { next=23 }
+	case 23: if (cmd=="east"||cmd=="e") && room=="tutorial_storehouse" { next=24 }
+	case 24: if (cmd=="inv"||cmd=="inventory"||cmd=="i") && room=="tutorial_storehouse" { next=25 }
+	case 25: if (cmd=="eq"||cmd=="equipment"||cmd=="gear") && room=="tutorial_storehouse" { next=26 }
+	case 26: if cmd=="help" && has("combat") && room=="tutorial_storehouse" { next=27 }
+	case 27: if (cmd=="worldmap"||cmd=="world-map") && room=="tutorial_storehouse" { next=28 }
+	case 28: if (cmd=="west"||cmd=="w") && room=="tutorial_yard" { next=29 }
+	case 29: if (cmd=="west"||cmd=="w") && room=="tutorial_camp" { next=30 }
+	case 30: if (cmd=="talk"||cmd=="say") && has("combat","fight","enemy") && room=="tutorial_camp" { next=31 }
+	case 31: if cmd=="quests" && room=="tutorial_camp" { next=32 }
+	case 32: if (cmd=="journal"||cmd=="quest"||cmd=="story") && room=="tutorial_camp" { next=33 }
+	case 33: if (cmd=="score"||cmd=="stats") && room=="tutorial_camp" { next=34 }
+	case 34: if (cmd=="east"||cmd=="e") && room=="tutorial_yard" { next=35 }
+	case 35: if (cmd=="east"||cmd=="e") && room=="tutorial_storehouse" { next=36 }
+	case 36: if (cmd=="north"||cmd=="n") && room=="tutorial_gate" { next=37 }
+	case 37: if cmd=="look" && has("north"," n") && room=="tutorial_gate" { next=38 }
+	case 38:
+		if (cmd=="north"||cmd=="n") && room=="village_square" {
+			s.Character.SetStoryFlag("tutorial_complete")
+			s.Character.SetStoryFlag("tutorial_finished")
+			s.Character.StoryFlags["tutorial_available"] = false
+			s.PrologueStep=39
+			s.WriteLine("\x1b[1;32mTHE FIRST THREAD — COMPLETE\x1b[0m")
+			s.WriteLine("The marble gate seals behind you. Your training is remembered, but the tutorial itself is no longer reachable.")
+			s.WriteLine("You have entered Fatewalker proper. Use 'help list', 'journal', 'quests', and 'look' as you explore.")
+			return
+		}
+	}
+	if next>=0 { s.PrologueStep=next; s.Character.SetStoryFlag(fmt.Sprintf("tutorial_lesson_%d",next)); s.prologueHint() }
+}
+
 func (s *Session) tutorialHint() {
+	if s.Character != nil && s.Character.HasStoryFlag("tutorial_available") { s.prologueHint(); return }
 	switch s.TutorialStep {
 	case 0: s.WriteLine("\x1b[1;36mTUTORIAL 1/16 — LOOK:\x1b[0m Type 'look'.")
 	case 1: s.WriteLine("\x1b[1;36mTUTORIAL 2/16 — MOVE:\x1b[0m Now go north to the village lane.")
@@ -805,6 +936,21 @@ func compactText(value string, limit int) string {
 func (s *Session) spawnEnemy() {
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
+	s.EnemyAggressive = true
+	if strings.HasPrefix(s.Character.RoomID, "tutorial_") {
+		if s.Character.HasStoryFlag("tutorial_enemy_slain_" + s.Character.RoomID) { s.Enemy = nil; return }
+		switch s.Character.RoomID {
+		case "tutorial_yard":
+			s.Enemy = &combat.Enemy{Name:"Training Shade", Description:"A small shadow woven from harmless dusk. It waits with its hands lowered; it will only defend itself if struck.", Level:1, HP:24, MaxHP:24, Defense:0, Damage:2, XP:0}
+		case "tutorial_grove":
+			s.Enemy = &combat.Enemy{Name:"Practice Satyr", Description:"A young satyr holds its staff loosely and watches you without hostility. It will not attack unless you attack first.", Level:1, HP:28, MaxHP:28, Defense:0, Damage:3, XP:0}
+		default: return
+		}
+		s.EnemyAggressive = false
+		s.WriteLine("\x1b[1;33mA %s waits nearby, but does not attack.\x1b[0m", s.Enemy.Name)
+		s.WriteLine("%s", s.Enemy.Description)
+		return
+	}
 	switch s.Character.RoomID {
 	case "olympus_foothills":
 		s.Enemy = combat.NewHarpy()
@@ -841,6 +987,10 @@ func (s *Session) spawnEnemy() {
 
 func (s *Session) canEnter(id string) bool {
 	c:=s.Character
+	if strings.HasPrefix(id, "tutorial_") && (!c.HasStoryFlag("tutorial_available") || c.HasStoryFlag("tutorial_complete")) {
+		s.WriteLine("The tutorial threshold has closed. That first passage cannot be revisited.")
+		return false
+	}
 	if strings.HasPrefix(id,"modern_") && c.Life<2 { s.WriteLine("The world beyond the Styx has not opened to you. This is a road for another life."); return false }
 	if (strings.HasPrefix(id, "future_") || id == "far_era") && c.Life < 3 {
 		s.WriteLine("That horizon belongs to a later chapter of your soul. Rebirth must open the way.")
@@ -880,6 +1030,10 @@ func (s *Session) move(direction string) {
 	if !ok {s.WriteLine("You cannot go that way.");return}
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
 	if !s.canEnter(next) { return }
+	if r.ID == "tutorial_gate" && direction == "north" && s.PrologueStep < 38 {
+		s.WriteLine("The gate remains sealed. Complete the remaining lessons first; use 'tutorial' to review the current instruction.")
+		return
+	}
 	if r.ID == "village_lane" && direction == "north" && s.TutorialStep < 9 {
 		s.WriteLine("Damon raises a hand. Finish the village lessons first: inspect and speak with him, use 'hint', then practice 'exits' and 'map'.")
 		return
@@ -892,7 +1046,15 @@ func (s *Session) move(direction string) {
 	if s.AutoMap { s.localMap() }
 	s.updateQuests()
 	s.look()
-	if s.Character.RoomID == "village_lane" && s.TutorialStep == 1 {
+	if s.Character.RoomID == "village_square" && r.ID == "tutorial_gate" && s.Character.HasStoryFlag("tutorial_available") {
+		s.Character.SetStoryFlag("tutorial_complete")
+		s.Character.SetStoryFlag("tutorial_finished")
+		s.Character.StoryFlags["tutorial_available"] = false
+		s.PrologueStep = 39
+		s.WriteLine("\x1b[1;32mTHE FIRST THREAD — COMPLETE\x1b[0m")
+		s.WriteLine("The marble gate seals behind you. Your training is remembered, but the tutorial itself is no longer reachable.")
+		s.WriteLine("You have entered Fatewalker proper. Use 'help list', 'journal', 'quests', and 'look' as you explore.")
+	} else if s.Character.RoomID == "village_lane" && s.TutorialStep == 1 {
 		s.advanceTutorial(2)
 	} else if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 9 {
 		s.advanceTutorial(10)
@@ -909,6 +1071,7 @@ func (s *Session) attack(args []string) {
 		return
 	}
 	if len(args)>0{target:=strings.Join(args," ");if target!="1"&&!strings.Contains(strings.ToLower(s.Enemy.Name),target){s.WriteLine("Your current target is %s. Use 'attack 1' or 'attack %s'.",s.Enemy.Name,strings.ToLower(s.Enemy.Name));return}}
+	s.EnemyAggressive = true
 	w := s.currentWeapon()
 	result := combat.Attack(s.Character.Name, w, s.Enemy, s.Character.AttackPower())
 	if result.Damage > 0 {
@@ -960,6 +1123,9 @@ func (s *Session) defeatEnemy(divine bool) {
 		return
 	}
 	enemy := s.Enemy
+	if strings.HasPrefix(s.Character.RoomID, "tutorial_") {
+		s.Character.SetStoryFlag("tutorial_enemy_slain_" + s.Character.RoomID)
+	}
 	s.advanceQuestKill(enemy.Name)
 	s.awardExperience(enemy.XP)
 	if divine {
@@ -987,6 +1153,7 @@ func (s *Session) defeatEnemy(divine bool) {
 	}
 	s.EncounterClearedRoom = s.Character.RoomID
 	s.Enemy = nil
+	s.EnemyAggressive = false
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
 	if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 11 && enemy.Name == "Harpy" {
@@ -1049,7 +1216,7 @@ func (s *Session) applySoulRelicStrike(damage int) (int, int) {
 }
 
 func (s *Session) enemyTurn() {
-	if s.Enemy==nil || s.Enemy.HP<=0{return}
+	if s.Enemy==nil || s.Enemy.HP<=0 || !s.EnemyAggressive{return}
 	result:=combat.EnemyAttack(s.Enemy,s.Character.DefensePower())
 	if result.Damage>0 {
 		finalDamage, absorbed := s.applySoulRelicWard(result.Damage)
