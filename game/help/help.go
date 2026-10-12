@@ -68,6 +68,18 @@ including the tutorial's practice enemies, wait until you attack them first.
 A successful attack, divine cast, or consumable use gives an aggressive
 enemy a chance to retaliate. A consumable is not a free combat turn.
 
+AUTOMATIC OR MANUAL COMBAT
+  pc                  Toggle automatic combat on/off instantly.
+  pc on               Enable automatic follow-up weapon attacks.
+  pc off              Disable automatic attacks; type attack each time.
+  combatmode          Display the current setting.
+  combatmode on/off   Set the mode explicitly.
+
+Automatic combat is on by default. After your first attack, your character
+continues making basic weapon attacks every 2.5 seconds while you are in
+combat. You can still cast powers, use items, guard, or flee. The setting
+is saved separately for each character.
+
 Every damaging action ends with its damage in parentheses:
   Your bronze sword slashes the harpy's wing. (14 damage)
 
@@ -504,5 +516,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
+	return []string{"start","movement","combat","combatmode","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
 }
