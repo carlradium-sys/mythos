@@ -42,8 +42,8 @@ Read the room text and each instruction rather than racing through commands. A f
 32. **Review quests:** type `quests`. Quests track objectives, progress, rewards, and locked story branches.
 33. **Read the journal:** type `journal`. The journal offers direction, not a forced checklist.
 34. **Check progress again:** type `score`. Level 3 opens domain awakening; level 10 opens rebirth.
-35. **Revisit the courtyard:** type `east`.
-36. **Revisit the storehouse:** type `east`.
+35. **Survival and combat choices:** type `east`. Learn that `attack` uses your weapon, `cast <power>` spends mana, `use <item>` consumes a supply, `guard` reduces the next incoming hit, and `flee` gives the enemy one final strike before escape.
+36. **Economy and crafting:** type `east`. Victories and discoveries can earn gold; merchants sell supplies and gear, and some enemies drop materials. At Theron's Forge, `craft` lists recipes; finished gear must be equipped.
 37. **Approach the gate:** type `north`. It remains sealed until the review lessons are complete.
 38. **Preview the real world:** type `look north`. This reveals Asterion Village without moving you.
 39. **Depart:** type `north`. The gate is one-way. Completion is saved, and the tutorial cannot be revisited.
