@@ -9,22 +9,23 @@ type Quest struct {
  TargetEnemy string
  Required int
  RewardXP int
+ RewardGold int
  RequiredFlag string
  RequiredQuest string
  CompletionFlag string
 }
 
 var all=[]Quest{
- {ID:"black_thread",Name:"The Black Thread",Description:"Something beyond Olympus recognizes the thread bound to your sword.",Goal:"Defeat a creature in the foothills.",TargetRoom:"olympus_foothills",TargetEnemy:"Harpy",Required:1,RewardXP:80},
- {ID:"oracle_whisper",Name:"The Oracle's Whisper",Description:"The path to Delphi carries a prophecy meant for a soul that has already died.",Goal:"Reach the Delphi Sanctum.",TargetRoom:"delphi_sanctum",Required:1,RewardXP:120},
- {ID:"river_of_memory",Name:"The River of Memory",Description:"The Styx remembers every life you have not yet lived.",Goal:"Reach the Shores of the Styx after hearing Pythia's prophecy.",TargetRoom:"styx_shore",Required:1,RewardXP:200,RequiredQuest:"oracle_whisper"},
- {ID:"oath_across_the_river",Name:"An Oath Across the River",Description:"Pythia entrusted you with a warning. Carry it to the Temple of the First Dawn.",Goal:"Reach the Temple of the First Dawn.",TargetRoom:"temple_dawn",Required:1,RewardXP:180,RequiredFlag:"oracle_trust"},
- {ID:"unwritten_path",Name:"The Unwritten Path",Description:"You rejected prophecy. Prove that your own choices can shape the road ahead.",Goal:"Reach Ancient Athens without the Oracle’s blessing.",TargetRoom:"ancient_athens",Required:1,RewardXP:180,RequiredFlag:"oracle_defied"},
- {ID:"echoes_in_glass",Name:"Echoes in Glass",Description:"The Styx has left a memory in your soul. Find where the modern river hides beneath Athens.",Goal:"Find the modern Styx in Athens after rebirth.",TargetRoom:"modern_styx",Required:1,RewardXP:260,RequiredFlag:"styx_memory_recovered"},
- {ID:"museum_echo",Name:"Museum Echo",Description:"An old object seems to recognize you.",Goal:"Explore the modern museum.",TargetRoom:"modern_museum",Required:1,RewardXP:180,RequiredFlag:"styx_memory_recovered"},
- {ID:"delphi_trials",Name:"Trials of the Seer",Description:"Pythia tests whether you can hear the truth beneath a prophecy.",Goal:"Explore the Delphi Sanctum and listen to what remains.",TargetRoom:"delphi_sanctum",Required:1,RewardXP:90},
- {ID:"gate_of_three",Name:"The Gate of Three",Description:"Defeat the guardian beneath the river.",Goal:"Defeat Cerberus.",TargetRoom:"cerberus_gate",TargetEnemy:"Cerberus",Required:1,RewardXP:400,RequiredFlag:"styx_memory_recovered"},
- {ID:"forge_remembers",Name:"The Forge Remembers",Description:"Theron believes the monsters of Olympus leave behind materials that can be shaped into protection.",Goal:"Craft one piece of equipment at Theron's Forge.",Required:1,RewardXP:140,RequiredFlag:"forge_discovered",CompletionFlag:"crafted_any_gear"},
+ {ID:"black_thread",Name:"The Black Thread",Description:"Something beyond Olympus recognizes the thread bound to your sword.",Goal:"Defeat a creature in the foothills.",TargetRoom:"olympus_foothills",TargetEnemy:"Harpy",Required:1,RewardXP:80,RewardGold:10},
+ {ID:"oracle_whisper",Name:"The Oracle's Whisper",Description:"The path to Delphi carries a prophecy meant for a soul that has already died.",Goal:"Reach the Delphi Sanctum.",TargetRoom:"delphi_sanctum",Required:1,RewardXP:120,RewardGold:15},
+ {ID:"river_of_memory",Name:"The River of Memory",Description:"The Styx remembers every life you have not yet lived.",Goal:"Reach the Shores of the Styx after hearing Pythia's prophecy.",TargetRoom:"styx_shore",Required:1,RewardXP:200,RewardGold:25,RequiredQuest:"oracle_whisper"},
+ {ID:"oath_across_the_river",Name:"An Oath Across the River",Description:"Pythia entrusted you with a warning. Carry it to the Temple of the First Dawn.",Goal:"Reach the Temple of the First Dawn.",TargetRoom:"temple_dawn",Required:1,RewardXP:180,RewardGold:22,RequiredFlag:"oracle_trust"},
+ {ID:"unwritten_path",Name:"The Unwritten Path",Description:"You rejected prophecy. Prove that your own choices can shape the road ahead.",Goal:"Reach Ancient Athens without the Oracle’s blessing.",TargetRoom:"ancient_athens",Required:1,RewardXP:180,RewardGold:22,RequiredFlag:"oracle_defied"},
+ {ID:"echoes_in_glass",Name:"Echoes in Glass",Description:"The Styx has left a memory in your soul. Find where the modern river hides beneath Athens.",Goal:"Find the modern Styx in Athens after rebirth.",TargetRoom:"modern_styx",Required:1,RewardXP:260,RewardGold:32,RequiredFlag:"styx_memory_recovered"},
+ {ID:"museum_echo",Name:"Museum Echo",Description:"An old object seems to recognize you.",Goal:"Explore the modern museum.",TargetRoom:"modern_museum",Required:1,RewardXP:180,RewardGold:22,RequiredFlag:"styx_memory_recovered"},
+ {ID:"delphi_trials",Name:"Trials of the Seer",Description:"Pythia tests whether you can hear the truth beneath a prophecy.",Goal:"Explore the Delphi Sanctum and listen to what remains.",TargetRoom:"delphi_sanctum",Required:1,RewardXP:90,RewardGold:11},
+ {ID:"gate_of_three",Name:"The Gate of Three",Description:"Defeat the guardian beneath the river.",Goal:"Defeat Cerberus.",TargetRoom:"cerberus_gate",TargetEnemy:"Cerberus",Required:1,RewardXP:400,RewardGold:50,RequiredFlag:"styx_memory_recovered"},
+ {ID:"forge_remembers",Name:"The Forge Remembers",Description:"Theron believes the monsters of Olympus leave behind materials that can be shaped into protection.",Goal:"Craft one piece of equipment at Theron's Forge.",Required:1,RewardXP:140,RewardGold:17,RequiredFlag:"forge_discovered",CompletionFlag:"crafted_any_gear"},
 }
 
 func All() []Quest { return append([]Quest(nil),all...) }
