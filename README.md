@@ -92,7 +92,7 @@ requirements, and XP rewards. First-time room visits also grant exploration XP.
 
 ## Commands
 
-`look`, `map`, movement commands, `attack`, `cast <power>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help`, `quit`.
+`look`, `map`, movement commands, `attack`, `cast <power>`, `ql`, `ql set <slot> <power>`, `ql <slot> <target>`, `ql clear <slot>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help <topic>`, `quit`. Spell-specific help works too, e.g. `help Stormspark` or `help Judgment of the Sky`.
 
 ## World vision
 
