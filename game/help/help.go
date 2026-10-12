@@ -328,6 +328,23 @@ Stand near a merchant and use:
   buy <item>
 
 Purchased equipment is added to your inventory and can be equipped normally.`},
+	"consumables": {"consumables", `CONSUMABLES AND COMBAT RESOURCES
+
+Use 'inv' to see what you carry. Consumables display their healing or mana
+restoration values. Use 'use <item name>' to consume one; 'drink' and
+'consume' are aliases. A successful use removes one item from your inventory.
+
+AMBROSIA DRAUGHT — Restores up to 45 health.
+BLUE LOTUS TONIC — Restores up to 20 mana.
+LAUREL POULTICE — Restores up to 20 health.
+
+Restoration never exceeds your maximum health or mana. If you are already
+at full values, the item is not consumed. Consumables can be used during a
+fight, but an aggressive living enemy gets its turn immediately afterward.
+That makes timing matter: healing is useful, but not a free action.
+
+Visit a merchant and type 'shop' to see available supplies. Use 'buy <name>'
+to purchase an item, then 'inv' to verify that it is in your pack.`},
 	"tutorial": {"tutorial", `THE FIRST THREAD — GUIDED PROLOGUE
 
 Newly created characters receive a one-time, 39-lesson tutorial before
