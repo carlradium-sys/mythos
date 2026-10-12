@@ -1254,3 +1254,29 @@ func TestManualCombatModeSuppressesAutomaticRound(t *testing.T) {
 		t.Fatal("manual combat mode should not auto-attack")
 	}
 }
+
+func TestQuicklistAssignListAndCast(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Domain = power.Storm
+	s.Character.Level = 5
+	s.Character.Mana = 100
+	s.Enemy = &combat.Enemy{Name: "Practice Harpy", Level: 1, HP: 500, MaxHP: 500, Damage: 1}
+	s.EnemyAggressive = true
+
+	s.handleCommand("ql set 1 Stormspark")
+	if s.Character.Quicklist[0] != "Stormspark" { t.Fatalf("slot 1 = %q, want Stormspark", s.Character.Quicklist[0]) }
+	beforeHP, beforeMana := s.Enemy.HP, s.Character.Mana
+	s.handleCommand("ql 1 harpy")
+	if s.Enemy.HP >= beforeHP { t.Fatal("quicklist cast should damage the selected enemy") }
+	if s.Character.Mana != beforeMana-8 { t.Fatalf("mana after quick cast = %d, want %d",s.Character.Mana,beforeMana-8) }
+}
+
+func TestQuicklistRejectsLockedPowerAndInvalidSlot(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Domain = power.Storm
+	s.Character.Level = 5
+	s.handleCommand("ql set 1 Thunderfall")
+	if s.Character.Quicklist[0] != "" { t.Fatal("locked power should not be assigned") }
+	s.handleCommand("ql set 9 Stormspark")
+	if s.Character.Quicklist[0] != "" { t.Fatal("invalid slot should not be assigned") }
+}
