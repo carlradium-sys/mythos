@@ -2321,3 +2321,63 @@ func TestHuntingGroundRosterHasDistinctProgressionTiers(t *testing.T) {
 		}
 	}
 }
+
+
+func TestHuntingContractTracksMatchingKillsAndPaysOnce(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "fields_asphodel"
+	startXP, startGold := s.Character.Experience, s.Character.Gold
+
+	s.huntContract([]string{"accept"})
+	if !s.Character.HasStoryFlag(huntContractFlag("Restless Shade")) {
+		t.Fatal("accepting the local board contract should persist its target")
+	}
+	s.advanceHuntContract("Bronze Hoplite", "ancient_athens")
+	if got := s.Character.Quests[huntContractProgressKey]; got != 0 {
+		t.Fatalf("unmatched monster should not count toward contract; got %d", got)
+	}
+	s.advanceHuntContract("Restless Shade", "fields_asphodel")
+	s.advanceHuntContract("Restless Shade", "fields_asphodel")
+	if got := s.Character.Quests[huntContractProgressKey]; got != 2 {
+		t.Fatalf("two matching victories should give 2/3 progress, got %d", got)
+	}
+	s.huntContract([]string{"turnin"})
+	if s.Character.Experience != startXP {
+		t.Fatal("incomplete contract must not pay experience")
+	}
+	s.advanceHuntContract("Restless Shade", "fields_asphodel")
+	if got := s.Character.Quests[huntContractProgressKey]; got != 3 {
+		t.Fatalf("third matching victory should complete contract, got %d", got)
+	}
+	s.huntContract([]string{"turnin"})
+	if s.Character.Experience <= startXP || s.Character.Gold <= startGold {
+		t.Fatal("turning in a completed contract should award experience and drachmae")
+	}
+	if s.Character.HasStoryFlag(huntContractFlag("Restless Shade")) {
+		t.Fatal("turning in should clear the active contract")
+	}
+	paidXP, paidGold := s.Character.Experience, s.Character.Gold
+	s.huntContract([]string{"turnin"})
+	if s.Character.Experience != paidXP || s.Character.Gold != paidGold {
+		t.Fatal("a contract must not pay twice after turn-in")
+	}
+}
+
+func TestHuntingContractCanBeCancelledAndRequiresHuntingGround(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	s.huntContract([]string{"accept"})
+	if activeHuntContract(s.Character) != "" {
+		t.Fatal("contract must not be accepted outside a hunting ground")
+	}
+	s.Character.RoomID = "modern_rooftop"
+	s.huntContract([]string{"accept"})
+	if activeHuntContract(s.Character) != "Storm Crow" {
+		t.Fatal("modern rooftop board should offer a Storm Crow contract")
+	}
+	s.advanceHuntContract("Storm Crow", "modern_rooftop")
+	s.huntContract([]string{"cancel"})
+	if activeHuntContract(s.Character) != "" || s.Character.Quests[huntContractProgressKey] != 0 {
+		t.Fatal("cancelling should clear the active contract and progress")
+	}
+}
