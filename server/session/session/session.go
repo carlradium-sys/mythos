@@ -155,6 +155,8 @@ func (s *Session) handleCommand(input string) bool {
 		if s.TutorialStep == 5 && s.Character.HasStoryFlag("tutorial_hint_used") { s.advanceTutorial(6) }
 	case "choose":
 		s.choose(parts[1:])
+	case "offer":
+		s.offerMemory(parts[1:])
 	case "shop", "wares":
 		s.shop(parts[1:])
 	case "buy":
@@ -2090,10 +2092,6 @@ func(s *Session) talk(args []string) {
 				s.WriteLine("\x1b[1;33mA new story thread has appeared: A Memory for the Dead.\x1b[0m")
 			}
 		}
-		if n.ID == "asphodel_shade" && s.Character.HasStoryFlag("charon_memory_heard") &&
-			(matchedTopic == "memory" || matchedTopic == "remember" || matchedTopic == "name" || matchedTopic == "judgment") {
-			s.Character.SetStoryFlag("asphodel_memory_returned")
-		}
 		if n.ID == "village_guide" && s.TutorialStep == 3 && (topic == "hello" || topic == "greeting") {
 			s.advanceTutorial(4)
 		} else if n.ID == "village_guide" && s.TutorialStep == 4 && (topic == "village" || topic == "home") {
@@ -2130,6 +2128,56 @@ func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
 		return "Myrto tilts her head. \"You carry an old prophecy. In this city, old words have a way of becoming new trouble.\""
 	}
 	return ""
+}
+
+
+// offerMemory lets the player contribute an actual remembered experience to
+// the Underworld quest. The text is stored in the character's soul record;
+// merely mentioning the word "memory" to the shade is not enough to complete it.
+func (s *Session) offerMemory(args []string) {
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("The %s leaves you no room to offer a memory.", s.Enemy.Name)
+		return
+	}
+	if s.Character.RoomID != "fields_asphodel" {
+		s.WriteLine("There is no shade here to receive your memory.")
+		return
+	}
+	var shadePresent bool
+	for _, npc := range s.World.NPCs[s.Character.RoomID] {
+		if npc.ID == "asphodel_shade" {
+			shadePresent = true
+			break
+		}
+	}
+	if !shadePresent {
+		s.WriteLine("The memory has no listener here.")
+		return
+	}
+	if !s.Character.HasStoryFlag("charon_memory_heard") {
+		s.WriteLine("You do not yet understand what the river asks of a memory. Speak with Charon at the Styx first.")
+		return
+	}
+	if len(args) < 2 || !strings.EqualFold(args[0], "memory") {
+		s.WriteLine("Offer a specific remembered experience, not just a name or a feeling.")
+		s.WriteLine("Try: offer memory I remember someone singing off-key to comfort me when I feared the dark.")
+		return
+	}
+	memory := strings.TrimSpace(strings.Join(args[1:], " "))
+	if len(strings.Fields(memory)) < 6 {
+		s.WriteLine("The shade listens, but the fragment is too small to hold. Describe a moment: who was there, what happened, and why it stayed with you.")
+		return
+	}
+	if s.Character.HasStoryFlag("asphodel_memory_returned") {
+		s.WriteLine("The shade touches the clay token. \"I will not ask you to prove it twice. The memory has a place here now.\"")
+		return
+	}
+	s.Character.SetStoryFlag("asphodel_memory_returned")
+	s.Character.Memories = append(s.Character.Memories, "I offered the Unremembered Shade this memory: "+memory)
+	s.WriteLine("\x1b[1;36mThe shade listens without interrupting. When you finish, the pale flowers around its knees stir as if a breeze has crossed the field. The three grooves on the clay token darken: one straight, one broken, one unfinished.\x1b[0m")
+	s.WriteLine("The shade says, \"I cannot tell whether this happened to me. Perhaps that is not the point. For the first time, I can imagine that an ordinary life leaves a mark even when its name is lost. I will keep the shape of what you told me.\"")
+	s.WriteLine("\x1b[1;33mYour memory has become part of your soul's record. A Memory for the Dead is complete.\x1b[0m")
+	s.updateQuests()
 }
 
 func (s *Session) choose(args []string) {
