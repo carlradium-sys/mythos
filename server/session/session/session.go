@@ -1751,7 +1751,8 @@ func (s *Session) scanItems() {
 	if r == nil { s.WriteLine("There is nowhere here to scan."); return }
 	s.WriteLine("\x1b[1;36mINTERACTABLE SCAN — %s\x1b[0m", r.Name)
 	found := false
-	for i, object := range visibleRoomObjects(r, s.Character) {
+	objects := visibleRoomObjects(r, s.Character)
+	for i, object := range objects {
 		found = true
 		kind := "scenery"
 		if object.Container { kind = "container" } else if object.Takeable { kind = "takeable" }
@@ -1760,11 +1761,13 @@ func (s *Session) scanItems() {
 		}
 		s.WriteLine("  %d. %s [%s]", i+1, object.Name, kind)
 	}
+	displayIndex := len(objects) + 1
 	for _, container := range r.Objects {
 		if container == nil || !container.Container || !container.Open || !container.VisibleIn(r.Objects) { continue }
 		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
 			found = true
-			s.WriteLine("  %d. %s [stored in %s; takeable]", len(visibleRoomObjects(r, s.Character))+1, stored.Name, container.Name)
+			s.WriteLine("  %d. %s [stored in %s; takeable]", displayIndex, stored.Name, container.Name)
+			displayIndex++
 		}
 	}
 	if !found { s.WriteLine("  Nothing obvious can be handled here. Look closely at the room description for clues.") }
