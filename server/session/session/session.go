@@ -1464,7 +1464,7 @@ func (s *Session) lookTarget(args []string) {
 			return
 		}
 	}
-	for _, container := range r.Objects {
+	for _, container := range r.ObjectsSnapshot() {
 		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !objectVisibleIn(r, container, s.Character) { continue }
 		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
 			if strings.Contains(strings.ToLower(stored.Name), target) {
@@ -1613,7 +1613,7 @@ func objectVisibleIn(r *world.Room, object *world.Object, character *character.C
 func visibleRoomObjects(r *world.Room, character *character.Character) []*world.Object {
 	if r == nil { return nil }
 	var found []*world.Object
-	for _, object := range r.Objects {
+	for _, object := range r.ObjectsSnapshot() {
 		if object != nil && objectVisibleIn(r, object, character) && (character == nil || !character.HasStoryFlag("object_taken_"+object.ID)) { found = append(found, object) }
 	}
 	return found
@@ -1621,7 +1621,7 @@ func visibleRoomObjects(r *world.Room, character *character.Character) []*world.
 
 func findRoomObjectByID(r *world.Room, id string) *world.Object {
 	if r == nil { return nil }
-	for _, object := range r.Objects { if object != nil && object.ID == id { return object } }
+	for _, object := range r.ObjectsSnapshot() { if object != nil && object.ID == id { return object } }
 	return nil
 }
 
@@ -1636,7 +1636,7 @@ func findRoomObject(r *world.Room, query, source string, character *character.Ch
 	if r == nil { return nil }
 	query = stripLeadingArticle(strings.TrimSpace(strings.ToLower(query)))
 	source = stripLeadingArticle(strings.TrimSpace(strings.ToLower(source)))
-	for _, object := range r.Objects {
+	for _, object := range r.ObjectsSnapshot() {
 		if object == nil || !objectVisibleIn(r, object, character) || (character != nil && character.HasStoryFlag("object_taken_"+object.ID)) || !object.Matches(query) { continue }
 		if source != "" {
 			parent := findRoomObjectByID(r, object.ContainerID)
@@ -1661,7 +1661,7 @@ func (s *Session) describeObject(object *world.Object, r *world.Room, character 
 			s.WriteLine("It is closed. You will need to open it before you can see what lies inside.")
 		} else {
 			var contents []string
-			for _, child := range r.Objects {
+			for _, child := range r.ObjectsSnapshot() {
 				if child != nil && child.ContainerID == object.ID && child.Visible && (character == nil || !character.HasStoryFlag("object_taken_"+child.ID)) { contents = append(contents, child.Name) }
 			}
 			known := map[string]bool{}
@@ -1728,7 +1728,7 @@ func (s *Session) searchObject(args []string) {
 			return
 		}
 		found := 0
-		for _, child := range r.Objects {
+		for _, child := range r.ObjectsSnapshot() {
 			if child == nil || child.ContainerID != object.ID || !child.Visible || s.Character.HasStoryFlag("object_taken_"+child.ID) { continue }
 			found++
 			s.WriteLine("  You find: %s.", child.Name)
@@ -1975,7 +1975,7 @@ func (s *Session) dropItem(args []string) {
 	stored := owned
 	object.StoredItem = &stored
 	object.Takeable = true
-	r.Objects = append(r.Objects, object)
+	r.AddObject(object)
 	s.Character.Inventory = append(s.Character.Inventory[:selected], s.Character.Inventory[selected+1:]...)
 	s.WriteLine("You leave %s here.", owned.Name)
 	s.persist()
@@ -1997,7 +1997,7 @@ func (s *Session) scanItems() {
 		s.WriteLine("  %d. %s [%s]", i+1, object.Name, kind)
 	}
 	displayIndex := len(objects) + 1
-	for _, container := range r.Objects {
+	for _, container := range r.ObjectsSnapshot() {
 		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !objectVisibleIn(r, container, s.Character) { continue }
 		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
 			found = true
