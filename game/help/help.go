@@ -78,10 +78,12 @@ ATTACK
 Your weapon determines the style of the attack. Combat descriptions can
 target different body locations and may trigger special effects.
 
-Aggressive creatures can strike as you enter their room. Passive creatures,
-including the tutorial's practice enemies, wait until you attack them first.
-A successful attack, divine cast, or consumable use gives an aggressive
-enemy a chance to retaliate. A consumable is not a free combat turn.
+Aggressive creatures can strike as you enter their room. Wary creatures
+watch you without starting a fight; passive creatures keep their distance
+unless you challenge them. The Harpy is wary, while the road Satyr and the
+tutorial's practice enemies are passive. Attacking a wary or passive creature
+provokes it. A successful attack, divine cast, or consumable use gives an
+aggressive enemy a chance to retaliate. A consumable is not a free combat turn.
 
 AUTOMATIC OR MANUAL COMBAT
   pc                  Toggle automatic combat on/off instantly.
