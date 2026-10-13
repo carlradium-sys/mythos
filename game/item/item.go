@@ -13,6 +13,7 @@ const (
 
 type Item struct {
 	Name   string
+	Description string
 	Tier   Tier
 	Damage int
 	Armor  int
