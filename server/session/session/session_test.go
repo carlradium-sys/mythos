@@ -208,12 +208,23 @@ func TestEnteringFoothillsDoesNotCompleteBlackThread(t *testing.T) {
 func TestRoomQuestCompletesOnArrival(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "delphi_sanctum"
+	s.Character.SetStoryFlag("room_discovered_delphi_sanctum")
 	s.updateQuests()
 	if got := s.Character.Quests["oracle_whisper"]; got != 1 {
 		t.Fatalf("oracle_whisper progress = %d, want 1", got)
 	}
+	if s.Character.Experience != 120 {
+		t.Fatalf("experience = %d, want 120 (Oracle's Whisper only; the inscription still needs examining)", s.Character.Experience)
+	}
+	if got := s.Character.Quests["delphi_trials"]; got != 0 {
+		t.Fatalf("Delphi trials progress on room entry = %d, want 0 until the inscription is examined", got)
+	}
+	s.examineTarget([]string{"inscription"})
+	if got := s.Character.Quests["delphi_trials"]; got != 1 {
+		t.Fatalf("Delphi trials progress after examining inscription = %d, want 1", got)
+	}
 	if s.Character.Experience != 210 {
-		t.Fatalf("experience = %d, want 210 (Oracle's Whisper plus Trials of the Seer)", s.Character.Experience)
+		t.Fatalf("experience after examining inscription = %d, want 210", s.Character.Experience)
 	}
 }
 
@@ -350,7 +361,9 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 func TestDelphiTrialsGrantPersistentLaurelRelic(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "delphi_sanctum"
+	s.Character.SetStoryFlag("room_discovered_delphi_sanctum")
 	s.updateQuests()
+	s.examineTarget([]string{"inscription"})
 	if !s.Character.HasStoryFlag("delphi_trials_complete") {
 		t.Fatal("Delphi trials should record a persistent story flag")
 	}
@@ -828,7 +841,8 @@ func TestFirstLifeRouteCompletesCoreQuests(t *testing.T) {
 	s.defeatEnemy(false)
 	s.choose([]string{"trust"})
 	s.move("north")
-	if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") || !s.Character.HasStoryFlag("delphi_trials_complete") { t.Fatal("Delphi quests missing") }
+	s.examineTarget([]string{"inscription"})
+	if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") || !s.Character.HasStoryFlag("delphi_trials_complete") { t.Fatal("Delphi quests missing after examining the inscription") }
 	s.move("east")
 	if !s.Character.HasStoryFlag("quest_completed_oath_across_the_river") { t.Fatal("trust quest missing") }
 	s.move("down")
@@ -889,7 +903,8 @@ func TestMuseumQuestPersistsItsRewards(t *testing.T) {
 	s.Character.RoomID = "modern_museum"
 	s.Character.SetStoryFlag("styx_memory_recovered")
 	s.updateQuests()
-	if !s.Character.HasStoryFlag("museum_echo_uncovered") { t.Fatal("museum flag missing") }
+	s.examineTarget([]string{"mask"})
+	if !s.Character.HasStoryFlag("museum_echo_uncovered") { t.Fatal("museum flag missing after examining the mask") }
 	if len(s.Character.Memories) == 0 { t.Fatal("memory reward missing") }
 }
 
@@ -1339,4 +1354,208 @@ func TestCharonsMemoryQuestRequiresAnOfferedMemory(t *testing.T) {
 	if len(s.Character.Memories) == 0 || !strings.Contains(s.Character.Memories[len(s.Character.Memories)-1], "singing off-key") {
 		t.Fatal("the offered memory should be recorded in the character's soul memories")
 	}
+}
+
+
+func TestGetCoinFromAshAddsInventoryAndRemovesRoomObject(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.getObject([]string{"coin", "from", "ash"})
+	found := false
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, "scratched bronze coin") { found = true }
+	}
+	if !found { t.Fatal("get coin from ash should add the coin to inventory") }
+	if !s.Character.HasStoryFlag("found_scratched_coin") { t.Fatal("coin pickup should record its story discovery") }
+	room := s.World.GetRoom("olympus_foothills")
+	if findRoomObject(room, "coin", "", s.Character) != nil {
+		t.Fatal("a character should no longer see a coin after collecting it")
+	}
+	other := character.New("Otherwalker")
+	if findRoomObject(room, "coin", "", other) == nil {
+		t.Fatal("a different character should still be able to discover the shared-world coin")
+	}
+	if got := s.Character.Quests["coin_in_the_ash"]; got != 0 {
+		t.Fatalf("coin quest progress after pickup = %d, want 0 until examined", got)
+	}
+	s.dropItem([]string{"coin"})
+	stillCarried := false
+	for _, carried := range s.Character.Inventory { if strings.EqualFold(carried.Name, "scratched bronze coin") { stillCarried = true } }
+	if !stillCarried { t.Fatal("story-critical coin should not be droppable before the mystery is resolved") }
+	s.examineTarget([]string{"coin"})
+	if got := s.Character.Quests["coin_in_the_ash"]; got != 1 {
+		t.Fatalf("coin quest progress after examination = %d, want 1", got)
+	}
+}
+
+func TestHarpyIsWaryRatherThanHostileOnSight(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.spawnEnemy()
+	if s.Enemy == nil || s.Enemy.Behavior != "wary" || s.EnemyAggressive {
+		t.Fatal("Harpy should be wary and should not attack merely because the player entered")
+	}
+}
+
+func TestSatyrIsPassiveAndManticoreIsAggressive(t *testing.T) {
+	if got := combat.NewSatyr().Behavior; got != "passive" { t.Fatalf("Satyr behavior = %q, want passive", got) }
+	if got := combat.NewManticore().Behavior; got != "aggressive" { t.Fatalf("Manticore behavior = %q, want aggressive", got) }
+}
+
+
+func TestTerminalWrappingIgnoresANSIColorCodes(t *testing.T) {
+	colored := "\x1b[31mred text\x1b[0m"
+	if got := visibleTerminalWidth(colored); got != len("red text") {
+		t.Fatalf("visible width = %d, want %d", got, len("red text"))
+	}
+	line := "\x1b[36mA long room description should wrap at a word boundary without breaking color codes or words.\x1b[0m"
+	wrapped := wrapTerminalLine(line, 28)
+	if len(wrapped) < 2 { t.Fatal("long prose line should wrap to terminal width") }
+	for _, part := range wrapped {
+		if visibleTerminalWidth(part) > 28 {
+			t.Fatalf("wrapped line has visible width %d, limit 28: %q", visibleTerminalWidth(part), part)
+		}
+	}
+}
+
+
+func TestEnteringWaryHarpyRoomDoesNotCauseAutomaticDamage(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_gates"
+	s.Character.SetStoryFlag("room_discovered_olympus_foothills")
+	s.Character.HP = s.Character.MaxHP
+	before := s.Character.HP
+	s.move("north")
+	if s.Character.RoomID != "olympus_foothills" { t.Fatalf("room = %q, want foothills", s.Character.RoomID) }
+	if s.Enemy == nil || s.Enemy.Name != "Harpy" { t.Fatal("Harpy should be present in the foothills") }
+	if s.EnemyAggressive { t.Fatal("wary Harpy should not be aggressive on sight") }
+	if s.Character.HP != before { t.Fatalf("HP changed on entry: %d -> %d", before, s.Character.HP) }
+}
+
+
+func TestMuseumQuestRequiresExaminingTheArtifact(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "modern_museum"
+	s.Character.SetStoryFlag("styx_memory_recovered")
+	s.updateQuests()
+	if got := s.Character.Quests["museum_echo"]; got != 0 {
+		t.Fatalf("museum quest progress on entry = %d, want 0 until artifact is examined", got)
+	}
+	s.examineTarget([]string{"black-glass funerary mask"})
+	if got := s.Character.Quests["museum_echo"]; got != 1 {
+		t.Fatalf("museum quest progress after examining artifact = %d, want 1", got)
+	}
+}
+
+
+func TestDropAndPickupPreservesItemProperties(t *testing.T) {
+	s := newChoiceTestSession(t)
+	potion := item.Item{Name:"laurel poultice", Description:"A poultice of crushed laurel leaves.", Tier:item.Common, Kind:"consumable", Healing:20}
+	s.Character.Inventory = append(s.Character.Inventory, potion)
+	s.dropItem([]string{"laurel", "poultice"})
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, potion.Name) { t.Fatal("dropped item should leave the inventory") }
+	}
+	r := s.World.GetRoom(s.Character.RoomID)
+	dropped := findRoomObject(r, "laurel poultice", "", s.Character)
+	if dropped == nil { t.Fatal("dropped item should become a room object") }
+	s.getObject([]string{"laurel", "poultice"})
+	found := false
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, potion.Name) {
+			found = true
+			if carried.Healing != 20 || carried.Kind != "consumable" || carried.Description != potion.Description {
+				t.Fatalf("picked-up item lost its properties: %#v", carried)
+			}
+		}
+	}
+	if !found { t.Fatal("picked-up item should return to inventory") }
+}
+
+
+func TestOnlineRosterRegistersRefreshesAndUnregistersPlayers(t *testing.T) {
+	s1 := newChoiceTestSession(t)
+	s2 := newChoiceTestSession(t)
+	s1.Character.Name = "Firstwalker"
+	s2.Character.Name = "Secondwalker"
+	s1.Character.RoomID = "village_square"
+	s2.Character.RoomID = "modern_crossroads"
+	s1.registerOnline()
+	defer s1.unregisterOnline()
+	s2.registerOnline()
+	defer s2.unregisterOnline()
+	players := s1.onlineSnapshotList()
+	foundFirst, foundSecond := false, false
+	for _, player := range players {
+		if player.Name == "Firstwalker" && player.RoomID == "village_square" { foundFirst = true }
+		if player.Name == "Secondwalker" && player.RoomID == "modern_crossroads" { foundSecond = true }
+	}
+	if !foundFirst || !foundSecond { t.Fatal("online roster should contain both registered players and their rooms") }
+	s2.Character.RoomID = "modern_museum"
+	s2.refreshOnline()
+	for _, player := range s1.onlineSnapshotList() {
+		if player.Name == "Secondwalker" && player.RoomID != "modern_museum" {
+			t.Fatal("roster location should refresh after movement")
+		}
+	}
+	s2.unregisterOnline()
+	for _, player := range s1.onlineSnapshotList() {
+		if player.Name == "Secondwalker" { t.Fatal("unregistered player should disappear from who list") }
+	}
+}
+
+
+func TestSayDistinguishesGreetingsFromNPCAddresses(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	if s.isNPCAddress([]string{"hi"}) { t.Fatal("a short greeting should be room speech, not an NPC selector") }
+	if !s.isNPCAddress([]string{"damon"}) { t.Fatal("a clear NPC name should route to NPC dialogue") }
+}
+
+
+func TestGetCoinAcceptsCompactContainerSyntax(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.getObject([]string{"coin", "ash"})
+	if !s.Character.HasStoryFlag("found_scratched_coin") {
+		t.Fatal("get coin ash should collect the coin from the ash bed")
+	}
+}
+
+func TestGetAllCollectsVisibleTakeableObjectsOnly(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.getObject([]string{"all"})
+	if !s.Character.HasStoryFlag("object_taken_scratched_bronze_coin") {
+		t.Fatal("get all should collect the visible coin")
+	}
+	if !s.Character.HasStoryFlag("object_taken_bronze_oil_lamp") {
+		t.Fatal("get all should collect the takeable lamp")
+	}
+	if s.Character.HasStoryFlag("object_taken_campfire_ash") {
+		t.Fatal("get all should not collect scenery containers")
+	}
+}
+
+
+func TestCoinOfferingRequiresExaminationAndCompletesOptionalQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	coin := item.Item{Name:"scratched bronze coin", Description:"A scratched bronze coin.", Tier:item.Common, Kind:"quest"}
+	s.Character.Inventory = append(s.Character.Inventory, coin)
+	s.Character.SetStoryFlag("found_scratched_coin")
+	s.offerItem("coin", "bowl")
+	if s.Character.HasStoryFlag("offered_coin_at_well") {
+		t.Fatal("the coin should not be offered before the player examines its mark")
+	}
+	s.Character.SetStoryFlag("examined_scratched_coin")
+	s.offerItem("coin", "bowl")
+	if !s.Character.HasStoryFlag("offered_coin_at_well") { t.Fatal("the offering should be recorded") }
+	if !s.Character.HasStoryFlag("quest_completed_return_the_coin") { t.Fatal("the optional return-the-coin quest should complete") }
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, "scratched bronze coin") { t.Fatal("the offered coin should leave inventory") }
+	}
+	beforeXP := s.Character.Experience
+	s.offerItem("coin", "bowl")
+	if s.Character.Experience != beforeXP { t.Fatal("repeating the offering should not award the quest twice") }
 }
