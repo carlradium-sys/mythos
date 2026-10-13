@@ -57,7 +57,7 @@ This is the release gate for calling a build a **playable demo**, rather than me
 - [ ] Two sessions can fight or move independently without corrupting one another's state or terminal output.
 - [ ] Opening or closing a container in one session does not reveal or hide its contents for another character.
 - [ ] Dropping an ordinary item makes it visible in the shared room, and concurrent pickup attempts give it to exactly one character.
-- [ ] A character cannot be logged in simultaneously through two sessions; after disconnecting, reconnecting works without stale state overwriting newer progress.
+- [ ] An account cannot have two simultaneous sessions; after disconnecting, reconnecting works without stale state overwriting newer progress.
 
 ## 6. Terminal presentation and help
 
