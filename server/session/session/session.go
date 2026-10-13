@@ -1264,6 +1264,18 @@ func (s *Session) lookTarget(args []string) {
 			return
 		}
 	}
+	for _, container := range r.Objects {
+		if container == nil || !container.Container || !container.Open || !container.VisibleIn(r.Objects) { continue }
+		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
+			if strings.Contains(strings.ToLower(stored.Name), target) {
+				s.WriteLine("\x1b[1;36m%s\x1b[0m", stored.Name)
+				if stored.Description != "" { s.WriteLine("%s", stored.Description) }
+				s.WriteLine("It is stored inside %s.", container.Name)
+				s.WriteLine("Use 'get %s from %s' to retrieve it.", strings.ToLower(stored.Name), strings.ToLower(container.Name))
+				return
+			}
+		}
+	}
 	for i, n := range s.World.NPCs[s.Character.RoomID] {
 		name := strings.ToLower(n.Name)
 		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
@@ -1747,6 +1759,13 @@ func (s *Session) scanItems() {
 			if parent := findRoomObjectByID(r, object.ContainerID); parent != nil { s.WriteLine("  %d. %s [%s; in %s]", i+1, object.Name, kind, parent.Name); continue }
 		}
 		s.WriteLine("  %d. %s [%s]", i+1, object.Name, kind)
+	}
+	for _, container := range r.Objects {
+		if container == nil || !container.Container || !container.Open || !container.VisibleIn(r.Objects) { continue }
+		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
+			found = true
+			s.WriteLine("  %d. %s [stored in %s; takeable]", len(visibleRoomObjects(r, s.Character))+1, stored.Name, container.Name)
+		}
 	}
 	if !found { s.WriteLine("  Nothing obvious can be handled here. Look closely at the room description for clues.") }
 	s.WriteLine("Try 'look <object>', 'examine <object>', or 'get <item> from <container>'.")
