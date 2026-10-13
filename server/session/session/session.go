@@ -129,12 +129,12 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 			if !ok { return }
 			if !s.handleCommand(strings.TrimSpace(line)) { return }
 			s.WriteLine("")
-			s.WriteLine("%s", s.prompt())
+			s.writePrompt()
 		case <-combatTicker.C:
 			if s.Character != nil && s.Character.AutoCombat && s.Enemy != nil && s.Enemy.HP > 0 && s.EnemyAggressive {
 				s.automaticCombatRound()
 				s.persist()
-				s.WriteLine("%s", s.prompt())
+				s.writePrompt()
 			}
 		}
 	}
