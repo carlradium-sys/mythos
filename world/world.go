@@ -17,12 +17,39 @@ func NewWorld() *World {
 	den := NewRoom("manticore_den","The Manticore Den","Broken columns and old offerings surround a dark cavern. Something large has disturbed the dust. Ancient claw marks cross a wall beside a half-erased image of a three-headed hound.")
 	crossroads := NewRoom("modern_crossroads","The Crossroads of Athens","Athens has paved over its old roads but never quite buried them. Neon spills across rain-dark stone; scooters thread between buses; a kiosk radio argues about football beneath a statue whose inscription has been replaced three times. For one second, every phone on the street displays the same unfamiliar date. Then the screens correct themselves. Beneath the traffic noise comes the slow lap of water against wood, impossibly close and impossibly deep. A vendor watches you as if she heard it too.")
 
+	// Objects are world fixtures, not prose-only decoration. Their state is
+	// changed by get/take commands and remains changed for the shared world.
+	ashBed := NewObject("campfire_ash", "campfire ash", "A cold fire has collapsed into a shallow bed of grey ash. Someone has stirred it recently; a small round edge of bronze shows beneath the surface.", "ash", "ashes", "fire", "campfire")
+	ashBed.Container = true
+	ashBed.Takeable = false
+	coin := NewObject("scratched_bronze_coin", "scratched bronze coin", "A bronze coin lies half-buried in the ash, still faintly warm despite the cold fire. One face has been scratched away. On the other, a tiny mark resembles a thread tied in a knot.", "coin", "bronze coin", "token")
+	coin.ContainerID = ashBed.ID
+	coin.Takeable = true
+	foothills.Objects = append(foothills.Objects, ashBed, coin)
+
+	offeringBowl := NewObject("offering_bowl", "empty offering bowl", "A shallow clay bowl rests beside the old well. A thumbprint remains in the dust inside it, though no one admits to having touched it.", "bowl", "clay bowl", "offering")
+	offeringBowl.Takeable = false
+	village.Objects = append(village.Objects, offeringBowl)
+
+	shrineLamp := NewObject("bronze_oil_lamp", "bronze oil lamp", "The lamp is tarnished where many hands have held it. Its wick is cold, but the faint scent of myrrh clings to the bronze.", "lamp", "oil lamp", "bronze lamp")
+	shrineLamp.Takeable = true
+	foothills.Objects = append(foothills.Objects, shrineLamp)
+
 	// Isolated, one-way prologue rooms for newly created characters.
 	tutShore := NewRoom("tutorial_shore", "The Shore Between Heartbeats", "You wake on pale sand beside a still pool of black water. The sky holds no sun, yet a warm dawn glows behind the hills. A narrow path leads north toward a lantern-lit shelter. Your hands are empty of memory, but a dark thread circles your wrist.")
 	tutCamp := NewRoom("tutorial_camp", "The Wayfarer's Shelter", "A weathered shelter stands beneath olive branches. A guide has prepared a table with a map, a pack, and a practice blade. Nothing here is dangerous; this is a place to learn before the world begins testing you.")
 	tutYard := NewRoom("tutorial_yard", "The Training Courtyard", "A low stone wall encloses a courtyard marked with chalk circles. A small training shade waits in the center, motionless and watchful. It will not strike first. Beyond the northern arch, a quiet grove offers a more realistic lesson.")
 	tutGrove := NewRoom("tutorial_grove", "The Quiet Practice Grove", "Olive trees shade a ring of worn stones. A young satyr stands in the clearing with its staff lowered. It watches you but will not attack unless you attack it first. This is a controlled lesson, not a real ambush.")
 	tutStore := NewRoom("tutorial_storehouse", "The Wayfarer's Storehouse", "A tidy storehouse holds a rack for weapons and a chest of practice supplies. Labels explain how carried items differ from equipped items. A marble gate to the north leads out of the lesson and into the living world.")
+
+	// The prologue's table and practice supplies are tangible, inspectable
+	// objects so players can learn that room descriptions refer to real things.
+	tutorialMap := NewObject("tutorial_map", "weathered practice map", "A charcoal map marks the shelter, the courtyard, the grove, and the one-way gate. The ink is smudged where someone traced the road north with a thumb.", "map", "charcoal map")
+	tutorialMap.Takeable = false
+	tutCamp.Objects = append(tutCamp.Objects, tutorialMap)
+	practiceToken := NewObject("practice_token", "clay practice token", "A small clay disk stamped with a simple spiral. It has no value, but its weight makes it easier to understand how objects become part of your inventory.", "token", "clay disk", "practice coin")
+	practiceToken.Takeable = true
+	tutStore.Objects = append(tutStore.Objects, practiceToken)
 	tutGate := NewRoom("tutorial_gate", "The Gate of First Steps", "The tutorial ends at a pale marble gate. Beyond it, the road descends toward Asterion Village and the first true choices of your life. This threshold opens only once. Once you leave, the way back will be sealed.")
 	tutShore.Exits["north"] = tutCamp.ID
 	tutCamp.Exits["south"] = tutShore.ID
@@ -55,10 +82,11 @@ func NewWorld() *World {
 	}}
 	w.NPCs=map[string][]*NPC{}
 	tutGuide := NewNPC("tutorial_guide", "Ianthe, Wayfarer Guide", "A calm traveler in a faded blue cloak. She speaks as if she has guided many souls through their first uncertain steps.", 1, 100, 0, 0)
-	tutGuide.AddDialogue([]string{"hello", "greeting", "name"}, `Ianthe smiles gently. "Welcome, wayfarer. You do not need to know everything at once. I will teach you one skill at a time. Read each room, try each command, and remember that help is always available."`)
+	tutGuide.AddDialogue([]string{"hello", "greeting", "name"}, `Ianthe sets a cup of warm water on the table before asking your name. "You were found beside a shore that is not on any map. You were cold, but not dead—or perhaps you had been dead and something changed its mind. I have guided other lost souls, though none arrived with a thread around their wrist. You can stay here until you feel steady. Look around, ask what you need, and do not mistake my advice for orders. The road will still be there when you are ready."`)
 	tutGuide.AddDialogue([]string{"movement", "move", "directions", "exits"}, `"Movement follows named exits. Use north, south, east, west, up, or down; short forms such as n and e work too. 'exits' lists routes and 'map' shows how nearby rooms connect. Looking at a path does not move you."`)
 	tutGuide.AddDialogue([]string{"combat", "fight", "enemy", "monster"}, `"Inspect a creature before attacking. Some beings are hostile; others are wary but peaceful until harmed. 'attack <name>' starts a fight. Watch both health totals, use 'rest' only when safe, and remember that 'flee' is a legitimate survival choice."`)
 	tutGuide.AddDialogue([]string{"inventory", "items", "equipment", "gear"}, `"Inventory is what you carry; equipment is what you have ready. Use 'inv' to inspect your pack and 'eq' to see your weapon and armor. Carrying a sword does not always mean it is the sword you have equipped."`)
+	tutGuide.AddDialogue([]string{"objects", "items", "inspect", "examine", "coin", "map"}, `"A place is more than its walls and exits. The map on this table is a real thing you can inspect, just as the objects you find later will be real things you can pick up. Try 'look weathered practice map', then use 'iscan' when you want a list of things you can handle. 'scan' also lists people and creatures."`)
 	tutGuide.AddDialogue([]string{"story", "quests", "journal", "help"}, `"The journal gives broad story direction; quests track objectives. 'help <topic>' explains a system in depth, and 'tutorial' repeats the current lesson. You may explore beyond the obvious road later. This prologue is a safe place to practice."`)
 	w.NPCs["tutorial_camp"] = append(w.NPCs["tutorial_camp"], tutGuide)
 
@@ -92,6 +120,19 @@ func NewWorld() *World {
 	merchant.Shop=[]item.Item{{Name:"city knife",Tier:item.Common,Damage:14,Kind:"sword",Price:60},{Name:"reinforced jacket",Tier:item.Uncommon,Armor:4,Kind:"armor",Price:80},{Name:"ambrosia draught",Tier:item.Uncommon,Kind:"consumable",Price:40,Healing:45},{Name:"blue lotus tonic",Tier:item.Common,Kind:"consumable",Price:28,ManaRestore:20},{Name:"laurel poultice",Tier:item.Common,Kind:"consumable",Price:20,Healing:20}}
 	w.NPCs["modern_crossroads"]=append(w.NPCs["modern_crossroads"],merchant)
 	expandWorld(w.Rooms)
+
+	// These clues turn major story milestones into interactions, not room-entry
+	// checkboxes. They are ordinary room objects and can be examined by name.
+	if sanctum := w.Rooms["delphi_sanctum"]; sanctum != nil {
+		inscription := NewObject("delphi_broken_inscription", "broken stone inscription", "Most of the lettering has been scraped away. What remains describes a soul that returned from the river carrying a memory no living witness could confirm. The final line has been deliberately chiseled out.", "inscription", "stone inscription", "writing", "stone")
+		inscription.Takeable = false
+		sanctum.Objects = append(sanctum.Objects, inscription)
+	}
+	if museum := w.Rooms["modern_museum"]; museum != nil {
+		artifact := NewObject("museum_black_glass_mask", "black-glass funerary mask", "The museum label calls it an unprovenanced funerary object. Behind the glass, its polished surface reflects a shoreline instead of the gallery. A faint thumbprint rests on the inside, where no visitor could reach.", "artifact", "mask", "glass mask", "black glass")
+		artifact.Takeable = false
+		museum.Objects = append(museum.Objects, artifact)
+	}
 
 	// Story NPCs live in later regions so exploration reveals lore, not just
 	// room descriptions. These figures are guides and witnesses, not required
