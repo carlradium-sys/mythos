@@ -35,6 +35,7 @@ This is the release gate for calling a build a **playable demo**, rather than me
 - [ ] The Oracle's Whisper completes only after asking Pythia about the thread or prophecy; entering a room alone does not substitute for the conversation.
 - [ ] The River of Memory completes only after using `listen water` at the ancient Styx, not on arrival.
 - [ ] Quest progress survives disconnect/reconnect.
+- [ ] Defeated one-off encounters stay defeated after reconnecting in the same life, preventing duplicate XP/loot; rebirth opens the encounter again only where intended.
 - [ ] `current quests` lists active quests with stable numeric IDs; `current quests track <ID>` selects one; `current quest` shows its checklist and a useful next lead; `current quests untrack` clears it.
 - [ ] Every quest checklist has meaningful wording and actionable hints, and completing one quest does not falsely complete another.
 
