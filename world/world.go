@@ -54,6 +54,9 @@ func NewWorld() *World {
 		tutShore.ID:tutShore, tutCamp.ID:tutCamp, tutYard.ID:tutYard, tutGrove.ID:tutGrove, tutStore.ID:tutStore, tutGate.ID:tutGate,
 	}}
 	w.NPCs=map[string][]*NPC{}
+	village.Items = []item.Item{{Name:"black feather", Tier:item.Common, Kind:"clue"}, {Name:"cracked clay token", Tier:item.Common, Kind:"keepsake"}}
+	tutCamp.Items = []item.Item{{Name:"folded travel map", Tier:item.Common, Kind:"tool"}, {Name:"clay waterskin", Tier:item.Common, Kind:"consumable", Healing:5}}
+	tutStore.Items = []item.Item{{Name:"linen bandage", Tier:item.Common, Kind:"consumable", Healing:12}, {Name:"bronze oil lamp", Tier:item.Common, Kind:"tool"}}
 	tutGuide := NewNPC("tutorial_guide", "Ianthe, Wayfarer Guide", "A calm traveler in a faded blue cloak. She speaks as if she has guided many souls through their first uncertain steps.", 1, 100, 0, 0)
 	tutGuide.AddDialogue([]string{"hello", "greeting", "name"}, `Ianthe smiles gently. "Welcome, wayfarer. You do not need to know everything at once. I will teach you one skill at a time. Read each room, try each command, and remember that help is always available."`)
 	tutGuide.AddDialogue([]string{"movement", "move", "directions", "exits"}, `"Movement follows named exits. Use north, south, east, west, up, or down; short forms such as n and e work too. 'exits' lists routes and 'map' shows how nearby rooms connect. Looking at a path does not move you."`)
