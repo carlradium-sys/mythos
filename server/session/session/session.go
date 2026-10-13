@@ -566,6 +566,11 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.Memories = append(s.Character.Memories, "A museum artifact remembered you before you remembered it.")
 		s.Character.Echoes = append(s.Character.Echoes, "Behind glass, an ancient face wears your eyes.")
 		s.WriteLine("The artifact warms beneath the glass. A memory crosses the distance between lives.")
+	case "prayer_without_name":
+		s.Character.SetStoryFlag("prayer_witnessed")
+		s.Character.Memories = append(s.Character.Memories, "The nameless prayer asked that someone remember why a person stayed, not who they were.")
+		s.Character.Echoes = append(s.Character.Echoes, "A witness mark survives where a name was erased.")
+		s.WriteLine("The black thread tightens once around your wrist, then relaxes. You have not learned the writer's name, but you understand what they refused to let the world forget.")
 	case "return_the_coin":
 		s.Character.SetStoryFlag("well_answered")
 		s.Character.Echoes = append(s.Character.Echoes, "The village well remembered the shore where the scratched coin first changed hands.")
@@ -700,6 +705,8 @@ func (s *Session) questList() {
 }
 func questUnlockHint(flag string) string {
 	switch flag {
+	case "opened_tomb_coffer":
+		return "open the sealed votive coffer in the Manticore Den and read the prayer strip"
 	case "found_scratched_coin":
 		return "search the cold campfire ash beneath Olympus"
 	case "room_discovered_delphi_sanctum":
