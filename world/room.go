@@ -42,3 +42,21 @@ func (r *Room) AddObject(object *Object) {
 	r.Objects = append(r.Objects, object)
 	r.objectsMu.Unlock()
 }
+
+
+// RemoveObjectByID atomically removes a runtime object, allowing shared ground
+// items to be picked up by at most one player.
+func (r *Room) RemoveObjectByID(id string) (*Object, bool) {
+	if r == nil || id == "" {
+		return nil, false
+	}
+	r.objectsMu.Lock()
+	defer r.objectsMu.Unlock()
+	for i, object := range r.Objects {
+		if object != nil && object.ID == id {
+			r.Objects = append(r.Objects[:i], r.Objects[i+1:]...)
+			return object, true
+		}
+	}
+	return nil, false
+}
