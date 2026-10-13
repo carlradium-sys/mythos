@@ -77,3 +77,16 @@ func TestTalkHelpExplainsOracleChoicePrerequisite(t *testing.T) {
 		}
 	}
 }
+
+
+func TestCombatHelpExplainsCreatureAggressionStates(t *testing.T) {
+	topic, ok := Get("combat")
+	if !ok {
+		t.Fatal("combat help topic is missing")
+	}
+	for _, expected := range []string{"Wary creatures", "The Harpy is wary", "road Satyr", "Attacking a wary or passive creature provokes it"} {
+		if !strings.Contains(topic.Text, expected) {
+			t.Errorf("combat help missing %q", expected)
+		}
+	}
+}
