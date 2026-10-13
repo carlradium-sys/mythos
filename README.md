@@ -25,7 +25,10 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Choice-linked relic rewards and a Delphi exploration reward
 - Inventory and equipment foundation
 - Real room objects with descriptions, keywords, containers, and takeable state
-- Object inspection and pickup: `look coin`, `examine coin`, `get coin from ash`
+- Object inspection, searching, and pickup: `look coin`, `examine coin`, `search ash`, `get coin from ash`, and `get all`
+- Stateful containers: `open`, `close`, and `look in` reveal contents without making hidden items visible prematurely
+- Readable clues and offerings: `read prayer strip` and `offer coin to bowl` advance story quests through discovery and player choice
+- Tutorial practice chest and bandage teach scanning, opening, pickup, and examination safely
 - Separate `scan` (people/creatures/objects) and `iscan` (interactable objects) commands
 - Creature behavior states: wary and passive creatures do not attack just because you enter
 - Consumable items with health and mana restoration
@@ -38,6 +41,7 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Character-specific dialogue with clues, conflicting testimony, recurring symbols, and long-form story exchanges
 - Narrative continuity bible documenting the black thread, the first shore, the Styx, Cerberus, and open mysteries
 - Optional Underworld side quest linking Charon's memory lesson to the Unremembered Shade, requiring a player-authored memory recorded in the soul legacy
+- Optional village offering quest and a hidden prayer-strip quest in the Manticore Den, both advanced by interacting with physical objects rather than entering a room
 
 ## Run a local demo (Termux or Linux)
 
@@ -86,7 +90,7 @@ to inspect logs.
 
 ### First-life progression
 
-Use `help`, `look`, `scan`, `iscan`, `examine`, `get`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. For example, in the Olympus foothills, try `look coin`, `get coin from ash`, then `examine coin` to uncover a small piece of the larger mystery. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
+Use `help`, `look`, `scan`, `iscan`, `examine`, `search`, `open`, `close`, `read`, `get`, `offer`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. For example, in the Olympus foothills, try `look coin`, `get coin from ash`, then `examine coin` to uncover a small piece of the larger mystery. You can return to the village and `offer coin to bowl` if you want to see what the well remembers; later, `open` the sealed coffer in the Manticore Den and `read` the prayer strip inside. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
 
 ### Suggested first-life route
 
