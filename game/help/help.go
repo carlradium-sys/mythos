@@ -36,6 +36,30 @@ COMBAT AND GROWTH
 Rooms describe what is present; they do not all represent combat encounters. Some creatures attack on sight, others defend themselves, and some may have no interest in you at all. Looking around should not restart a defeated encounter. Discovery, conversation, and exploration can matter as much as victory.
 
 The help files explain the rules. The world itself tells the story.`},
+	"objects": {"objects", `OBJECTS & INTERACTION
+
+Rooms can contain loose objects as well as people and creatures. Objects are
+not automatically loot, and not every object needs to be picked up.
+
+  look                       Read the room and its visible objects.
+  examine <name>             Inspect an object without taking it.
+  look <name>                Equivalent to examine for people, creatures,
+                             objects, and connected rooms.
+  iscan                      List loose objects you can interact with.
+  get <name>                 Pick up an available object.
+  get 1                      Pick up the first available object in the list.
+  scan                       List visible people and creatures.
+
+An object's description may hint at its history or use. Some are supplies;
+others are tools, evidence, or keepsakes. Picking something up records that
+choice for your character, so it does not vanish for everyone else in a
+shared room. Use inv to review what you carry. A consumable can be used with
+use <name> when its effect would be helpful.
+
+Scanning is informational and does not start combat. Inspect a creature
+before deciding whether to attack; some beings are hostile, while others
+will leave you alone unless you provoke them.`},
+
 	"movement": {"movement", `MOVEMENT & EXPLORATION
 
 Use north, south, east, west, up, down, in, or out. Short forms also
