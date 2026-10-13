@@ -432,9 +432,13 @@ not enough; describe a moment that could matter even if its owner's name is lost
 Story choices are recorded on your character and survive logout and rebirth. Consequences may return as changed dialogue, soul memories, faction standing, quests, or evidence in a later era.
 
 Use soul (or legacy) to inspect the marks your decisions leave behind.`},
-	"offer": {"offer", `OFFERING A MEMORY
+	"offer": {"offer", `OFFERINGS & WITNESSES
 
-The optional Underworld quest asks you to share a real, specific memory with
+Offer a physical item to a meaningful recipient when the story calls for it:
+  offer coin to bowl       Return the examined scratched coin to Asterion's well.
+  offer letter to shade    Give the read feather-folded letter to the Unremembered Shade.
+
+The optional Underworld memory quest also asks you to share a real, specific memory with
 the Unremembered Shade in Asphodel.
 
 First, hear Charon's lesson at the Shores of the Styx:
