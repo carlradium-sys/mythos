@@ -8,7 +8,32 @@ type Topic struct {
 }
 
 var topics = map[string]Topic{
-	"start": {"start", `FATEWALKER: GETTING STARTED\n\nYou have entered a world with its own history, grudges, rituals, and unanswered questions. Your first life begins in Ancient Greece, but the story does not belong to a single age. Choices leave marks on the soul, and rebirth can carry those marks into a changed world.\n\nThere is no required sequence of commands beyond the occasional situation that needs a direct action. Read what a place tells you. Speak to people as people, not as vending machines for quests. Examine unfamiliar things. Follow a rumor if it interests you, and return to an unfinished mystery when you are ready.\n\nWHEN YOU NEED A HAND\n  look                  Read the current room and its visible people or threats.\n  look <name>            Inspect a person, creature, or connected place.\n  talk <name> <question> Ask an NPC about something in natural language.\n  hint                   Request an optional nudge from someone nearby.\n  exits / map            Understand routes and nearby connections.\n  inv / eq               Review carried items and equipped gear.\n  quests / journal       Review objectives and story threads you have found.\n  help <topic>           Read a detailed reference without losing your place.\n\nCOMBAT AND GROWTH\n  attack <target>        Begin a weapon attack when you choose to fight.\n  cast <power>           Use a divine power you have unlocked.\n  ql                     Review your combat quicklist.\n  awaken <domain>        At level 3, choose a divine resonance.\n  rebirth                At level 10, begin another life and enter a new era.\n\nRooms describe what is present; they do not all represent combat encounters. Some creatures attack on sight, others defend themselves, and some may have no interest in you at all. Looking around should not restart a defeated encounter. Discovery, conversation, and exploration can matter as much as victory.\n\nThe help files explain the rules. The world itself tells the story.`},
+	"start": {"start", `FATEWALKER: GETTING STARTED
+
+You have entered a world with its own history, grudges, rituals, and unanswered questions. Your first life begins in Ancient Greece, but the story does not belong to a single age. Choices leave marks on the soul, and rebirth can carry those marks into a changed world.
+
+There is no required sequence of commands beyond the occasional situation that needs a direct action. Read what a place tells you. Speak to people as people, not as vending machines for quests. Examine unfamiliar things. Follow a rumor if it interests you, and return to an unfinished mystery when you are ready.
+
+WHEN YOU NEED A HAND
+  look                  Read the current room and its visible people or threats.
+  look <name>            Inspect a person, creature, or connected place.
+  talk <name> <question> Ask an NPC about something in natural language.
+  hint                   Request an optional nudge from someone nearby.
+  exits / map            Understand routes and nearby connections.
+  inv / eq               Review carried items and equipped gear.
+  quests / journal       Review objectives and story threads you have found.
+  help <topic>           Read a detailed reference without losing your place.
+
+COMBAT AND GROWTH
+  attack <target>        Begin a weapon attack when you choose to fight.
+  cast <power>           Use a divine power you have unlocked.
+  ql                     Review your combat quicklist.
+  awaken <domain>        At level 3, choose a divine resonance.
+  rebirth                At level 10, begin another life and enter a new era.
+
+Rooms describe what is present; they do not all represent combat encounters. Some creatures attack on sight, others defend themselves, and some may have no interest in you at all. Looking around should not restart a defeated encounter. Discovery, conversation, and exploration can matter as much as victory.
+
+The help files explain the rules. The world itself tells the story.`},
 	"movement": {"movement", `MOVEMENT & EXPLORATION
 
 Use north, south, east, west, up, down, in, or out. Short forms also
