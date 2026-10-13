@@ -171,3 +171,21 @@ func TestObjectKeywordsMatchNaturalNames(t *testing.T) {
 	o := NewObject("coin", "scratched bronze coin", "A coin.", "coin", "token")
 	if !o.Matches("bronze") || !o.Matches("token") { t.Fatal("object should match name fragments and keywords") }
 }
+
+
+func TestManticoreCofferContainsHiddenReadableClue(t *testing.T) {
+	w := NewWorld()
+	den := w.GetRoom("manticore_den")
+	if den == nil { t.Fatal("Manticore Den should exist") }
+	var coffer, prayer *Object
+	for _, object := range den.Objects {
+		if object.ID == "tomb_coffer" { coffer = object }
+		if object.ID == "charred_prayer_strip" { prayer = object }
+	}
+	if coffer == nil || prayer == nil { t.Fatal("coffer and prayer strip should be real room objects") }
+	if !coffer.Container || coffer.Open { t.Fatal("coffer should be a closed container") }
+	if prayer.ContainerID != coffer.ID || !prayer.Takeable { t.Fatal("prayer strip should be takeable and stored inside the coffer") }
+	if prayer.VisibleIn(den.Objects) { t.Fatal("prayer strip must stay hidden until the coffer is opened") }
+	coffer.Open = true
+	if !prayer.VisibleIn(den.Objects) { t.Fatal("opening the coffer should reveal the prayer strip") }
+}
