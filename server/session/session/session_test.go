@@ -1,6 +1,7 @@
 package session
 
 import (
+	"bufio"
 	"fatewalker/game/account"
 	"fatewalker/game/power"
 	"io"
@@ -2054,4 +2055,57 @@ func TestAccountSessionReservationPreventsConcurrentStaleAccountCopies(t *testin
 		t.Fatal("account should become available after the first session releases it")
 	}
 	second.releaseAccount()
+}
+
+
+func TestLogoutAtCharacterSelectTransfersAccountReservation(t *testing.T) {
+	store := account.NewStore(t.TempDir())
+	if err := store.Register("firstuser", "password-1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Register("seconduser", "password-2"); err != nil {
+		t.Fatal(err)
+	}
+	firstAccount, err := store.Login("firstuser", "password-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondAccount, err := store.Login("seconduser", "password-2")
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, err := secondAccount.NewCharacter("SecondWalker")
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondAccount.Characters = append(secondAccount.Characters, *record)
+	if err := store.Save(secondAccount); err != nil {
+		t.Fatal(err)
+	}
+
+	s := newChoiceTestSession(t)
+	s.Accounts = store
+	s.Account = firstAccount
+	if !s.reserveAccount() {
+		t.Fatal("first account should be reserved")
+	}
+	scanner := bufio.NewScanner(strings.NewReader("logout\nlogin seconduser password-2\n1\n"))
+	if !s.selectCharacter(scanner) {
+		t.Fatal("character selection should continue after logging into the second account")
+	}
+	defer s.releaseAccount()
+
+	if s.Account.Username != "seconduser" || s.Character == nil || s.Character.Name != "SecondWalker" {
+		t.Fatalf("selected account/character = %q/%v, want seconduser/SecondWalker", s.Account.Username, s.Character)
+	}
+	onlineMu.RLock()
+	_, oldReservationExists := activeAccounts["firstuser"]
+	newReservationOwner := activeAccounts["seconduser"]
+	onlineMu.RUnlock()
+	if oldReservationExists {
+		t.Fatal("logging out should release the previous account reservation")
+	}
+	if newReservationOwner != s {
+		t.Fatal("the new account should be reserved by the current session")
+	}
 }
