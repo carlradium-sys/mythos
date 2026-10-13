@@ -2349,9 +2349,18 @@ func TestHuntingContractTracksMatchingKillsAndPaysOnce(t *testing.T) {
 	if got := s.Character.Quests[huntContractProgressKey]; got != 3 {
 		t.Fatalf("third matching victory should complete contract, got %d", got)
 	}
+	s.Character.RoomID = "village_square"
+	s.huntContract([]string{"turnin"})
+	if s.Character.Experience != startXP || s.Character.Gold != startGold {
+		t.Fatal("completed contract should not pay when turned in away from a hunting board")
+	}
+	if activeHuntContract(s.Character) != "Restless Shade" {
+		t.Fatal("leaving the board should not clear a completed but unclaimed contract")
+	}
+	s.Character.RoomID = "fields_asphodel"
 	s.huntContract([]string{"turnin"})
 	if s.Character.Experience <= startXP || s.Character.Gold <= startGold {
-		t.Fatal("turning in a completed contract should award experience and drachmae")
+		t.Fatal("turning in a completed contract at a hunting board should award experience and drachmae")
 	}
 	if s.Character.HasStoryFlag(huntContractFlag("Restless Shade")) {
 		t.Fatal("turning in should clear the active contract")
