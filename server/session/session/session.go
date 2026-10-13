@@ -739,7 +739,23 @@ func huntContractTarget(roomID string) (string, bool) {
 }
 
 const huntContractProgressKey = "__hunt_contract_progress"
-const huntContractTargetKey = "__hunt_contract_target"
+const huntContractFlagPrefix = "hunt_contract_active_"
+
+func huntContractFlag(target string) string {
+	return huntContractFlagPrefix + strings.ReplaceAll(strings.ToLower(target), " ", "_")
+}
+
+func activeHuntContract(c *character.Character) string {
+	if c == nil {
+		return ""
+	}
+	for _, target := range []string{"Bronze Hoplite", "Ambrosia Wisp", "Restless Shade", "Street Shade", "Echo Hound", "Storm Crow"} {
+		if c.HasStoryFlag(huntContractFlag(target)) {
+			return target
+		}
+	}
+	return ""
+}
 
 func (s *Session) huntContract(args []string) {
 	if s.Character == nil {
@@ -750,7 +766,7 @@ func (s *Session) huntContract(args []string) {
 		action = strings.ToLower(args[0])
 	}
 	target, available := huntContractTarget(s.Character.RoomID)
-	activeTarget := s.Character.StoryFlags[huntContractTargetKey]
+	activeTarget := activeHuntContract(s.Character)
 	progress := s.Character.Quests[huntContractProgressKey]
 
 	switch action {
@@ -768,7 +784,7 @@ func (s *Session) huntContract(args []string) {
 		}
 		s.WriteLine("A weathered notice has been nailed to a post. Someone has paid to thin the supernatural creatures gathering here.")
 		s.WriteLine("Contract: defeat 3 %s. Reward: experience, drachmae, and the materials the creatures leave behind.", target)
-		s.WriteLine("Type 'hunt accept' to take the contract. You can keep exploring; only matching kills in hunting grounds count.",)
+		s.WriteLine("Type 'hunt accept' to take the contract. You can keep exploring; only matching kills in hunting grounds count.")
 	case "accept":
 		if activeTarget != "" {
 			s.WriteLine("You already have a contract to hunt %s (%d/3). Finish it or use 'hunt cancel' first.", activeTarget, progress)
@@ -778,7 +794,7 @@ func (s *Session) huntContract(args []string) {
 			s.WriteLine("No local hunting contract is posted here. Find a repeatable hunting ground first.")
 			return
 		}
-		s.Character.StoryFlags[huntContractTargetKey] = target
+		s.Character.SetStoryFlag(huntContractFlag(target))
 		s.Character.Quests[huntContractProgressKey] = 0
 		s.WriteLine("Contract accepted: defeat 3 %s. Matching victories in hunting grounds will count; story progress remains separate.", target)
 	case "turnin", "complete", "claim":
@@ -794,7 +810,7 @@ func (s *Session) huntContract(args []string) {
 		rewardGold := 50 + s.Character.Level*10
 		s.awardExperience(rewardXP)
 		s.Character.Gold += rewardGold
-		delete(s.Character.StoryFlags, huntContractTargetKey)
+		delete(s.Character.StoryFlags, huntContractFlag(activeTarget))
 		s.Character.Quests[huntContractProgressKey] = 0
 		s.WriteLine("\x1b[1;32mContract fulfilled! +%d XP and %d drachmae.\x1b[0m", rewardXP, rewardGold)
 		s.WriteLine("The hunting board's keeper marks your name in charcoal. More work will be waiting.")
@@ -803,7 +819,7 @@ func (s *Session) huntContract(args []string) {
 			s.WriteLine("You have no active hunting contract.")
 			return
 		}
-		delete(s.Character.StoryFlags, huntContractTargetKey)
+		delete(s.Character.StoryFlags, huntContractFlag(activeTarget))
 		s.Character.Quests[huntContractProgressKey] = 0
 		s.WriteLine("You abandon the contract to hunt %s. No reward is paid.", activeTarget)
 	default:
@@ -815,7 +831,7 @@ func (s *Session) advanceHuntContract(enemy, roomID string) {
 	if s.Character == nil {
 		return
 	}
-	target := s.Character.StoryFlags[huntContractTargetKey]
+	target := activeHuntContract(s.Character)
 	if target == "" || !repeatableHuntingGround(roomID) || !strings.EqualFold(target, enemy) {
 		return
 	}
