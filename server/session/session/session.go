@@ -2898,11 +2898,11 @@ func (s *Session) offerItem(itemName, recipient string) {
 	}
 	if s.Character.RoomID == "fields_asphodel" && (strings.Contains(recipient, "shade") || strings.Contains(recipient, "asphodel")) {
 		if !s.Character.HasStoryFlag("read_harpy_letter") {
-			s.WriteLine("The shade studies the paper from a distance. "A mark without its words is only a shape. Read the letter first, and decide what you are carrying here."")
+			s.WriteLine(`The shade studies the paper from a distance. "A mark without its words is only a shape. Read the letter first, and decide what you are carrying here."`)
 			return
 		}
 		if s.Character.HasStoryFlag("offered_harpy_letter_to_shade") {
-			s.WriteLine("The shade rests one hand over the place where the letter was kept. "I have the witness now. I will not ask you to surrender it twice."")
+			s.WriteLine(`The shade rests one hand over the place where the letter was kept. "I have the witness now. I will not ask you to surrender it twice."`)
 			return
 		}
 		selected := -1
@@ -2928,7 +2928,7 @@ func (s *Session) offerItem(itemName, recipient string) {
 		s.Character.SetStoryFlag("offered_harpy_letter_to_shade")
 		s.Character.Memories = append(s.Character.Memories, "I gave the feather-folded letter to the Unremembered Shade. It recognized the three-line witness mark but could not recover the writer's name.")
 		s.WriteLine("The shade takes the letter with both hands. Its fingers stop at the three-line mark.")
-		s.WriteLine(""I know this mark," it whispers. "Or I know the space it leaves behind. Someone stood in a doorway so another could pass. I cannot tell you who they were, and I will not pretend that recognition is the same as remembering. But this is a witness. Let it stay here, where the forgotten are still allowed to matter."")
+		s.WriteLine(`"I know this mark," it whispers. "Or I know the space it leaves behind. Someone stood in a doorway so another could pass. I cannot tell you who they were, and I will not pretend that recognition is the same as remembering. But this is a witness. Let it stay here, where the forgotten are still allowed to matter."`)
 		s.WriteLine("The shade folds the letter carefully and places it beside the clay token. For the first time, the token's unfinished groove fills with a thin line of light.")
 		s.updateQuests()
 		s.persist()
