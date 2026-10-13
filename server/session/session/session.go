@@ -1918,6 +1918,14 @@ func (s *Session) getObject(args []string) {
 		s.WriteLine("You cannot take %s; it is part of the surroundings.", object.Name)
 		return
 	}
+	if strings.HasPrefix(object.ID, "dropped_") {
+		pickedUp, available := r.RemoveObjectByID(object.ID)
+		if !available {
+			s.WriteLine("Another traveler has already picked up %s.", object.Name)
+			return
+		}
+		object = pickedUp
+	}
 	kind := "object"
 	if object.ID == "scratched_bronze_coin" || object.ID == "harpy_letter" || object.ID == "charred_prayer_strip" { kind = "quest" }
 	carried := item.Item{Name:object.Name, Description:object.Description, Tier:item.Common, Kind:kind}
