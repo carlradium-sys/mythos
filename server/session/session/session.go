@@ -7,7 +7,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+	"unicode/utf8"
 
 	"fatewalker/game/character"
 	"fatewalker/game/combat"
@@ -20,7 +22,19 @@ import (
 	"fatewalker/world"
 )
 
+type onlineSnapshot struct {
+	Name string
+	Level int
+	Life int
+	Era string
+	RoomID string
+}
+
+var onlineMu sync.RWMutex
+var onlineSessions = map[*Session]onlineSnapshot{}
+
 type Session struct {
+	writeMu sync.Mutex
  Character *character.Character
  Account *account.Account
  Accounts *account.Store
@@ -42,7 +56,65 @@ func New(accounts *account.Store, conn net.Conn, w *world.World) *Session {
  return &Session{Accounts:accounts, Conn:conn, World:w, AutoMap:false}
 }
 
-func (s *Session) WriteLine(format string,args ...any) { fmt.Fprintf(s.Conn,format+"\r\n",args...) }
+// WriteLine centralizes Telnet line endings and wraps long prose without
+// counting ANSI color codes as visible terminal columns.
+func (s *Session) WriteLine(format string, args ...any) {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+	rendered := fmt.Sprintf(format, args...)
+	rendered = strings.ReplaceAll(rendered, "\r\n", "\n")
+	for _, line := range strings.Split(rendered, "\n") {
+		for _, wrapped := range wrapTerminalLine(line, 78) {
+			fmt.Fprint(s.Conn, wrapped, "\r\n")
+		}
+	}
+}
+
+func visibleTerminalWidth(value string) int {
+	width := 0
+	for i := 0; i < len(value); {
+		if value[i] == 0x1b && i+1 < len(value) && value[i+1] == '[' {
+			i += 2
+			for i < len(value) {
+				ch := value[i]
+				i++
+				if ch >= 0x40 && ch <= 0x7e { break }
+			}
+			continue
+		}
+		_, size := utf8.DecodeRuneInString(value[i:])
+		if size < 1 { size = 1 }
+		width++
+		i += size
+	}
+	return width
+}
+
+func wrapTerminalLine(line string, width int) []string {
+	if width < 20 || visibleTerminalWidth(line) <= width || strings.ContainsAny(line, "╭╮╰╯│┌┐└┘←→↑↓") {
+		return []string{line}
+	}
+	words := strings.Fields(line)
+	if len(words) < 2 { return []string{line} }
+	indent := len(line) - len(strings.TrimLeft(line, " "))
+	prefix := strings.Repeat(" ", indent)
+	var lines []string
+	current := ""
+	for _, word := range words {
+		if current == "" {
+			current = word
+			continue
+		}
+		if visibleTerminalWidth(current)+1+visibleTerminalWidth(word) > width {
+			lines = append(lines, current)
+			current = prefix + word
+		} else {
+			current += " " + word
+		}
+	}
+	if current != "" { lines = append(lines, current) }
+	return lines
+}
 
 func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("")
@@ -51,10 +123,13 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	if !s.login(scanner) { return }
 	defer s.persist()
 	if !s.selectCharacter(scanner) { return }
+	s.registerOnline()
+	defer s.unregisterOnline()
 	s.prepareTutorial()
 	s.storyIntro()
 	s.updateQuests()
 	s.look()
+	s.refreshOnline()
 	if s.Character.HasStoryFlag("tutorial_available") {
 		s.prologueHint()
 	} else if s.TutorialStep < 16 {
@@ -84,11 +159,13 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 		case line, ok := <-commands:
 			if !ok { return }
 			if !s.handleCommand(strings.TrimSpace(line)) { return }
+			s.refreshOnline()
 			s.WriteLine("")
 			s.WriteLine("%s", s.prompt())
 		case <-combatTicker.C:
 			if s.Character != nil && s.Character.AutoCombat && s.Enemy != nil && s.Enemy.HP > 0 && s.EnemyAggressive {
 				s.automaticCombatRound()
+				s.refreshOnline()
 				s.persist()
 				s.WriteLine("%s", s.prompt())
 			}
@@ -101,6 +178,7 @@ func (s *Session) prompt() string {
 }
 
 func (s *Session) handleCommand(input string) bool {
+	rawParts := strings.Fields(input)
 	parts:=strings.Fields(strings.ToLower(input))
 	if len(parts)==0{return true}
 	switch parts[0] {
@@ -120,6 +198,16 @@ func (s *Session) handleCommand(input string) bool {
 			s.look()
 			if s.TutorialStep == 0 { s.advanceTutorial(1) }
 		}
+	case "examine", "inspect":
+		s.examineTarget(parts[1:])
+	case "get", "take", "pickup":
+		s.getObject(parts[1:])
+	case "drop", "discard":
+		s.dropItem(parts[1:])
+	case "scan":
+		s.scanTargets()
+	case "iscan", "itemscan", "scanitems":
+		s.scanItems()
 	case "map":
 		s.localMap()
 		if s.TutorialStep == 8 { s.advanceTutorial(9) }
@@ -130,14 +218,20 @@ func (s *Session) handleCommand(input string) bool {
 			s.autoMap(parts[1:])
 		}
 	case "worldmap", "world-map":
-		s.WriteLine(s.World.MapText(s.Character.RoomID))
+		s.WriteLine("%s", s.World.MapText(s.Character.RoomID))
 	case "exits":
 		s.showExits()
 		if s.TutorialStep == 7 { s.advanceTutorial(8) }
 	case "north","south","east","west","up","down","in","out","n","s","e","w","u","d":
 		s.move(parts[0])
 	case "who":
-		s.WriteLine("You are the first known traveler on this shard.")
+		s.who()
+	case "chat", "gossip":
+		s.chat(rawParts[1:])
+	case "emote", "me":
+		s.emote(rawParts[1:])
+	case "tell", "whisper":
+		s.tell(rawParts[1:])
 	case "score","stats":
 		s.score()
 	case "inventory", "inv", "i":
@@ -148,15 +242,17 @@ func (s *Session) handleCommand(input string) bool {
 		if s.TutorialStep == 13 { s.advanceTutorial(14) }
 	case "equip", "wield", "wear":
 		s.equip(parts[1:])
-	case "talk", "say":
+	case "talk":
 		s.talk(parts[1:])
+	case "say":
+		if s.isNPCAddress(parts[1:]) { s.talk(parts[1:]) } else { s.sayRoom(rawParts[1:]) }
 	case "hint":
 		s.hint(parts[1:])
 		if s.TutorialStep == 5 && s.Character.HasStoryFlag("tutorial_hint_used") { s.advanceTutorial(6) }
 	case "choose":
 		s.choose(parts[1:])
 	case "offer":
-		s.offerMemory(parts[1:])
+		s.offer(parts[1:])
 	case "shop", "wares":
 		s.shop(parts[1:])
 	case "buy":
@@ -203,6 +299,134 @@ func (s *Session) handleCommand(input string) bool {
 	if s.Character.HasStoryFlag("tutorial_available") { s.advancePrologueForCommand(parts) }
 	s.persist()
 	return true
+}
+
+func (s *Session) registerOnline() {
+	if s.Character == nil { return }
+	onlineMu.Lock()
+	onlineSessions[s] = onlineSnapshot{Name:s.Character.Name, Level:s.Character.Level, Life:s.Character.Life, Era:s.Character.Era, RoomID:s.Character.RoomID}
+	onlineMu.Unlock()
+	s.broadcastGlobalExcept(fmt.Sprintf("%s enters the world.", s.Character.Name), s)
+}
+
+func (s *Session) refreshOnline() {
+	if s.Character == nil { return }
+	onlineMu.Lock()
+	if _, ok := onlineSessions[s]; ok {
+		onlineSessions[s] = onlineSnapshot{Name:s.Character.Name, Level:s.Character.Level, Life:s.Character.Life, Era:s.Character.Era, RoomID:s.Character.RoomID}
+	}
+	onlineMu.Unlock()
+}
+
+func (s *Session) unregisterOnline() {
+	onlineMu.Lock()
+	snapshot, ok := onlineSessions[s]
+	if ok { delete(onlineSessions, s) }
+	onlineMu.Unlock()
+	if ok { s.broadcastGlobal(fmt.Sprintf("%s leaves the world.", snapshot.Name)) }
+}
+
+func (s *Session) onlineSnapshotList() []onlineSnapshot {
+	onlineMu.RLock()
+	list := make([]onlineSnapshot, 0, len(onlineSessions))
+	for _, player := range onlineSessions { list = append(list, player) }
+	onlineMu.RUnlock()
+	sort.Slice(list, func(i,j int) bool { return strings.ToLower(list[i].Name) < strings.ToLower(list[j].Name) })
+	return list
+}
+
+func (s *Session) who() {
+	players := s.onlineSnapshotList()
+	s.WriteLine("\x1b[1;36mPLAYERS ONLINE — %d\x1b[0m", len(players))
+	if len(players) == 0 { s.WriteLine("  No travelers are visible."); return }
+	for _, player := range players {
+		room := player.RoomID
+		if found := s.World.GetRoom(room); found != nil { room = found.Name }
+		s.WriteLine("  %-20s Level %-3d Life %-2d %-8s — %s", player.Name, player.Level, player.Life, player.Era, room)
+	}
+}
+
+func (s *Session) broadcastGlobal(message string) {
+	s.broadcastGlobalExcept(message, nil)
+}
+
+func (s *Session) broadcastGlobalExcept(message string, except *Session) {
+	onlineMu.RLock()
+	recipients := make([]*Session, 0, len(onlineSessions))
+	for player := range onlineSessions { if player != except { recipients = append(recipients, player) } }
+	onlineMu.RUnlock()
+	for _, player := range recipients { player.WriteLine("\x1b[1;35m[World]\x1b[0m %s", message) }
+}
+
+func (s *Session) broadcastRoom(message string) {
+	s.refreshOnline()
+	onlineMu.RLock()
+	recipients := make([]*Session, 0, len(onlineSessions))
+	for player, snapshot := range onlineSessions {
+		if snapshot.RoomID == s.Character.RoomID { recipients = append(recipients, player) }
+	}
+	onlineMu.RUnlock()
+	for _, player := range recipients { player.WriteLine("%s", message) }
+}
+
+func (s *Session) chat(args []string) {
+	message := strings.TrimSpace(strings.Join(args, " "))
+	if message == "" { s.WriteLine("Usage: chat <message>"); return }
+	s.broadcastGlobal(fmt.Sprintf("%s: %s", s.Character.Name, message))
+}
+
+func (s *Session) emote(args []string) {
+	message := strings.TrimSpace(strings.Join(args, " "))
+	if message == "" { s.WriteLine("Usage: emote <action>"); return }
+	s.broadcastRoom(fmt.Sprintf("\x1b[1;35m%s %s\x1b[0m", s.Character.Name, message))
+}
+
+func (s *Session) sayRoom(args []string) {
+	message := strings.TrimSpace(strings.Join(args, " "))
+	if message == "" { s.WriteLine("Say what?"); return }
+	s.broadcastRoom(fmt.Sprintf("\x1b[1;36m%s says, %q\x1b[0m", s.Character.Name, message))
+}
+
+func (s *Session) isNPCAddress(args []string) bool {
+	if len(args) == 0 { return false }
+	first := strings.ToLower(args[0])
+	if _, err := strconv.Atoi(first); err == nil { return len(s.World.NPCs[s.Character.RoomID]) > 0 }
+	if len(first) < 3 { return false }
+	for _, n := range s.World.NPCs[s.Character.RoomID] {
+		if strings.Contains(strings.ToLower(n.Name), first) { return true }
+	}
+	return false
+}
+
+func (s *Session) tell(args []string) {
+	if len(args) < 2 { s.WriteLine("Usage: tell <player> <message>"); return }
+	targetName := strings.ToLower(args[0])
+	message := strings.TrimSpace(strings.Join(args[1:], " "))
+	onlineMu.RLock()
+	var target *Session
+	var name string
+	var partialMatches []*Session
+	var partialNames []string
+	for player, snapshot := range onlineSessions {
+		if strings.EqualFold(snapshot.Name, targetName) {
+			target, name = player, snapshot.Name
+			break
+		}
+		if strings.Contains(strings.ToLower(snapshot.Name), targetName) {
+			partialMatches = append(partialMatches, player)
+			partialNames = append(partialNames, snapshot.Name)
+		}
+	}
+	onlineMu.RUnlock()
+	if target == nil && len(partialMatches) == 1 { target, name = partialMatches[0], partialNames[0] }
+	if target == nil && len(partialMatches) > 1 {
+		s.WriteLine("That name matches several players: %s. Use a more specific name.", strings.Join(partialNames, ", "))
+		return
+	}
+	if target == nil { s.WriteLine("No online player matches '%s'. Use 'who' to see who's here.", args[0]); return }
+	if target == s { s.WriteLine("You tell yourself: %s", message); return }
+	target.WriteLine("\x1b[1;35m[Tell from %s]\x1b[0m %s", s.Character.Name, message)
+	s.WriteLine("\x1b[1;35m[Tell to %s]\x1b[0m %s", name, message)
 }
 
 func (s *Session) login(scanner *bufio.Scanner) bool {
@@ -336,6 +560,10 @@ func (s *Session) completeQuest(q quest.Quest) {
 		s.Character.Memories = append(s.Character.Memories, "A museum artifact remembered you before you remembered it.")
 		s.Character.Echoes = append(s.Character.Echoes, "Behind glass, an ancient face wears your eyes.")
 		s.WriteLine("The artifact warms beneath the glass. A memory crosses the distance between lives.")
+	case "return_the_coin":
+		s.Character.SetStoryFlag("well_answered")
+		s.Character.Echoes = append(s.Character.Echoes, "The village well remembered the shore where the scratched coin first changed hands.")
+		s.WriteLine("The well has answered, though it has not explained itself. Your choice is now part of the thread.")
 	case "gate_of_three":
 		s.Character.SetStoryFlag("cerberus_defeated")
 		s.Character.Favors = append(s.Character.Favors, "Cerberus Oath")
@@ -452,7 +680,7 @@ func (s *Session) questList() {
 		}
 		if status == "LOCKED" {
 			if q.RequiredFlag != "" && !s.Character.HasStoryFlag(q.RequiredFlag) {
-				s.WriteLine("    Unlock: discover %s", strings.ReplaceAll(q.RequiredFlag, "_", " "))
+				s.WriteLine("    Unlock: %s", questUnlockHint(q.RequiredFlag))
 			} else if q.RequiredQuest != "" {
 				if prerequisite, ok := quest.Get(q.RequiredQuest); ok {
 					s.WriteLine("    Unlock: complete %s", prerequisite.Name)
@@ -464,6 +692,23 @@ func (s *Session) questList() {
 	s.WriteLine("\x1b[90mSummary: %d active  •  %d complete  •  %d locked\x1b[0m", active, complete, locked)
 	s.WriteLine("Type 'journal' for a concise suggestion on what to do next.")
 }
+func questUnlockHint(flag string) string {
+	switch flag {
+	case "found_scratched_coin":
+		return "search the cold campfire ash beneath Olympus"
+	case "room_discovered_delphi_sanctum":
+		return "find the Delphi Sanctum and read what remains"
+	case "styx_memory_recovered":
+		return "recover a memory at the ancient Styx"
+	case "forge_discovered":
+		return "visit Theron's Forge east of the foothills"
+	case "charon_memory_heard":
+		return "hear Charon explain what a memory can mean to the dead"
+	default:
+		return "follow the clues that point toward " + strings.ReplaceAll(flag, "_", " ")
+	}
+}
+
 func (s *Session) nextAvailableQuest() (quest.Quest, bool) {
 	s.ensureQuests()
 	for _, q := range quest.All() {
@@ -510,12 +755,14 @@ func (s *Session) journal() {
 func (s *Session) tutorial() {
 	if s.Character != nil && s.Character.HasStoryFlag("tutorial_available") {
 		s.prologueHint()
-		s.WriteLine("Your prologue progress is saved. Complete the gate lesson to enter the main world; the gate is one-way.")
+		s.WriteLine("Your prologue notes are saved. Explore freely, and leave through the one-way gate whenever you feel ready.")
 		return
 	}
 	s.WriteLine("\x1b[1;33mTHE FIRST THREAD — FIELD GUIDE\x1b[0m")
 	s.WriteLine("LOOK         'look' describes your current room. It does not list paths; use 'exits' for the detailed route list.")
 	s.WriteLine("INSPECT      'look Damon', 'look Harpy', or 'look east' reveals details about a person, creature, or destination.")
+	s.WriteLine("OBJECTS      'iscan' lists interactable objects; 'scan' lists people, creatures, and objects.")
+	s.WriteLine("COLLECT      'look coin' or 'examine coin' inspects an object; 'get coin from ash' picks it up when takeable.")
 	s.WriteLine("MOVE         north/south/east/west (or n/s/e/w) travels along an available path. After moving, type 'look' when you want the room details.")
 	s.WriteLine("NAVIGATION   'exits' names each destination; 'map' shows nearby connections; 'worldmap' shows the wider world.")
 	s.WriteLine("CONVERSATION 'talk 1 hello' greets NPC 1; 'talk 1 <topic>' asks about a subject. NPC numbers come from 'look'.")
@@ -538,13 +785,14 @@ func (s *Session) storyIntro() {
 	s.Character.SetStoryFlag("tutorial_intro_seen")
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;35mTHE THREAD REMEMBERS\x1b[0m")
-	s.WriteLine("Death came as cold black water. You remember sinking, but not the prayer or crime that brought you there.")
-	s.WriteLine("Three mornings ago, Asterion fishers dragged your body from the river. At dawn, you opened your eyes.")
-	s.WriteLine("A black thread circled your wrist, pointing toward Olympus. The gods are real, monsters haunt old roads, and death is a crossing.")
-	s.WriteLine("Rebirth may carry you into a new age, but every choice follows the soul. Damon knows what happened after the river returned you.")
+	s.WriteLine("The first thing you remember is not a face, but the sound of water closing overhead.")
+	s.WriteLine("There should be a memory after that: a hand reaching for yours, a prayer spoken too late, perhaps your own voice calling out. Instead there is only the cold, and the stubborn certainty that someone has mistaken the end of your life for the end of your story.")
+	s.WriteLine("Three mornings ago, villagers found you beside Asterion's old well. You had no breath and no heartbeat. They had begun preparing a shroud when the dawn reached your face—and you opened your eyes.")
+	s.WriteLine("No one agrees on what happened next. Some say you asked for water. Others swear you asked what year it was, then wept when they answered. Damon, who keeps watch on the village lane, says only that a black thread had wound itself around your wrist.")
+	s.WriteLine("It pulls faintly toward the mountain. The villagers call that a warning. The priests call it a sign. The old women who leave bread by the well refuse to name it at all.")
+	s.WriteLine("You are free to decide what to believe. For now, the village is real beneath your feet, the people have their own troubles, and the road will answer only if you choose to follow it.")
 	s.WriteLine("")
 }
-
 func (s *Session) prepareTutorial() {
 	if s.Character == nil { return }
 	if s.Character.HasStoryFlag("tutorial_available") && !s.Character.HasStoryFlag("tutorial_complete") {
@@ -620,14 +868,21 @@ func (s *Session) prologueHint() {
 		"LESSON 34/39 — CHECK PROGRESS: Type 'score'.\nRead HP, mana, XP, attack, defense, armor, gold, life, and era. Level-ups strengthen your character. At level 3, choose one domain with 'awaken storm', 'awaken tide', 'awaken ember', or 'awaken aegis'; powers then unlock at their listed levels. At level 10, rebirth opens. It resets level and XP, but the soul carries its history and relics.",
 		"LESSON 35/39 — SURVIVAL AND COMBAT CHOICES: Type 'east'.\nIn a real fight, 'attack' deals weapon damage, 'cast <power>' spends mana for a divine attack, 'use <item>' consumes a healing or mana supply, 'guard' reduces the next incoming hit, and 'flee' abandons the encounter. These choices trade damage, resources, and safety; read 'help combat' and 'help guard' before a difficult battle.",
 		"LESSON 36/39 — ECONOMY AND CRAFTING: Type 'east'.\nVictories and discoveries can earn XP and gold. Merchants sell equipment and supplies; use 'shop' then 'buy <item>'. Some enemies leave crafting materials marked [MATERIAL]. Carry the named ingredient and enough gold to Theron's Forge, then type 'craft' to see recipes. Crafted gear goes into your inventory and must be equipped. Read 'help economy' and 'help crafting' for details.",
-		"LESSON 37/39 — APPROACH THE GATE: Type 'north'.\nThe gate is intentionally locked while any lesson remains incomplete. This keeps the one-time prologue from being skipped accidentally. If you are unsure what it expects, type 'tutorial' to repeat the current lesson before trying again.",
+		"LESSON 37/39 — APPROACH THE GATE: Type 'north'.\nThe marble gate is open whenever you feel ready to leave. There is no penalty for skipping a lesson or taking a detour; the notes and help files will remain available after you leave.",
 		"LESSON 38/39 — PREVIEW THE REAL WORLD: Type 'look north'.\nThe destination preview describes Asterion Village without moving you there. Read the description and imagine the first choices you might make: talk to the village guide, investigate the road, explore the forge, or follow the main story. The gate is the boundary between safe practice and the open game.",
-		"LESSON 39/39 — DEPART: Type 'north'.\nThis is the final, irreversible transition. The game records tutorial completion and places you in Asterion Village, where the broader sandbox begins. The prologue cannot be revisited afterward, but the ordinary help files and story journal remain available whenever you need guidance.",
+		"LESSON 39/39 — DEPART: Type 'north'.\nThis is the threshold between a safe shelter and a living world. When you leave, the game records the prologue as complete and places you in Asterion Village. The shelter will close behind you, but the wider world will not demand that you follow one prescribed route.",
 	}
 	if s.PrologueStep >= len(lessons) { s.WriteLine("The prologue is complete. Continue into Fatewalker proper."); return }
-	s.WriteLine("\x1b[1;36mTHE FIRST THREAD — GUIDED PROLOGUE (%d/39)\x1b[0m", s.PrologueStep+1)
-	s.WriteLine("%s", lessons[s.PrologueStep])
-	s.WriteLine("Progress is saved automatically. Type 'tutorial' to repeat this instruction, or 'help <topic>' for more detail.")
+	s.WriteLine("\x1b[1;36mTHE FIRST THREAD — WAYFARER FIELD NOTES\x1b[0m")
+	parts := strings.SplitN(lessons[s.PrologueStep], "\n", 2)
+	heading := strings.TrimSpace(parts[0])
+	if divider := strings.Index(heading, " — "); divider >= 0 {
+		heading = strings.TrimSpace(heading[divider+len(" — "):])
+	}
+	s.WriteLine("\x1b[1;33m%s\x1b[0m", heading)
+	if len(parts) > 1 { s.WriteLine("%s", parts[1]) }
+	s.WriteLine("This is a suggestion, not a test. Explore, talk, inspect, and experiment in any order; the gate is available when you feel ready.")
+	s.WriteLine("Progress is saved automatically. Type 'tutorial' for these notes, or 'help <topic>' for practical details.")
 }
 
 func (s *Session) advancePrologueForCommand(p []string) {
@@ -912,6 +1167,29 @@ func (s *Session) look() {
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", r.Name)
 	s.WriteLine("%s", r.Description)
+	if visible := visibleRoomObjects(r, s.Character); len(visible) > 0 {
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;37mOBJECTS & DETAILS\x1b[0m")
+		for _, object := range visible {
+			label := ""
+			if object.Container { label = " \x1b[90m[container]\x1b[0m" } else if object.Takeable { label = " \x1b[32m[takeable]\x1b[0m" } else { label = " \x1b[90m[scenery]\x1b[0m" }
+			if object.ContainerID != "" {
+				if parent := findRoomObjectByID(r, object.ContainerID); parent != nil {
+					s.WriteLine("  %s%s \x1b[90m(in %s)\x1b[0m", object.Name, label, parent.Name)
+					continue
+				}
+			}
+			s.WriteLine("  %s%s", object.Name, label)
+		}
+	}
+	others := s.onlineSnapshotList()
+	shownOthers := 0
+	for _, player := range others {
+		if strings.EqualFold(player.Name, s.Character.Name) || player.RoomID != s.Character.RoomID { continue }
+		if shownOthers == 0 { s.WriteLine(""); s.WriteLine("\x1b[1;37mOTHER TRAVELERS\x1b[0m") }
+		shownOthers++
+		s.WriteLine("  \x1b[1;36m%s\x1b[0m — Level %d, Life %d", player.Name, player.Level, player.Life)
+	}
 	npcs := s.World.NPCs[s.Character.RoomID]
 	if len(npcs) > 0 {
 		s.WriteLine("")
@@ -937,6 +1215,9 @@ func (s *Session) look() {
 func (s *Session) lookTarget(args []string) {
 	if s.Character == nil || len(args) == 0 { s.look(); return }
 	target := strings.ToLower(strings.TrimSpace(strings.Join(args, " ")))
+	target = strings.TrimPrefix(target, "at ")
+	target = strings.TrimPrefix(target, "in ")
+	target = stripLeadingArticle(target)
 	r := s.World.GetRoom(s.Character.RoomID)
 	if r == nil { s.WriteLine("You are nowhere."); return }
 	directions := map[string]string{"n":"north", "s":"south", "e":"east", "w":"west", "u":"up", "d":"down", "north":"north", "south":"south", "east":"east", "west":"west", "up":"up", "down":"down", "in":"in", "out":"out"}
@@ -948,6 +1229,21 @@ func (s *Session) lookTarget(args []string) {
 			} else { s.WriteLine("The path leads toward %s.", id) }
 		} else { s.WriteLine("There is no visible path %s from here.", direction) }
 		return
+	}
+	if object := findRoomObject(r, target, "", s.Character); object != nil {
+		s.describeObject(object, r, s.Character)
+		return
+	}
+	for _, carried := range s.Character.Inventory {
+		if strings.Contains(strings.ToLower(carried.Name), target) || strings.EqualFold(carried.Name, target) {
+			s.WriteLine("\x1b[1;36m%s\x1b[0m", carried.Name)
+			if carried.Description != "" { s.WriteLine("%s", carried.Description) } else { s.WriteLine("A %s you are carrying.", carried.Kind) }
+			s.WriteLine("Quality: %s", carried.TierName())
+			if carried.Damage > 0 { s.WriteLine("Weapon damage: %d", carried.Damage) }
+			if carried.Armor > 0 { s.WriteLine("Armor: %d", carried.Armor) }
+			if carried.Relic { s.WriteLine("This is a soul relic and may endure beyond rebirth.") }
+			return
+		}
 	}
 	for i, n := range s.World.NPCs[s.Character.RoomID] {
 		name := strings.ToLower(n.Name)
@@ -976,6 +1272,233 @@ func (s *Session) lookTarget(args []string) {
 	s.WriteLine("You see no person, creature, or path matching '%s'. Try 'look' for the room summary.", target)
 }
 
+func (s *Session) examineTarget(args []string) {
+	if len(args) == 0 { s.look(); return }
+	s.lookTarget(args)
+	query := strings.ToLower(strings.Join(args, " "))
+	if s.Character.RoomID == "delphi_sanctum" && (strings.Contains(query, "inscription") || strings.Contains(query, "writing") || strings.Contains(query, "stone")) {
+		s.Character.SetStoryFlag("examined_delphi_inscription")
+		s.updateQuests()
+	}
+	if s.Character.RoomID == "modern_museum" && (strings.Contains(query, "artifact") || strings.Contains(query, "mask") || strings.Contains(query, "glass")) {
+		s.Character.SetStoryFlag("examined_museum_artifact")
+		s.updateQuests()
+	}
+	if strings.Contains(query, "coin") || strings.Contains(query, "bronze") || strings.Contains(query, "scratched") {
+		for _, carried := range s.Character.Inventory {
+			if strings.Contains(strings.ToLower(carried.Name), "scratched bronze coin") {
+				s.Character.SetStoryFlag("examined_scratched_coin")
+				s.WriteLine("The scratched mark is not random damage. It resembles a thread tied in a knot, the same sign that circles your wrist.")
+				s.updateQuests()
+				break
+			}
+		}
+	}
+}
+
+func visibleRoomObjects(r *world.Room, character *character.Character) []*world.Object {
+	if r == nil { return nil }
+	var found []*world.Object
+	for _, object := range r.Objects {
+		if object != nil && object.VisibleIn(r.Objects) && (character == nil || !character.HasStoryFlag("object_taken_"+object.ID)) { found = append(found, object) }
+	}
+	return found
+}
+
+func findRoomObjectByID(r *world.Room, id string) *world.Object {
+	if r == nil { return nil }
+	for _, object := range r.Objects { if object != nil && object.ID == id { return object } }
+	return nil
+}
+
+func stripLeadingArticle(value string) string {
+	for _, article := range []string{"the ", "a ", "an "} {
+		value = strings.TrimPrefix(strings.TrimSpace(value), article)
+	}
+	return strings.TrimSpace(value)
+}
+
+func findRoomObject(r *world.Room, query, source string, character *character.Character) *world.Object {
+	if r == nil { return nil }
+	query = stripLeadingArticle(strings.TrimSpace(strings.ToLower(query)))
+	source = stripLeadingArticle(strings.TrimSpace(strings.ToLower(source)))
+	for _, object := range r.Objects {
+		if object == nil || !object.VisibleIn(r.Objects) || (character != nil && character.HasStoryFlag("object_taken_"+object.ID)) || !object.Matches(query) { continue }
+		if source != "" {
+			parent := findRoomObjectByID(r, object.ContainerID)
+			if parent == nil || !parent.Matches(source) { continue }
+		}
+		return object
+	}
+	return nil
+}
+
+func (s *Session) describeObject(object *world.Object, r *world.Room, character *character.Character) {
+	if object == nil { return }
+	s.WriteLine("\x1b[1;36m%s\x1b[0m", object.Name)
+	if object.Description != "" { s.WriteLine("%s", object.Description) }
+	if object.ContainerID != "" {
+		if parent := findRoomObjectByID(r, object.ContainerID); parent != nil {
+			s.WriteLine("It rests in %s.", parent.Name)
+		}
+	}
+	if object.Container {
+		var contents []string
+		for _, child := range r.Objects {
+			if child != nil && child.ContainerID == object.ID && child.Visible && (character == nil || !character.HasStoryFlag("object_taken_"+child.ID)) { contents = append(contents, child.Name) }
+		}
+		if len(contents) > 0 { s.WriteLine("Within it you can make out: %s.", strings.Join(contents, ", ")) } else { s.WriteLine("It appears to be empty.") }
+	}
+	if object.Takeable { s.WriteLine("You could pick it up with 'get %s'.", strings.ToLower(object.Name)) } else { s.WriteLine("It is part of the place and cannot be taken.") }
+}
+
+func (s *Session) getObject(args []string) {
+	if len(args) == 1 && strings.EqualFold(args[0], "all") {
+		r := s.World.GetRoom(s.Character.RoomID)
+		if r == nil { s.WriteLine("There is nowhere here to search."); return }
+		objects := visibleRoomObjects(r, s.Character)
+		picked := 0
+		for _, object := range objects {
+			if object.Takeable {
+				s.getObject([]string{object.Name})
+				picked++
+			}
+		}
+		if picked == 0 { s.WriteLine("There is nothing takeable here.") }
+		return
+	}
+	if len(args) == 0 { s.WriteLine("Get what? Try 'get coin from ash'. Use 'iscan' to find interactable objects."); return }
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("There is nowhere here to search."); return }
+	raw := strings.TrimSpace(strings.Join(args, " "))
+	target, source := raw, ""
+	lower := strings.ToLower(raw)
+	if index := strings.Index(lower, " from "); index >= 0 {
+		target, source = strings.TrimSpace(raw[:index]), strings.TrimSpace(raw[index+6:])
+	} else {
+		// Also accept the compact MUD form: get coin ash.
+		fields := strings.Fields(raw)
+		for split := len(fields)-1; split > 0; split-- {
+			candidateTarget := strings.Join(fields[:split], " ")
+			candidateSource := strings.Join(fields[split:], " ")
+			if findRoomObject(r, candidateTarget, candidateSource, s.Character) != nil {
+				target, source = candidateTarget, candidateSource
+				break
+			}
+		}
+	}
+	object := findRoomObject(r, target, source, s.Character)
+	if object == nil {
+		if source != "" { s.WriteLine("You cannot find %s in %s here.", target, source) } else { s.WriteLine("You cannot find '%s' here. Use 'look' or 'iscan' to see what is present.", target) }
+		return
+	}
+	if !object.Takeable {
+		s.WriteLine("You cannot take %s; it is part of the surroundings.", object.Name)
+		return
+	}
+	kind := "object"
+	if strings.EqualFold(object.ID, "scratched_bronze_coin") { kind = "quest" }
+	carried := item.Item{Name:object.Name, Description:object.Description, Tier:item.Common, Kind:kind}
+	if object.StoredItem != nil { carried = *object.StoredItem }
+	s.Character.Inventory = append(s.Character.Inventory, carried)
+	s.Character.SetStoryFlag("object_taken_" + object.ID)
+	s.WriteLine("\x1b[1;32mYou pick up %s.\x1b[0m", object.Name)
+	if strings.EqualFold(object.ID, "scratched_bronze_coin") {
+		s.Character.SetStoryFlag("found_scratched_coin")
+		s.updateQuests()
+		s.Character.Memories = append(s.Character.Memories, "I found a scratched bronze coin half-buried in cold campfire ash beneath Olympus.")
+		s.WriteLine("The coin warms in your palm. For an instant, you smell salt water and hear an oar creak in the dark.")
+	}
+	s.persist()
+}
+
+func (s *Session) dropItem(args []string) {
+	if len(args) == 0 { s.WriteLine("Drop what? Use 'inventory' to see what you carry."); return }
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("There is nowhere here to leave an item."); return }
+	query := strings.ToLower(strings.Join(args, " "))
+	selected := -1
+	if number, err := strconv.Atoi(query); err == nil {
+		if number >= 1 && number <= len(s.Character.Inventory) { selected = number-1 }
+	} else {
+		var matches []int
+		for i, owned := range s.Character.Inventory {
+			if strings.Contains(strings.ToLower(owned.Name), query) { matches = append(matches, i) }
+		}
+		if len(matches) == 1 { selected = matches[0] }
+		if len(matches) > 1 {
+			s.WriteLine("Several items match '%s'. Use the full name or inventory number:", query)
+			for _, i := range matches { s.WriteLine("  %d) %s", i+1, s.Character.Inventory[i].Name) }
+			return
+		}
+	}
+	if selected < 0 { s.WriteLine("You do not carry an item matching '%s'.", query); return }
+	owned := s.Character.Inventory[selected]
+	if owned.Relic { s.WriteLine("%s is bound to your soul and cannot be dropped.", owned.Name); return }
+	if owned.Kind == "quest" { s.WriteLine("%s is tied to your story and cannot be dropped.", owned.Name); return }
+	if strings.EqualFold(owned.Name, s.Character.Weapon) || strings.EqualFold(owned.Name, s.Character.Armor) {
+		s.WriteLine("You should unequip %s before dropping it.", owned.Name)
+		return
+	}
+	id := fmt.Sprintf("dropped_%d_%s", time.Now().UnixNano(), strings.NewReplacer(" ", "_", "'", "").Replace(strings.ToLower(owned.Name)))
+	description := owned.Description
+	if description == "" { description = fmt.Sprintf("%s left behind by a traveler.", owned.Name) }
+	object := world.NewObject(id, owned.Name, description, owned.Name, owned.Kind)
+	stored := owned
+	object.StoredItem = &stored
+	object.Takeable = true
+	r.Objects = append(r.Objects, object)
+	s.Character.Inventory = append(s.Character.Inventory[:selected], s.Character.Inventory[selected+1:]...)
+	s.WriteLine("You leave %s here.", owned.Name)
+	s.persist()
+}
+
+func (s *Session) scanItems() {
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("There is nowhere here to scan."); return }
+	s.WriteLine("\x1b[1;36mINTERACTABLE SCAN — %s\x1b[0m", r.Name)
+	found := false
+	for i, object := range visibleRoomObjects(r, s.Character) {
+		found = true
+		kind := "scenery"
+		if object.Container { kind = "container" } else if object.Takeable { kind = "takeable" }
+		if object.ContainerID != "" {
+			if parent := findRoomObjectByID(r, object.ContainerID); parent != nil { s.WriteLine("  %d. %s [%s; in %s]", i+1, object.Name, kind, parent.Name); continue }
+		}
+		s.WriteLine("  %d. %s [%s]", i+1, object.Name, kind)
+	}
+	if !found { s.WriteLine("  Nothing obvious can be handled here. Look closely at the room description for clues.") }
+	s.WriteLine("Try 'look <object>', 'examine <object>', or 'get <item> from <container>'.")
+}
+
+func (s *Session) scanTargets() {
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("There is nowhere here to scan."); return }
+	s.WriteLine("\x1b[1;36mTARGET SCAN — %s\x1b[0m", r.Name)
+	npcs := s.World.NPCs[s.Character.RoomID]
+	if len(npcs) > 0 {
+		s.WriteLine("\x1b[1;37mPEOPLE\x1b[0m")
+		for i, n := range npcs { s.WriteLine("  NPC %d: %s", i+1, n.Name) }
+	}
+	if s.Enemy == nil && s.EncounterClearedRoom != s.Character.RoomID { s.spawnEnemy() }
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		stance := "aggressive"
+		if !s.EnemyAggressive {
+			stance = strings.ToLower(s.Enemy.Behavior)
+			if stance == "" { stance = "passive" }
+		}
+		s.WriteLine("\x1b[1;37mCREATURES\x1b[0m")
+		s.WriteLine("  TARGET 1: %s — %s, HP %d/%d", s.Enemy.Name, stance, s.Enemy.HP, s.Enemy.MaxHP)
+	}
+	objects := visibleRoomObjects(r, s.Character)
+	if len(objects) > 0 {
+		s.WriteLine("\x1b[1;37mOBJECTS\x1b[0m")
+		for i, object := range objects { s.WriteLine("  OBJECT %d: %s", i+1, object.Name) }
+	}
+	if len(npcs) == 0 && (s.Enemy == nil || s.Enemy.HP <= 0) && len(objects) == 0 {
+		s.WriteLine("Nothing obvious stands out. Read the room description carefully.")
+	}
+}
 func compactText(value string, limit int) string {
 	value = strings.TrimSpace(value)
 	runes := []rune(value)
@@ -1017,7 +1540,7 @@ func (s *Session) spawnEnemy() {
 	case "tartarus_edge":
 		s.Enemy = &combat.Enemy{Name: "Tartarus Brute", Description: "A colossal shape claws its way up from the abyss, dragging chains that were forged before the gods had names.", Level: 10, HP: 390, MaxHP: 390, Defense: 13, Damage: 31, XP: 520}
 	case "modern_plaka":
-		s.Enemy = &combat.Enemy{Name: "Street Shade", Description: "A human-shaped shadow slips between the neon signs, moving against the light.", Level: 2, HP: 80, MaxHP: 80, Defense: 5, Damage: 10, XP: 90}
+		s.Enemy = &combat.Enemy{Name: "Street Shade", Behavior: "wary", Description: "A human-shaped shadow slips between the neon signs, moving against the light. It watches from the edge of the crowd and does not close in unless threatened.", Level: 2, HP: 80, MaxHP: 80, Defense: 5, Damage: 10, XP: 90}
 	case "modern_metro":
 		s.Enemy = &combat.Enemy{Name: "Echo Hound", Description: "A hound made of static and old memories emerges from the empty train.", Level: 4, HP: 145, MaxHP: 145, Defense: 7, Damage: 15, XP: 170}
 	case "modern_styx":
@@ -1025,17 +1548,27 @@ func (s *Session) spawnEnemy() {
 	case "modern_sanctum":
 		s.Enemy = &combat.Enemy{Name: "Bronze Sentinel", Description: "A bronze guardian unfolds from the hidden temple wall, its eyes burning with borrowed starlight.", Level: 6, HP: 220, MaxHP: 220, Defense: 9, Damage: 20, XP: 280}
 	case "future_city":
-		s.Enemy = &combat.Enemy{Name: "Chronal Warden", Description: "A guardian of fractured seconds steps from a ripple in the air.", Level: 2, HP: 95, MaxHP: 95, Defense: 5, Damage: 11, XP: 100}
+		s.Enemy = &combat.Enemy{Name: "Chronal Warden", Behavior: "wary", Description: "A guardian of fractured seconds steps from a ripple in the air, studying you as if comparing several possible futures.", Level: 2, HP: 95, MaxHP: 95, Defense: 5, Damage: 11, XP: 100}
 	case "future_skyway":
 		s.Enemy = &combat.Enemy{Name: "Storm Automaton", Description: "A machine of celestial bronze and lightning blocks the road above the clouds.", Level: 4, HP: 150, MaxHP: 150, Defense: 7, Damage: 15, XP: 180}
 	case "future_moon":
-		s.Enemy = &combat.Enemy{Name: "Moonshade", Description: "A pale shadow detaches itself from the lunar sanctuary's wall and reaches for your memories.", Level: 4, HP: 145, MaxHP: 145, Defense: 7, Damage: 14, XP: 180}
+		s.Enemy = &combat.Enemy{Name: "Moonshade", Behavior: "wary", Description: "A pale shadow detaches itself from the lunar sanctuary's wall and reaches for your memories, but pauses when it recognizes the thread around your wrist.", Level: 4, HP: 145, MaxHP: 145, Defense: 7, Damage: 14, XP: 180}
 	case "far_era":
 		s.Enemy = &combat.Enemy{Name: "Last Shore Titan", Description: "The drowned world's final guardian rises from the surf, carrying the weight of vanished centuries.", Level: 5, HP: 180, MaxHP: 180, Defense: 8, Damage: 18, XP: 220}
 	default:
 		return
 	}
-	s.WriteLine("\x1b[1;31mA %s appears!\x1b[0m",s.Enemy.Name)
+	behavior := strings.ToLower(s.Enemy.Behavior)
+	if behavior == "" { behavior = "aggressive" }
+	s.EnemyAggressive = behavior == "aggressive"
+	switch behavior {
+	case "passive":
+		s.WriteLine("\x1b[1;32m%s is here, watching you without hostility.\x1b[0m", s.Enemy.Name)
+	case "wary":
+		s.WriteLine("\x1b[1;33m%s circles at a distance, wary but not yet attacking.\x1b[0m", s.Enemy.Name)
+	default:
+		s.WriteLine("\x1b[1;31mA %s appears, ready to attack!\x1b[0m", s.Enemy.Name)
+	}
 	s.WriteLine("%s",s.Enemy.Description)
 }
 
@@ -1080,23 +1613,15 @@ func (s *Session) recordDiscovery(roomID string) {
 func (s *Session) move(direction string) {
 	aliases:=map[string]string{"n":"north","s":"south","e":"east","w":"west","u":"up","d":"down"}
 	if v,ok:=aliases[direction];ok{direction=v}
-	if s.Character.HasStoryFlag("tutorial_available") {
-		allowed := map[int]string{3:"north",10:"east",18:"north",22:"south",23:"east",28:"west",29:"west",34:"east",35:"east",36:"north",38:"north"}
-		if expected, ok := allowed[s.PrologueStep]; !ok || expected != direction {
-			s.WriteLine("Follow the current tutorial instruction first. Type 'tutorial' to review it.")
-			return
-		}
-	}
+	// The prologue is a safe place to experiment, not a command lockstep.
+	// Players may explore in their own order and can leave through the gate
+	// whenever they are ready; tutorial hints remain available on request.
 	r:=s.World.GetRoom(s.Character.RoomID)
 	if r==nil{return}
 	next,ok:=r.Exits[direction]
 	if !ok {s.WriteLine("You cannot go that way.");return}
 	if s.Enemy!=nil && s.Enemy.HP>0 {s.WriteLine("You cannot leave while the %s still stands.",s.Enemy.Name);return}
 	if !s.canEnter(next) { return }
-	if r.ID == "tutorial_gate" && direction == "north" && s.PrologueStep < 38 {
-		s.WriteLine("The gate remains sealed. Complete the remaining lessons first; use 'tutorial' to review the current instruction.")
-		return
-	}
 	if r.ID == "village_lane" && direction == "north" && s.TutorialStep < 9 {
 		s.WriteLine("Damon raises a hand. Finish the village lessons first: inspect and speak with him, use 'hint', then practice 'exits' and 'map'.")
 		return
@@ -1761,25 +2286,54 @@ func (s *Session) awaken(args []string) {
 
 func (s *Session) score() {
 	c := s.Character
+	bar := func(current, maximum, width int) string {
+		if maximum < 1 { maximum = 1 }
+		if current < 0 { current = 0 }
+		if current > maximum { current = maximum }
+		filled := current * width / maximum
+		return strings.Repeat("█", filled) + strings.Repeat("░", width-filled)
+	}
+	title := strings.ToUpper(c.Name)
 	s.WriteLine("")
-	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", c.Name)
-	s.WriteLine("\x1b[1;37mIDENTITY\x1b[0m")
-	s.WriteLine("  Level %d   •   Life %d   •   Rebirths %d", c.Level, c.Life, c.Rebirths)
-	s.WriteLine("  Era: %s   |   Domain: %s", c.Era, c.Domain)
+	s.WriteLine("\x1b[1;36m╭────────────────────────────── FATEWALKER ──────────────────────────────╮\x1b[0m")
+	s.WriteLine("\x1b[1;36m│\x1b[0m \x1b[1;37m%-70s\x1b[0m \x1b[1;36m│\x1b[0m", compactText(title,70))
+	s.WriteLine("\x1b[1;36m╰────────────────────────────────────────────────────────────────────────╯\x1b[0m")
+	s.WriteLine("  \x1b[1;33mLIFE %d\x1b[0m   Level %d   %s era   Rebirths %d", c.Life, c.Level, strings.Title(c.Era), c.Rebirths)
+	domain := "Unawakened"
+	if c.Domain != "" { domain = strings.Title(string(c.Domain)) }
+	s.WriteLine("  Divine path: %-18s  Divinity: %-3d  Gift: %s", domain, c.Divinity, c.LifeGift)
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;37mVITALS\x1b[0m")
-	s.WriteLine("  HP    %d / %d", c.HP, c.MaxHP)
-	s.WriteLine("  Mana  %d / %d", c.Mana, c.MaxMana)
-	s.WriteLine("  XP    %d   |   Next level in %d", c.Experience, progression.XPToNextLevel(c.Level, c.Experience))
+	s.WriteLine("  HP    \x1b[1;32m%s\x1b[0m %d/%d", bar(c.HP,c.MaxHP,22), c.HP,c.MaxHP)
+	s.WriteLine("  Mana  \x1b[1;36m%s\x1b[0m %d/%d", bar(c.Mana,c.MaxMana,22), c.Mana,c.MaxMana)
+	s.WriteLine("  XP    %d   •   %d to next level", c.Experience, progression.XPToNextLevel(c.Level,c.Experience))
 	s.WriteLine("")
-	s.WriteLine("\x1b[1;37mCOMBAT & RESOURCES\x1b[0m")
-	s.WriteLine("  Attack %d   |   Defense %d   |   Armor %d", c.AttackPower(), c.DefensePower(), c.ArmorPower())
-	s.WriteLine("  Divinity %d   |   Gold %d", c.Divinity, c.Gold)
+	s.WriteLine("\x1b[1;37mCOMBAT & EQUIPMENT\x1b[0m")
+	s.WriteLine("  Attack %-4d Defense %-4d Armor %-4d Gold %d", c.AttackPower(), c.DefensePower(), c.ArmorPower(), c.Gold)
+	s.WriteLine("  Weapon: %s", equippedName(c.Weapon, c.Inventory))
+	s.WriteLine("  Armor:  %s", equippedName(c.Armor, c.Inventory))
+	s.WriteLine("  Pack: %d items   Soul relics: %d   Combat: %s", len(c.Inventory), soulRelicCount(c.Inventory), combatModeName(c.AutoCombat))
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;37mQUICKLIST\x1b[0m")
+	for i, powerName := range c.Quicklist {
+		if powerName == "" { powerName = "—" }
+		s.WriteLine("  %d. %s", i+1, powerName)
+	}
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;37mSOUL LEGACY\x1b[0m")
 	s.WriteLine("  Memories %d  •  Scars %d  •  Oaths %d", len(c.Memories), len(c.Scars), len(c.Oaths))
 	s.WriteLine("  Favors %d  •  Curses %d  •  Echoes %d", len(c.Favors), len(c.Curses), len(c.Echoes))
+	s.WriteLine("\x1b[90m  Use 'inventory', 'powers', 'quests', and 'soul' for the full records.\x1b[0m")
 }
+
+func equippedName(name string, inventory []item.Item) string {
+	for _, owned := range inventory {
+		if strings.EqualFold(owned.Name, name) { return owned.Name }
+	}
+	if name == "" { return "None" }
+	return name + " (not in pack)"
+}
+
 func soulRelicCount(inventory []item.Item) int {
 	count := 0
 	for _, owned := range inventory {
@@ -2134,6 +2688,64 @@ func (s *Session) persistentNPCGreeting(n *world.NPC, topic string) string {
 // offerMemory lets the player contribute an actual remembered experience to
 // the Underworld quest. The text is stored in the character's soul record;
 // merely mentioning the word "memory" to the shade is not enough to complete it.
+func (s *Session) offer(args []string) {
+	if len(args) > 0 && strings.EqualFold(args[0], "memory") {
+		s.offerMemory(args)
+		return
+	}
+	if len(args) < 3 {
+		s.WriteLine("Offer what, and to whom? Try 'offer coin to bowl' or 'offer memory <specific remembered moment>'.")
+		return
+	}
+	joined := strings.Join(args, " ")
+	lower := strings.ToLower(joined)
+	to := strings.Index(lower, " to ")
+	if to < 0 {
+		s.WriteLine("Name the recipient: offer <item> to <person or object>.")
+		return
+	}
+	itemName := strings.TrimSpace(joined[:to])
+	recipient := stripLeadingArticle(strings.TrimSpace(joined[to+4:]))
+	s.offerItem(itemName, recipient)
+}
+
+func (s *Session) offerItem(itemName, recipient string) {
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("The %s leaves you no room to make an offering.", s.Enemy.Name)
+		return
+	}
+	if s.Character.RoomID != "village_square" || !(strings.Contains(recipient, "bowl") || strings.Contains(recipient, "offering") || strings.Contains(recipient, "well")) {
+		s.WriteLine("There is no suitable recipient here for that offering.")
+		return
+	}
+	if !s.Character.HasStoryFlag("examined_scratched_coin") {
+		s.WriteLine("The bowl waits beside the well. You should first understand the mark on the coin before deciding what it means.")
+		return
+	}
+	if s.Character.HasStoryFlag("offered_coin_at_well") {
+		s.WriteLine("The bowl is empty again, but the well's reflection has changed. It now shows a shoreline at dawn.")
+		return
+	}
+	selected := -1
+	for i, carried := range s.Character.Inventory {
+		if strings.Contains(strings.ToLower(carried.Name), strings.ToLower(itemName)) && strings.Contains(strings.ToLower(carried.Name), "scratched bronze coin") {
+			selected = i
+			break
+		}
+	}
+	if selected < 0 {
+		s.WriteLine("You need to be carrying the scratched bronze coin to make this offering.")
+		return
+	}
+	s.Character.Inventory = append(s.Character.Inventory[:selected], s.Character.Inventory[selected+1:]...)
+	s.Character.SetStoryFlag("offered_coin_at_well")
+	s.Character.Memories = append(s.Character.Memories, "I returned the scratched bronze coin to the offering bowl beside Asterion's well. The water showed a shore at dawn.")
+	s.WriteLine("You lay the scratched coin in the clay bowl. It makes no sound against the bottom. In the well, black water draws back from a pale shore and a boat waiting beneath the first light.")
+	s.WriteLine("For one breath, you hear an oar touch water. Then the reflection returns to the village square.")
+	s.updateQuests()
+	s.persist()
+}
+
 func (s *Session) offerMemory(args []string) {
 	if s.Enemy != nil && s.Enemy.HP > 0 {
 		s.WriteLine("The %s leaves you no room to offer a memory.", s.Enemy.Name)
