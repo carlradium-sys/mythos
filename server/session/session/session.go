@@ -1451,7 +1451,7 @@ func (s *Session) lookTarget(args []string) {
 		}
 	}
 	for _, container := range r.Objects {
-		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !container.VisibleIn(r.Objects) { continue }
+		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !objectVisibleIn(r, container, s.Character) { continue }
 		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
 			if strings.Contains(strings.ToLower(stored.Name), target) {
 				s.WriteLine("\x1b[1;36m%s\x1b[0m", stored.Name)
@@ -1585,11 +1585,22 @@ func setContainerOpen(r *world.Room, object *world.Object, character *character.
 	character.OpenContainers[containerStorageKey(r.ID, object.ID)] = open
 }
 
+func objectVisibleIn(r *world.Room, object *world.Object, character *character.Character) bool {
+	if object == nil || !object.Visible {
+		return false
+	}
+	if object.ContainerID == "" {
+		return true
+	}
+	parent := findRoomObjectByID(r, object.ContainerID)
+	return parent != nil && parent.Visible && parent.Container && containerIsOpen(r, parent, character)
+}
+
 func visibleRoomObjects(r *world.Room, character *character.Character) []*world.Object {
 	if r == nil { return nil }
 	var found []*world.Object
 	for _, object := range r.Objects {
-		if object != nil && object.VisibleIn(r.Objects) && (character == nil || !character.HasStoryFlag("object_taken_"+object.ID)) { found = append(found, object) }
+		if object != nil && objectVisibleIn(r, object, character) && (character == nil || !character.HasStoryFlag("object_taken_"+object.ID)) { found = append(found, object) }
 	}
 	return found
 }
@@ -1612,7 +1623,7 @@ func findRoomObject(r *world.Room, query, source string, character *character.Ch
 	query = stripLeadingArticle(strings.TrimSpace(strings.ToLower(query)))
 	source = stripLeadingArticle(strings.TrimSpace(strings.ToLower(source)))
 	for _, object := range r.Objects {
-		if object == nil || !object.VisibleIn(r.Objects) || (character != nil && character.HasStoryFlag("object_taken_"+object.ID)) || !object.Matches(query) { continue }
+		if object == nil || !objectVisibleIn(r, object, character) || (character != nil && character.HasStoryFlag("object_taken_"+object.ID)) || !object.Matches(query) { continue }
 		if source != "" {
 			parent := findRoomObjectByID(r, object.ContainerID)
 			if parent == nil || !parent.Matches(source) { continue }
@@ -1973,7 +1984,7 @@ func (s *Session) scanItems() {
 	}
 	displayIndex := len(objects) + 1
 	for _, container := range r.Objects {
-		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !container.VisibleIn(r.Objects) { continue }
+		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !objectVisibleIn(r, container, s.Character) { continue }
 		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
 			found = true
 			s.WriteLine("  %d. %s [stored in %s; takeable]", displayIndex, stored.Name, container.Name)
