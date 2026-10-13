@@ -263,6 +263,9 @@ WORLD OBJECTS
   look <thing>              Read a room object's description.
   examine <thing>           Inspect an object more closely.
   look in <container>       See what is visible inside a container.
+  open <container>          Open a container and reveal hidden contents.
+  close <container>         Close an open container.
+  read <item>               Read a carried or visible written object.
   get <item> from <source>  Collect a takeable item.
   get <item> <source>       Short form for the same action.
   get all                   Collect all visible takeable objects.
@@ -273,7 +276,7 @@ WORLD OBJECTS
   scan                      List visible people, creatures, and objects.
 
 Objects are physical room fixtures, not just text in a description. Some are
-scenery and cannot be collected; containers may hold other discoverable items.
+scenery and cannot be collected; containers may hold hidden items until opened. Readable objects can reveal new quest steps when examined in context.
 Your collected objects appear in inventory and can be examined there.
 Soul relics are marked in your inventory and persist through rebirth. The
 Styxglass Shard is the first relic: recover it by completing The River of
