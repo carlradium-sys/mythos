@@ -1681,7 +1681,7 @@ func (s *Session) closeContainer(args []string) {
 	if object == nil { s.WriteLine("You see no such object here."); return }
 	if !object.Container { s.WriteLine("%s is not a container.", object.Name); return }
 	if !containerIsOpen(r, object, s.Character) { s.WriteLine("%s is already closed.", object.Name); return }
-	object.Open = false
+	setContainerOpen(r, object, s.Character, false)
 	s.WriteLine("You close %s.", object.Name)
 	s.persist()
 }
