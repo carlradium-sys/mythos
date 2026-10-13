@@ -316,6 +316,8 @@ func (s *Session) handleCommand(input string) bool {
 		if s.TutorialStep == 14 { s.advanceTutorial(15) }
 	case "current":
 		s.currentQuests(parts[1:])
+	case "hunt", "contract", "bounty":
+		s.huntContract(parts[1:])
 	case "soul","legacy":
 		s.soul()
 	case "invoke","gift":
@@ -716,6 +718,119 @@ func (s *Session) updateQuests() {
   }
  }
 }
+// huntContractTarget returns the repeatable bounty target available in a hunting ground.
+func huntContractTarget(roomID string) (string, bool) {
+	switch roomID {
+	case "ancient_athens":
+		return "Bronze Hoplite", true
+	case "olympus_garden":
+		return "Ambrosia Wisp", true
+	case "fields_asphodel":
+		return "Restless Shade", true
+	case "modern_plaka":
+		return "Street Shade", true
+	case "modern_metro":
+		return "Echo Hound", true
+	case "modern_rooftop":
+		return "Storm Crow", true
+	default:
+		return "", false
+	}
+}
+
+const huntContractProgressKey = "__hunt_contract_progress"
+const huntContractTargetKey = "__hunt_contract_target"
+
+func (s *Session) huntContract(args []string) {
+	if s.Character == nil {
+		return
+	}
+	action := "show"
+	if len(args) > 0 {
+		action = strings.ToLower(args[0])
+	}
+	target, available := huntContractTarget(s.Character.RoomID)
+	activeTarget := s.Character.StoryFlags[huntContractTargetKey]
+	progress := s.Character.Quests[huntContractProgressKey]
+
+	switch action {
+	case "show", "board", "list":
+		s.WriteLine("\x1b[1;36mHUNTING CONTRACTS\x1b[0m")
+		if activeTarget != "" {
+			s.WriteLine("Active contract: hunt %s (%d/3).", activeTarget, progress)
+			s.WriteLine("Return to any hunting board and type 'hunt turnin' when the work is done.")
+			s.WriteLine("Use 'hunt cancel' to abandon this contract.")
+			return
+		}
+		if !available {
+			s.WriteLine("There is no hunting board here. Visit a known hunting ground to find local work.")
+			return
+		}
+		s.WriteLine("A weathered notice has been nailed to a post. Someone has paid to thin the supernatural creatures gathering here.")
+		s.WriteLine("Contract: defeat 3 %s. Reward: experience, drachmae, and the materials the creatures leave behind.", target)
+		s.WriteLine("Type 'hunt accept' to take the contract. You can keep exploring; only matching kills in hunting grounds count.",)
+	case "accept":
+		if activeTarget != "" {
+			s.WriteLine("You already have a contract to hunt %s (%d/3). Finish it or use 'hunt cancel' first.", activeTarget, progress)
+			return
+		}
+		if !available {
+			s.WriteLine("No local hunting contract is posted here. Find a repeatable hunting ground first.")
+			return
+		}
+		s.Character.StoryFlags[huntContractTargetKey] = target
+		s.Character.Quests[huntContractProgressKey] = 0
+		s.WriteLine("Contract accepted: defeat 3 %s. Matching victories in hunting grounds will count; story progress remains separate.", target)
+	case "turnin", "complete", "claim":
+		if activeTarget == "" {
+			s.WriteLine("You have no active hunting contract. Type 'hunt' at a hunting ground to see local work.")
+			return
+		}
+		if progress < 3 {
+			s.WriteLine("The contract is not complete yet: %s (%d/3).", activeTarget, progress)
+			return
+		}
+		rewardXP := 100 + s.Character.Level*30
+		rewardGold := 50 + s.Character.Level*10
+		s.awardExperience(rewardXP)
+		s.Character.Gold += rewardGold
+		delete(s.Character.StoryFlags, huntContractTargetKey)
+		s.Character.Quests[huntContractProgressKey] = 0
+		s.WriteLine("\x1b[1;32mContract fulfilled! +%d XP and %d drachmae.\x1b[0m", rewardXP, rewardGold)
+		s.WriteLine("The hunting board's keeper marks your name in charcoal. More work will be waiting.")
+	case "cancel", "abandon":
+		if activeTarget == "" {
+			s.WriteLine("You have no active hunting contract.")
+			return
+		}
+		delete(s.Character.StoryFlags, huntContractTargetKey)
+		s.Character.Quests[huntContractProgressKey] = 0
+		s.WriteLine("You abandon the contract to hunt %s. No reward is paid.", activeTarget)
+	default:
+		s.WriteLine("Usage: hunt | hunt accept | hunt turnin | hunt cancel")
+	}
+}
+
+func (s *Session) advanceHuntContract(enemy, roomID string) {
+	if s.Character == nil {
+		return
+	}
+	target := s.Character.StoryFlags[huntContractTargetKey]
+	if target == "" || !repeatableHuntingGround(roomID) || !strings.EqualFold(target, enemy) {
+		return
+	}
+	progress := s.Character.Quests[huntContractProgressKey]
+	if progress >= 3 {
+		return
+	}
+	progress++
+	s.Character.Quests[huntContractProgressKey] = progress
+	s.WriteLine("\x1b[1;33mHunting contract: %s (%d/3).\x1b[0m", target, progress)
+	if progress == 3 {
+		s.WriteLine("The contract is complete. Return to a hunting board and type 'hunt turnin' to claim your reward.")
+	}
+}
+
 func (s *Session) advanceQuestKill(enemy string) {
  s.ensureQuests()
  for _,q:=range quest.All() {
@@ -2556,6 +2671,7 @@ func (s *Session) defeatEnemy(divine bool) {
 		s.Character.SetStoryFlag("tutorial_enemy_slain_" + s.Character.RoomID)
 	}
 	s.advanceQuestKill(enemy.Name)
+	s.advanceHuntContract(enemy.Name, s.Character.RoomID)
 	s.awardExperience(enemy.XP)
 	var material item.Item
 	switch enemy.Name {
