@@ -1,13 +1,11 @@
 package world
 
-import "fatewalker/game/item"
-
 type Room struct {
 	ID          string
 	Name        string
 	Description string
 	Exits       map[string]string
-	Items       []item.Item
+	Objects     []*Object
 }
 
 func NewRoom(id, name, description string) *Room {
@@ -16,5 +14,6 @@ func NewRoom(id, name, description string) *Room {
 		Name:        name,
 		Description: description,
 		Exits:       make(map[string]string),
+		Objects:     []*Object{},
 	}
 }
