@@ -1652,3 +1652,43 @@ func TestSearchDoesNotOpenClosedContainerOrRevealItsContents(t *testing.T) {
 		t.Fatal("searching a closed coffer should not expose its contents")
 	}
 }
+
+
+func TestListeningConnectsVillageWellToModernStyxQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.World = world.NewWorld()
+	s.Character.RoomID = "village_square"
+
+	s.listen([]string{"well"})
+	if !s.Character.HasStoryFlag("listened_village_well") {
+		t.Fatal("listening at the village well should record the first clue")
+	}
+	if s.Character.Quests["two_cities_one_river"] >= 1 {
+		t.Fatal("the cross-era quest must not complete before the modern echo is heard")
+	}
+
+	s.Character.RoomID = "modern_styx"
+	s.listen([]string{"water"})
+	if !s.Character.HasStoryFlag("heard_modern_styx") {
+		t.Fatal("listening beneath modern Athens should record the matching echo")
+	}
+	if s.Character.Quests["two_cities_one_river"] < 1 {
+		t.Fatal("hearing both echoes should complete the cross-era quest")
+	}
+
+	before := len(s.Character.Memories)
+	s.listen([]string{"water"})
+	if len(s.Character.Memories) != before {
+		t.Fatal("repeating the interaction must not duplicate the permanent memory")
+	}
+}
+
+func TestModernStyxListeningNeedsTheVillageClueFirst(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.World = world.NewWorld()
+	s.Character.RoomID = "modern_styx"
+	s.listen([]string{"water"})
+	if s.Character.HasStoryFlag("heard_modern_styx") {
+		t.Fatal("the modern echo should remain unclear until the village clue is heard")
+	}
+}
