@@ -1613,3 +1613,28 @@ func TestReadingUnrelatedItemDoesNotCompletePrayerQuest(t *testing.T) {
 		t.Fatal("the clue quest should not complete without its specific object")
 	}
 }
+
+
+func TestTutorialContainerTeachesPickupAndPreservesConsumableData(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_storehouse"
+	r := s.World.GetRoom(s.Character.RoomID)
+	if findRoomObject(r, "practice bandage", "", s.Character) != nil {
+		t.Fatal("practice bandage should be hidden inside the closed chest")
+	}
+	s.openContainer([]string{"practice chest"})
+	if findRoomObject(r, "practice bandage", "", s.Character) == nil {
+		t.Fatal("opening the practice chest should reveal the bandage")
+	}
+	s.getObject([]string{"practice bandage"})
+	found := false
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, "practice bandage") {
+			found = true
+			if carried.Healing != 20 || carried.Kind != "consumable" {
+				t.Fatalf("tutorial item lost its consumable properties: %#v", carried)
+			}
+		}
+	}
+	if !found { t.Fatal("practice bandage should enter inventory") }
+}
