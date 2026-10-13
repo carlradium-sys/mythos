@@ -803,6 +803,10 @@ func (s *Session) huntContract(args []string) {
 			s.WriteLine("You have no active hunting contract. Type 'hunt' at a hunting ground to see local work.")
 			return
 		}
+		if _, isBoard := huntContractTarget(s.Character.RoomID); !isBoard {
+			s.WriteLine("The contract keeper is only found at hunting boards. Return to a hunting ground to claim your reward.")
+			return
+		}
 		if progress < 3 {
 			s.WriteLine("The contract is not complete yet: %s (%d/3).", activeTarget, progress)
 			return
