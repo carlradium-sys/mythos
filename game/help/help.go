@@ -342,29 +342,58 @@ QUEST CHAINS ACROSS LIVES
   Myrto may recognize what you did in an earlier life.
 
 Quests reward exploration and combat without forcing a linear path.`},
-	"talk": {"talk", `NPC DIALOGUE
+	"talk": {"talk", `NPC DIALOGUE AND LORE
+
+Talk to people as people, not as vending machines for quest keywords. The keyword is only how the MUD interface finds a subject; the response should reveal what this character has seen, believes, fears, or refuses to explain.
 
 Prefer targeting people by name:
   talk Damon hello
-  talk Damon <topic>
-  talk Pythia choices
+  talk Damon what happened at the well
+  talk Damon why does the Harpy steal letters
+  talk Pythia what do you know about the thread
+  talk Charon what does the river take
+  talk Unremembered why does judgment frighten you
+  talk Eleni what did the mirror show
+  talk choices
 
-You can also use a number selector, such as talk 1 hello or talk 1 choices.
-Questions may be phrased naturally: 'talk Damon can you please tell me about the village?' and 'talk Damon where is the road?' resolve by matching topic keywords and aliases, not by requiring an exact sentence.
-NPC names and numbers are shown by look.
+You can also use a number selector, such as talk 1 hello or talk 1 choices. Natural-language questions work when they contain a recognized subject or topic; try different phrasing if an NPC does not understand. Use look to see who is present.
+
+Listen for concrete details: objects, customs, dates, contradictions, repeated symbols, and things a character admits they cannot know. A witness can be honest and still be mistaken. Compare accounts rather than assuming the first explanation is the whole truth.
 
 Use:
-  talk
   talk thread
   talk fate
-  talk choices      Show the Oracle’s first major choice.
-  choose trust      Trust Pythia; gain Delphi reputation and a lasting oath.
-  choose defy       Reject prophecy; lose Delphi reputation and gain a scar.
+  talk memory
+  talk choices      Hear the Oracle's first major choice.
+  choose trust      Trust Pythia's warning; gain Delphi reputation and a lasting oath.
+  choose defy       Reject her interpretation; gain a lasting scar.
+  offer memory <text>  Share a detailed personal memory with the Asphodel shade.
 
-Story choices are recorded on your character and survive logout and rebirth.
-Some choices can only be made once; the world remembers what you decide.
+For the optional Underworld story, hear Charon's lesson, listen to the shade's
+fragments, then offer a specific memory in your own words. A short phrase is
+not enough; describe a moment that could matter even if its owner's name is lost.
+
+Story choices are recorded on your character and survive logout and rebirth. Consequences may return as changed dialogue, soul memories, faction standing, quests, or evidence in a later era.
 
 Use soul (or legacy) to inspect the marks your decisions leave behind.`},
+	"offer": {"offer", `OFFERING A MEMORY
+
+The optional Underworld quest asks you to share a real, specific memory with
+the Unremembered Shade in Asphodel.
+
+First, hear Charon's lesson at the Shores of the Styx:
+  talk Charon memory
+
+Then listen to the shade's fragments:
+  talk Unremembered memory
+  talk Unremembered token
+
+Finally, offer a detailed memory in your own words:
+  offer memory I remember someone singing off-key to comfort me when I feared the dark.
+
+A short phrase is not enough. Describe a moment with enough detail that it
+feels like a lived experience. The offered text is recorded in your soul
+memories and becomes part of this character's story across later lives.`},
 	"soul": {"soul", `SOUL LEGACY
 
 Use:
@@ -573,5 +602,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
+	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
 }

@@ -90,3 +90,66 @@ func TestStoryNPCsExistAcrossEras(t *testing.T) {
 		})
 	}
 }
+
+
+func TestLoreTopicsResolveThroughNPCDialogue(t *testing.T) {
+	w := NewWorld()
+	cases := []struct {
+		room string
+		npcID string
+		topic string
+	}{
+		{"village_lane", "village_guide", "well"},
+		{"village_lane", "village_guide", "harpy"},
+		{"village_lane", "village_guide", "death"},
+		{"oracle_path", "pythia", "thread"},
+		{"therons_forge", "hephaestus_apprentice", "craft"},
+		{"styx_shore", "charon", "fates"},
+		{"fields_asphodel", "asphodel_shade", "token"},
+		{"modern_museum", "museum_curator", "metro"},
+		{"future_moon", "lunar_oracle", "shore"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.npcID+"/"+tc.topic, func(t *testing.T) {
+			var found *NPC
+			for _, npc := range w.NPCs[tc.room] {
+				if npc.ID == tc.npcID {
+					found = npc
+					break
+				}
+			}
+			if found == nil {
+				t.Fatalf("NPC %q not found in room %q", tc.npcID, tc.room)
+			}
+			_, response := found.MatchDialogue(tc.topic)
+			if response == "" {
+				t.Fatalf("topic %q should resolve to story dialogue for %q", tc.topic, tc.npcID)
+			}
+			if len(strings.Fields(response)) < 25 {
+				t.Errorf("lore response for %q/%q is too short to provide a meaningful story exchange", tc.npcID, tc.topic)
+			}
+		})
+	}
+}
+
+func TestCoreLoreCluesAppearInWorldDescriptions(t *testing.T) {
+	w := NewWorld()
+	cases := []struct {
+		room string
+		clue string
+	}{
+		{"village_square", "bread and salt"},
+		{"village_lane", "three tiny lines"},
+		{"olympus_foothills", "coin pressed into the ash"},
+		{"modern_crossroads", "slow lap of water"},
+	}
+	for _, tc := range cases {
+		room := w.GetRoom(tc.room)
+		if room == nil {
+			t.Fatalf("expected lore room %q to exist", tc.room)
+		}
+		if !strings.Contains(strings.ToLower(room.Description), strings.ToLower(tc.clue)) {
+			t.Errorf("room %q description should include recurring lore clue %q", tc.room, tc.clue)
+		}
+	}
+}

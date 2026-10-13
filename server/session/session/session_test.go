@@ -1305,7 +1305,7 @@ func TestQuestGoldRewardIsGrantedOnlyOnce(t *testing.T) {
 }
 
 
-func TestCharonsMemoryQuestCompletesThroughDialogue(t *testing.T) {
+func TestCharonsMemoryQuestRequiresAnOfferedMemory(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "styx_shore"
 	s.talk([]string{"Charon", "memory"})
@@ -1317,15 +1317,26 @@ func TestCharonsMemoryQuestCompletesThroughDialogue(t *testing.T) {
 		t.Fatal("Charon's memory quest is missing from the catalogue")
 	}
 	if s.Character.Quests[q.ID] >= q.Required {
-		t.Fatal("quest should not complete before the player speaks to the shade")
+		t.Fatal("quest should not complete before the player offers a memory")
 	}
 
 	s.Character.RoomID = "fields_asphodel"
 	s.talk([]string{"Unremembered", "memory"})
+	if s.Character.HasStoryFlag("asphodel_memory_returned") {
+		t.Fatal("talking about memory should not complete the quest by itself")
+	}
+	s.offerMemory([]string{"memory", "a", "song"})
+	if s.Character.HasStoryFlag("asphodel_memory_returned") {
+		t.Fatal("a short fragment should not complete the quest")
+	}
+	s.offerMemory([]string{"memory", "I", "remember", "someone", "singing", "off-key", "to", "comfort", "me", "when", "I", "feared", "the", "dark"})
 	if !s.Character.HasStoryFlag("asphodel_memory_returned") {
-		t.Fatal("sharing the memory with the shade should record the story flag")
+		t.Fatal("a detailed offered memory should complete the story thread")
 	}
 	if s.Character.Quests[q.ID] != q.Required {
 		t.Fatalf("quest progress = %d, want %d", s.Character.Quests[q.ID], q.Required)
+	}
+	if len(s.Character.Memories) == 0 || !strings.Contains(s.Character.Memories[len(s.Character.Memories)-1], "singing off-key") {
+		t.Fatal("the offered memory should be recorded in the character's soul memories")
 	}
 }
