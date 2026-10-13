@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 	"testing"
 
 	"fatewalker/game/character"
@@ -2151,5 +2152,56 @@ func TestPythiaConversationCompletesOracleWhisper(t *testing.T) {
 	}
 	if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") {
 		t.Fatal("completed Oracle quest should be recorded on the character")
+	}
+}
+
+
+func TestDroppedItemCanBePickedUpByOnlyOnePlayer(t *testing.T) {
+	w := world.NewWorld()
+	first := newChoiceTestSession(t)
+	second := newChoiceTestSession(t)
+	first.World = w
+	second.World = w
+	first.Character.RoomID = "village_square"
+	second.Character.RoomID = "village_square"
+	first.Character.Inventory = append(first.Character.Inventory, item.Item{
+		Name: "shared test tonic", Description: "A test tonic used for multiplayer pickup checks.",
+		Kind: "consumable", Healing: 17,
+	})
+
+	first.dropItem([]string{"shared test tonic"})
+	room := w.GetRoom("village_square")
+	if findRoomObject(room, "shared test tonic", "", second.Character) == nil {
+		t.Fatal("the dropped tonic should be visible to other players")
+	}
+
+	var workers sync.WaitGroup
+	workers.Add(2)
+	go func() {
+		defer workers.Done()
+		first.getObject([]string{"shared test tonic"})
+	}()
+	go func() {
+		defer workers.Done()
+		second.getObject([]string{"shared test tonic"})
+	}()
+	workers.Wait()
+
+	owners := 0
+	for _, s := range []*Session{first, second} {
+		for _, carried := range s.Character.Inventory {
+			if carried.Name == "shared test tonic" {
+				owners++
+				if carried.Healing != 17 {
+					t.Fatalf("picked-up item lost its healing value: %#v", carried)
+				}
+			}
+		}
+	}
+	if owners != 1 {
+		t.Fatalf("number of players who received the shared tonic = %d, want exactly 1", owners)
+	}
+	if findRoomObject(room, "shared test tonic", "", first.Character) != nil {
+		t.Fatal("a picked-up dropped item should no longer remain in the shared room")
 	}
 }
