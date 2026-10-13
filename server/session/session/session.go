@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -42,7 +43,50 @@ func New(accounts *account.Store, conn net.Conn, w *world.World) *Session {
  return &Session{Accounts:accounts, Conn:conn, World:w, AutoMap:false}
 }
 
-func (s *Session) WriteLine(format string,args ...any) { fmt.Fprintf(s.Conn,format+"\r\n",args...) }
+var ansiSequence = regexp.MustCompile("\\x1b\\[[0-?]*[ -/]*[@-~]")
+
+// WriteLine wraps text for traditional MUD terminals without counting ANSI
+// control sequences as visible characters. Telnet output consistently uses CRLF.
+func (s *Session) WriteLine(format string, args ...any) {
+ text := fmt.Sprintf(format, args...)
+ logical := strings.Split(text, "\n")
+ var output []string
+ for _, line := range logical {
+  line = strings.TrimSuffix(line, "\r")
+  output = append(output, wrapTerminalLine(line, 78)...)
+ }
+ fmt.Fprint(s.Conn, strings.Join(output, "\r\n"), "\r\n")
+}
+
+func wrapTerminalLine(line string, width int) []string {
+ if width < 40 { width = 78 }
+ visibleLine := ansiSequence.ReplaceAllString(line, "")
+ if len([]rune(visibleLine)) <= width { return []string{line} }
+ leading := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+ words := strings.Fields(line)
+ if len(words) == 0 { return []string{line} }
+ var lines []string
+ current := ""
+ visible := 0
+ for _, word := range words {
+  wordWidth := len([]rune(ansiSequence.ReplaceAllString(word, "")))
+  if current != "" && visible+1+wordWidth > width {
+   lines = append(lines, current)
+   current = leading + word
+   visible = len([]rune(ansiSequence.ReplaceAllString(leading, ""))) + wordWidth
+   continue
+  }
+  if current == "" {
+   current = leading + word
+   visible = len([]rune(ansiSequence.ReplaceAllString(leading, ""))) + wordWidth
+  } else {
+   current += " " + word
+   visible += 1 + wordWidth
+  }
+ }
+ if current != "" { lines = append(lines, current) }
+ return lines
+}
 
 func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("")
@@ -530,7 +574,7 @@ func (s *Session) tutorial() {
 func (s *Session) storyIntro() {
 	if s.Character == nil || s.Character.HasStoryFlag("tutorial_intro_seen") ||
 		s.Character.Life != 1 || s.Character.Level > 1 ||
-		(s.Character.RoomID != "village_square" && s.Character.RoomID != "village_lane") {
+		(s.Character.RoomID != "village_square" && s.Character.RoomID != "village_lane" && s.Character.RoomID != "tutorial_shore") {
 		return
 	}
 	s.Character.SetStoryFlag("tutorial_intro_seen")
@@ -623,9 +667,11 @@ func (s *Session) prologueHint() {
 		"LESSON 39/39 — DEPART: Type 'north'.\nThis is the final, irreversible transition. The game records tutorial completion and places you in Asterion Village, where the broader sandbox begins. The prologue cannot be revisited afterward, but the ordinary help files and story journal remain available whenever you need guidance.",
 	}
 	if s.PrologueStep >= len(lessons) { s.WriteLine("The prologue is complete. Continue into Fatewalker proper."); return }
-	s.WriteLine("\x1b[1;36mTHE FIRST THREAD — GUIDED PROLOGUE (%d/39)\x1b[0m", s.PrologueStep+1)
+	s.WriteLine("\x1b[1;36mTHE FIRST THREAD\x1b[0m")
 	s.WriteLine("%s", lessons[s.PrologueStep])
-	s.WriteLine("Progress is saved automatically. Type 'tutorial' to repeat this instruction, or 'help <topic>' for more detail.")
+	s.WriteLine("")
+	s.WriteLine("Take your time. Look around, speak to Ianthe, and follow what genuinely interests you; the world will not punish you for being curious.")
+	s.WriteLine("If you lose your place, 'tutorial' recalls this thread, and 'help <topic>' explains a system without taking you out of the story.")
 }
 
 func (s *Session) advancePrologueForCommand(p []string) {
