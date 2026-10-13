@@ -116,11 +116,11 @@ func NewWorld() *World {
 	w.NPCs["modern_museum"] = append(w.NPCs["modern_museum"], curator)
 
 	oracle := NewNPC("lunar_oracle", "The Oracle Beneath the Moon", "A blind oracle sits inside a sanctuary carved into pale lunar stone. Constellations drift across the ceiling although no sky lies above it.", 30, 999, 0, 0)
-	oracle.Faction = "olympians"
-	oracle.AddDialogue([]string{"hello", "greeting"}, `"You have arrived before your own beginning," the oracle says. "That is why the stars cannot agree on your name."`)
-	oracle.AddDialogue([]string{"future", "fate", "rebirth"}, `"Each life is not a rung on a ladder. It is a world that could have been. Carry your choices forward, and the worlds will begin to answer one another."`)
-	oracle.AddDialogue([]string{"moon", "lunar", "prophecy"}, `The oracle traces a constellation that resembles your black thread. "When the last dawn comes, the sea will cover the oldest road. Find the shore that remembers the first choice."`)
-	oracle.AddDialogue([]string{"past", "memory", "lives"}, `"Your former selves are not ghosts to command. They are witnesses. Listen, and you may learn why one of them refused the gods."`)
+	lunarOracle.Faction = "olympians"
+	lunarOracle.AddDialogue([]string{"hello", "greeting"}, `"You have arrived before your own beginning," the oracle says. "That is why the stars cannot agree on your name."`)
+	lunarOracle.AddDialogue([]string{"future", "fate", "rebirth"}, `"Each life is not a rung on a ladder. It is a world that could have been. Carry your choices forward, and the worlds will begin to answer one another."`)
+	lunarOracle.AddDialogue([]string{"moon", "lunar", "prophecy"}, `The oracle traces a constellation that resembles your black thread. "When the last dawn comes, the sea will cover the oldest road. Find the shore that remembers the first choice."`)
+	lunarOracle.AddDialogue([]string{"past", "memory", "lives"}, `"Your former selves are not ghosts to command. They are witnesses. Listen, and you may learn why one of them refused the gods."`)
 	w.NPCs["future_moon"] = append(w.NPCs["future_moon"], oracle)
 
 	return w
