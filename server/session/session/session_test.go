@@ -1987,6 +1987,12 @@ func TestContainerOpenStateIsIsolatedBetweenPlayers(t *testing.T) {
 	if containerIsOpen(room, chest, second.Character) {
 		t.Fatal("opening a chest for one character must not open it for another")
 	}
+	if findRoomObject(room, "practice bandage", "", first.Character) == nil {
+		t.Fatal("the first character should see the bandage inside their open chest")
+	}
+	if findRoomObject(room, "practice bandage", "", second.Character) != nil {
+		t.Fatal("the second character must not see contents through another player's open chest")
+	}
 	if chest.Open {
 		t.Fatal("player interaction must not mutate the shared room object's default open state")
 	}
