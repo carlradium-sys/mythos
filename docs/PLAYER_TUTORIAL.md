@@ -53,3 +53,14 @@ Tutorial defeat flags and collected-object flags belong to the individual charac
 The game should wrap prose to a predictable terminal width without counting ANSI escape sequences as visible characters. Room headings, descriptions, objects, people, threats, and exits should form distinct blocks. The command prompt belongs on the input line, not on a line by itself. Color should improve readability but never be required to understand the output.
 
 This document describes the intended narrative standard. The tutorial is still being migrated from its original command-gated progression into a more flexible story flow; the visible prose should continue improving without breaking saved character progress.
+
+
+## Following quests without losing the story
+
+Fatewalker's quests are story threads, not a checklist you must follow in order.
+Use `current quests` to see the active threads your character has uncovered.
+Each active thread has a stable numeric ID, a short goal, and a progress count.
+
+To focus on one, use `current quests track <ID>`, replacing `<ID>` with the number shown beside the quest. Then `current quest` displays that quest's context, a checklist of recorded discoveries, its reward, and a gentle next lead. The lead is intended to help when you are stuck without spelling out every revelation.
+
+Use `current quests untrack` to clear the selection. Your chosen quest and story progress are stored with the character. The older `quests` command remains available for the broader catalogue, including completed and choice-locked threads.
