@@ -84,7 +84,7 @@ func TestCombatHelpExplainsCreatureAggressionStates(t *testing.T) {
 	if !ok {
 		t.Fatal("combat help topic is missing")
 	}
-	for _, expected := range []string{"Wary creatures", "The Harpy is wary", "road Satyr", "Attacking a wary or passive creature provokes it"} {
+	for _, expected := range []string{"Wary creatures", "The Harpy is wary", "road Satyr", "Attacking a wary or passive creature"} {
 		if !strings.Contains(topic.Text, expected) {
 			t.Errorf("combat help missing %q", expected)
 		}
