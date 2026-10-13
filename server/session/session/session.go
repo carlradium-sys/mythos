@@ -1359,6 +1359,10 @@ func (s *Session) examineTarget(args []string) {
 	}
 }
 
+func containerStorageKey(roomID, containerID string) string {
+	return roomID + "/" + containerID
+}
+
 func visibleRoomObjects(r *world.Room, character *character.Character) []*world.Object {
 	if r == nil { return nil }
 	var found []*world.Object
@@ -1649,13 +1653,11 @@ func (s *Session) putItem(args []string) {
 		s.WriteLine("%s is tied to your soul or story and cannot be stored away.", carried.Name)
 		return
 	}
-	id := fmt.Sprintf("stored_%d_%s", time.Now().UnixNano(), strings.NewReplacer(" ", "_", "'", "").Replace(strings.ToLower(carried.Name)))
-	storedObject := world.NewObject(id, carried.Name, carried.Description, carried.Name, carried.Kind)
-	storedObject.ContainerID = container.ID
-	storedObject.Takeable = true
-	storedItem := carried
-	storedObject.StoredItem = &storedItem
-	r.Objects = append(r.Objects, storedObject)
+	if s.Character.ContainerStorage == nil {
+		s.Character.ContainerStorage = map[string][]item.Item{}
+	}
+	key := containerStorageKey(r.ID, container.ID)
+	s.Character.ContainerStorage[key] = append(s.Character.ContainerStorage[key], carried)
 	s.Character.Inventory = append(s.Character.Inventory[:selected], s.Character.Inventory[selected+1:]...)
 	s.WriteLine("You place %s inside %s.", carried.Name, container.Name)
 	s.persist()
