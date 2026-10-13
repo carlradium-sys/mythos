@@ -72,8 +72,9 @@ Run from the repository root:
 
 ```sh
 go test ./...
+go test -race ./...
 go vet ./...
-go build ./cmd/mythos
+go build ./cmd/fatewalker
 ```
 
 A demo candidate is not considered release-ready until these checks pass and the manual story path above has been completed at least once from a fresh character. Passing automated tests is necessary, but does not replace the playthrough.
