@@ -202,7 +202,24 @@ Item names support case-insensitive partial matching. For example:
 
 If more than one item matches, the game displays numbered choices. Select
 one with the corresponding numbered equip command. Use eq to see what is
-currently equipped.`},
+currently equipped.
+
+Use 'put <item> in <container>' to store an ordinary item in an open container.
+Quest-critical items and soul relics are protected from being put away.`},
+	"put": {"put", `STORING ITEMS IN CONTAINERS
+
+Use:
+  iscan
+  open <container>
+  put <item> in <container>
+  look in <container>
+  close <container>
+
+Only open containers accept items. Closing a container hides its contents;
+open it again to retrieve them with 'get <item> from <container>'. Consumables
+retain their healing or mana properties when stored and retrieved. Soul relics
+and story-critical quest items cannot be stored away, preventing accidental
+quest softlocks.`},
 	"equipment": {"equipment", `EQUIPMENT
 
 Use:
@@ -662,5 +679,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
+	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","put","map","automap","story","journal","quests","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
 }
