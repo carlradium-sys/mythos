@@ -2220,3 +2220,33 @@ func TestPythiaWarningRecognizesNaturalStoryTopics(t *testing.T) {
 		})
 	}
 }
+
+
+func TestEncounterVictoryPersistsAcrossReconnectButResetsForNewLife(t *testing.T) {
+	first := newChoiceTestSession(t)
+	first.Character.RoomID = "manticore_den"
+	first.Character.Level = 5
+	first.Enemy = &combat.Enemy{Name: "Manticore", HP: 0, MaxHP: 100, Level: 5, XP: 200}
+	first.defeatEnemy(false)
+	if !first.Character.HasStoryFlag(encounterDefeatedFlag("manticore_den", first.Character.Life)) {
+		t.Fatal("defeating a world encounter should persist a victory flag for this life")
+	}
+
+	returning := newChoiceTestSession(t)
+	returning.Character = first.Character
+	returning.Character.RoomID = "manticore_den"
+	returning.spawnEnemy()
+	if returning.Enemy != nil {
+		t.Fatal("a defeated encounter should not respawn after reconnecting in the same life")
+	}
+	if returning.EncounterClearedRoom != "manticore_den" {
+		t.Fatalf("cleared room = %q, want manticore_den", returning.EncounterClearedRoom)
+	}
+
+	returning.Character.Life++
+	returning.EncounterClearedRoom = ""
+	returning.spawnEnemy()
+	if returning.Enemy == nil || returning.Enemy.Name != "Manticore" {
+		t.Fatal("a new life should be able to encounter the Manticore again")
+	}
+}
