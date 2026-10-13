@@ -5,6 +5,7 @@ type Room struct {
 	Name        string
 	Description string
 	Exits       map[string]string
+	Objects     []*Object
 }
 
 func NewRoom(id, name, description string) *Room {
@@ -13,5 +14,6 @@ func NewRoom(id, name, description string) *Room {
 		Name:        name,
 		Description: description,
 		Exits:       make(map[string]string),
+		Objects:     []*Object{},
 	}
 }
