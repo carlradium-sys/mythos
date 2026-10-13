@@ -683,6 +683,11 @@ func (s *Session) currentQuests(args []string) {
 		s.showCurrentQuest(q); return
 	}
 	if len(args) > 0 && args[0] == "untrack" { s.Character.TrackedQuest = ""; s.WriteLine("Quest tracker cleared."); return }
+	if len(args) == 1 && args[0] == "quest" {
+		if q, ok := quest.Get(s.Character.TrackedQuest); ok { s.showCurrentQuest(q); return }
+		if q, ok := s.nextAvailableQuest(); ok { s.Character.TrackedQuest = q.ID; s.showCurrentQuest(q); return }
+		s.WriteLine("You have no active quest to display."); return
+	}
 	if len(args) == 0 || (len(args) == 1 && args[0] == "quests") { s.currentQuestList(); return }
 	s.WriteLine("Usage: current quests | current quests track <ID> | current quest | current quests untrack")
 }
