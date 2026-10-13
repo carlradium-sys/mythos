@@ -21,7 +21,14 @@ Your first life begins in Ancient Greece. Explore, fight, learn, awaken,
 make choices, and uncover why the Fates have marked you for rebirth.
 
 BASIC LOOP
-  look                 Examine the room and discover threats.
+  look                 Read the room, its objects, and visible occupants.
+  look <thing>         Inspect a person, creature, object, or exit.
+  get <item> [from <container>]  Pick up a takeable object.
+  get all              Pick up all visible takeable objects in the room.
+  drop <item>          Leave a non-equipped, non-quest item in the current room.
+  iscan                List objects you can inspect or handle.
+  scan                 List people, creatures, and visible objects.
+  who                  List connected players.
   hint                 Ask a nearby NPC what to ask or do next.
   north/south/east/west Travel through discovered paths.
   attack               Fight with your equipped weapon.
@@ -251,6 +258,23 @@ Item tiers:
   Mythic      Bright red/divine
 
 Inventory shows each item's tier, damage, and armor. Use equip <item> to change your weapon or armor.
+
+WORLD OBJECTS
+  look <thing>              Read a room object's description.
+  examine <thing>           Inspect an object more closely.
+  look in <container>       See what is visible inside a container.
+  get <item> from <source>  Collect a takeable item.
+  get <item> <source>       Short form for the same action.
+  get all                   Collect all visible takeable objects.
+  drop <item>               Leave a non-equipped, non-quest item in the room.
+  offer <item> to <object>  Make a story offering when a quest calls for one.
+  offer memory <moment>     Offer a specific remembered experience in Asphodel.
+  iscan                     List room objects and whether they can be taken.
+  scan                      List visible people, creatures, and objects.
+
+Objects are physical room fixtures, not just text in a description. Some are
+scenery and cannot be collected; containers may hold other discoverable items.
+Your collected objects appear in inventory and can be examined there.
 Soul relics are marked in your inventory and persist through rebirth. The
 Styxglass Shard is the first relic: recover it by completing The River of
 Memory at the Styx. Once per encounter, its river-ward absorbs up to 8 damage.
@@ -258,10 +282,29 @@ The ward refreshes when a new enemy encounter begins. Repeating a reward
 cannot create a second copy.
 An Oracle's Thread from the trust branch absorbs up to 4 damage once per
 encounter. The defiance branch grants an Unwritten Ember, adding 6 damage to
-your first successful weapon strike each encounter. Finding the Delphi
-Sanctum also completes the Trials of the Seer and grants the Laurel of the
-Seer, which adds 3 damage to your first successful weapon strike each
-encounter. Defensive relics do not stack; the strongest available ward is used.`},
+your first successful weapon strike each encounter. Examining the broken inscription in the Delphi
+Sanctum completes the Trials of the Seer and grants the Laurel of the Seer,
+which adds 3 damage to your first successful weapon strike each encounter. Defensive relics do not stack; the strongest available ward is used.`},
+	"communication": {"communication", "PLAYER COMMUNICATION\n\nWHO\n  who                 List connected players, their life, level, era, and room.\n\nROOM MESSAGES\n  say <message>       Speak to players in your current room.\n  emote <action>      Describe an action to players in the same room.\n\nPLAYER MESSAGES\n  tell <player> <text> Send a private message to an online player.\n  chat <message>      Send a world-wide message to connected players.\n  gossip <message>    Alias for chat.\n\nNPC dialogue remains separate: use talk <NPC> <topic>, or say <NPC> <topic>\nwhen you want to address someone in the room. Use who to see who is online."},
+	"scan": {"scan", `SCANNING & ROOM OBJECTS
+
+Use scan to list visible people, creatures, and objects that stand out.
+Use iscan to focus on objects you can inspect, open, or pick up.
+
+OBJECT INTERACTION
+  look coin                  Read an object description.
+  examine coin               Same as look coin.
+  inspect campfire ash       Inspect a container or fixture.
+  get coin                   Pick up a visible takeable item.
+  get coin from ash          Specify the container holding an item.
+  get coin ash               Short form accepted for the same action.
+  get all                    Pick up all visible takeable objects.
+  drop laurel poultice       Leave a carried item in the room.
+
+Items listed in a room are not necessarily takeable. Lamps, altars, doors,
+and other fixtures may be scenery; containers can hold discoverable items.
+A carried object appears in inventory and can be examined there too.
+Room objects are world objects, not merely text in the room description.`},
 	"story": {"story", `STORY & SANDBOX
 
 Fatewalker is built around two promises:
