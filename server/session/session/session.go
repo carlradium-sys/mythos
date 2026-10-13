@@ -1479,12 +1479,13 @@ func (s *Session) searchObject(args []string) {
 func (s *Session) readObject(args []string) {
 	if len(args) == 0 { s.WriteLine("Read what? Try 'read prayer strip'."); return }
 	query := strings.ToLower(strings.Join(args, " "))
-	found, isPrayerStrip := false, false
+	found, isPrayerStrip, isHarpyLetter := false, false, false
 	for _, carried := range s.Character.Inventory {
 		name := strings.ToLower(carried.Name)
 		if strings.Contains(name, query) || strings.Contains(query, name) {
 			found = true
 			if strings.Contains(name, "charred prayer strip") { isPrayerStrip = true }
+			if strings.Contains(name, "feather-folded letter") { isHarpyLetter = true }
 		}
 	}
 	if !found {
@@ -1492,9 +1493,27 @@ func (s *Session) readObject(args []string) {
 		if object := findRoomObject(r, query, "", s.Character); object != nil {
 			found = true
 			isPrayerStrip = object.ID == "charred_prayer_strip"
+			isHarpyLetter = object.ID == "harpy_letter"
 		}
 	}
 	if !found { s.WriteLine("You cannot find anything readable matching '%s'.", query); return }
+	if isHarpyLetter {
+		if !s.Character.HasStoryFlag("object_taken_harpy_letter") {
+			s.WriteLine("The letter is caught beneath a feather. Pick it up first if you want to unfold it safely.")
+			return
+		}
+		if !s.Character.HasStoryFlag("read_harpy_letter") {
+			s.Character.SetStoryFlag("read_harpy_letter")
+			s.Character.Memories = append(s.Character.Memories, "I read the feather-folded letter: its writer begged someone to tell a sister that staying behind was a choice, not abandonment.")
+			s.WriteLine("The letter begins without a greeting. The writer says they stayed at the sealed mountain shrine so a younger sister could escape before the creatures came down the road.")
+			s.WriteLine("The final lines are smudged, but one sentence survives: 'If they tell you I was taken, do not believe them. I stayed because someone had to hold the door.' There is no name, only the three-line mark.")
+			s.updateQuests()
+			s.persist()
+		} else {
+			s.WriteLine("You unfold the letter again. Its last surviving sentence still refuses to sound like a farewell.")
+		}
+		return
+	}
 	if isPrayerStrip {
 		if !s.Character.HasStoryFlag("opened_tomb_coffer") {
 			s.WriteLine("The words remain hidden. You must first open the coffer in the Manticore Den.")
