@@ -48,6 +48,7 @@ This is the release gate for calling a build a **playable demo**, rather than me
 - [ ] Defeating an enemy awards XP, loot, quest progress, and reputation at most once.
 - [ ] Repeatable hunting grounds in ancient Athens, the Garden of Ambrosia, Asphodel, Plaka, the Midnight Metro, and the Stormline Rooftops repopulate after leaving or reconnecting.
 - [ ] Hunting-ground creatures provide repeatable XP and currency, plus distinct regional materials, without replaying one-time story quest rewards.
+- [ ] `hunt` shows local contract work; `hunt accept` persists a target; only three matching kills in hunting grounds count; `hunt turnin` pays once; `hunt cancel` clears the contract without a reward.
 - [ ] Compare hunting difficulty and XP across regions; higher-risk creatures should provide better rewards without making early-game grinding the only sensible progression.
 - [ ] Healing, mana use, level-ups, equipment stats, merchant prices, and faction greetings agree with the character sheet.
 - [ ] Rebirth requires the intended threshold, preserves soul-bound memories/relics/choices, resets life-specific progression correctly, and places the character in the appropriate era.
