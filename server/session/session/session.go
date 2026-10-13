@@ -206,6 +206,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.getObject(parts[1:])
 	case "drop", "discard":
 		s.dropItem(parts[1:])
+	case "put", "place":
+		s.putItem(parts[1:])
 	case "open":
 		s.openContainer(parts[1:])
 	case "close":
@@ -1579,7 +1581,7 @@ func (s *Session) getObject(args []string) {
 		return
 	}
 	kind := "object"
-	if strings.EqualFold(object.ID, "scratched_bronze_coin") { kind = "quest" }
+	if object.ID == "scratched_bronze_coin" || object.ID == "harpy_letter" || object.ID == "charred_prayer_strip" { kind = "quest" }
 	carried := item.Item{Name:object.Name, Description:object.Description, Tier:item.Common, Kind:kind}
 	if object.StoredItem != nil { carried = *object.StoredItem }
 	s.Character.Inventory = append(s.Character.Inventory, carried)
@@ -1591,6 +1593,71 @@ func (s *Session) getObject(args []string) {
 		s.Character.Memories = append(s.Character.Memories, "I found a scratched bronze coin half-buried in cold campfire ash beneath Olympus.")
 		s.WriteLine("The coin warms in your palm. For an instant, you smell salt water and hear an oar creak in the dark.")
 	}
+	s.persist()
+}
+
+func (s *Session) putItem(args []string) {
+	if len(args) == 0 {
+		s.WriteLine("Put what where? Try 'put bandage in chest'.")
+		return
+	}
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil {
+		s.WriteLine("There is nowhere here to store an item.")
+		return
+	}
+	raw := strings.TrimSpace(strings.Join(args, " "))
+	lower := strings.ToLower(raw)
+	separator := strings.Index(lower, " in ")
+	if separator < 0 {
+		separator = strings.Index(lower, " into ")
+	}
+	if separator < 0 {
+		s.WriteLine("Name an open container: put <item> in <container>.")
+		return
+	}
+	itemQuery := strings.TrimSpace(raw[:separator])
+	containerQuery := strings.TrimSpace(raw[separator+4:])
+	if strings.Contains(lower, " into ") && strings.Index(lower, " into ") == separator {
+		containerQuery = strings.TrimSpace(raw[separator+6:])
+	}
+	container := findRoomObject(r, containerQuery, "", s.Character)
+	if container == nil || !container.Container {
+		s.WriteLine("You cannot find an interactable container matching '%s'.", containerQuery)
+		return
+	}
+	if !container.Open {
+		s.WriteLine("The %s is closed. Open it before putting anything inside.", container.Name)
+		return
+	}
+	selected := -1
+	for i, carried := range s.Character.Inventory {
+		if strings.Contains(strings.ToLower(carried.Name), strings.ToLower(itemQuery)) {
+			if selected >= 0 {
+				s.WriteLine("Several carried items match '%s'. Use a more specific name.", itemQuery)
+				return
+			}
+			selected = i
+		}
+	}
+	if selected < 0 {
+		s.WriteLine("You do not carry an item matching '%s'.", itemQuery)
+		return
+	}
+	carried := s.Character.Inventory[selected]
+	if carried.Relic || carried.Kind == "quest" {
+		s.WriteLine("%s is tied to your soul or story and cannot be stored away.", carried.Name)
+		return
+	}
+	id := fmt.Sprintf("stored_%d_%s", time.Now().UnixNano(), strings.NewReplacer(" ", "_", "'", "").Replace(strings.ToLower(carried.Name)))
+	storedObject := world.NewObject(id, carried.Name, carried.Description, carried.Name, carried.Kind)
+	storedObject.ContainerID = container.ID
+	storedObject.Takeable = true
+	storedItem := carried
+	storedObject.StoredItem = &storedItem
+	r.Objects = append(r.Objects, storedObject)
+	s.Character.Inventory = append(s.Character.Inventory[:selected], s.Character.Inventory[selected+1:]...)
+	s.WriteLine("You place %s inside %s.", carried.Name, container.Name)
 	s.persist()
 }
 
