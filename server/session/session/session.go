@@ -123,7 +123,9 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	if !s.login(scanner) { return }
 	defer s.persist()
 	if !s.selectCharacter(scanner) { return }
-	s.registerOnline()
+	if !s.registerOnline() {
+		return
+	}
 	defer s.unregisterOnline()
 	s.prepareTutorial()
 	s.storyIntro()
@@ -315,12 +317,22 @@ func (s *Session) handleCommand(input string) bool {
 	return true
 }
 
-func (s *Session) registerOnline() {
-	if s.Character == nil { return }
+func (s *Session) registerOnline() bool {
+	if s.Character == nil {
+		return false
+	}
 	onlineMu.Lock()
+	for player, snapshot := range onlineSessions {
+		if player != s && strings.EqualFold(snapshot.Name, s.Character.Name) {
+			onlineMu.Unlock()
+			s.WriteLine("That character is already connected. Disconnect the other session before logging this character in again.")
+			return false
+		}
+	}
 	onlineSessions[s] = onlineSnapshot{Name:s.Character.Name, Level:s.Character.Level, Life:s.Character.Life, Era:s.Character.Era, RoomID:s.Character.RoomID}
 	onlineMu.Unlock()
 	s.broadcastGlobalExcept(fmt.Sprintf("%s enters the world.", s.Character.Name), s)
+	return true
 }
 
 func (s *Session) refreshOnline() {
