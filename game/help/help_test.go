@@ -64,3 +64,16 @@ func TestListenHelpExplainsInteractionDrivenRiverProgress(t *testing.T) {
 		}
 	}
 }
+
+
+func TestTalkHelpExplainsOracleChoicePrerequisite(t *testing.T) {
+	topic, ok := Get("talk")
+	if !ok {
+		t.Fatal("talk help topic is missing")
+	}
+	for _, expected := range []string{"talk Pythia what do you know about the thread", "Hear Pythia's warning", "will not accept trust or defiance"} {
+		if !strings.Contains(topic.Text, expected) {
+			t.Errorf("talk help missing %q", expected)
+		}
+	}
+}
