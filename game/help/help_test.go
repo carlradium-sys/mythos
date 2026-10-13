@@ -90,3 +90,16 @@ func TestCombatHelpExplainsCreatureAggressionStates(t *testing.T) {
 		}
 	}
 }
+
+
+func TestHuntingContractHelpExplainsFullWorkflow(t *testing.T) {
+	topic, ok := Get("hunt")
+	if !ok {
+		t.Fatal("hunt help topic is missing")
+	}
+	for _, expected := range []string{"hunt accept", "hunt turnin", "hunt cancel", "three times", "story quests"} {
+		if !strings.Contains(topic.Text, expected) {
+			t.Errorf("hunt help missing %q", expected)
+		}
+	}
+}
