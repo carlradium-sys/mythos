@@ -21,6 +21,8 @@ WHEN YOU NEED A HAND
   hint                   Request an optional nudge from someone nearby.
   exits / map            Understand routes and nearby connections.
   inv / eq               Review carried items and equipped gear.
+  scan / iscan           Find visible targets or interactable objects.
+  examine <object>       Read an object closely; get <object> picks it up.
   quests / journal       Review objectives and story threads you have found.
   help <topic>           Read a detailed reference without losing your place.
 
