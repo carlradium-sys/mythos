@@ -44,6 +44,9 @@ BASIC LOOP
   help <topic>         Read a detailed help file (try inventory or powers).
   journal              See the current story thread without a forced quest path.
   quests               Review active, completed, and choice-locked quests.
+  current quests       List active quests with IDs and progress.
+  current quest        Show the tracked quest, checklist, and next lead.
+  current quests track <ID>  Track one quest by its displayed ID.
   soul                 Review memories, oaths, scars, echoes, and faction standing.
   invoke               Use your once-per-life manifestation.
   rebirth              At level 10, cross the Styx and begin another life.
@@ -415,6 +418,22 @@ QUEST CHAINS ACROSS LIVES
   Myrto may recognize what you did in an earlier life.
 
 Quests reward exploration and combat without forcing a linear path.`},
+	"current": {"current", `CURRENT QUEST TRACKER
+
+Use the tracker when you want a focused view of one story thread.
+
+  current quests              List active quests and their numeric IDs.
+  current quests track <ID>  Pin an active quest to your tracker.
+  current quest               Show the tracked quest's story, checklist, and next lead.
+  current quests untrack      Clear the pinned quest.
+
+The checklist records discoveries already made, such as finding an object,
+reading a letter, hearing a witness, or reaching a story location. The next
+lead suggests a useful action without revealing every twist in the story.
+Quest selection and progress are saved with your character. If you have not
+chosen a quest yet, 'current quest' selects the first available active quest.
+
+`},
 	"talk": {"talk", `NPC DIALOGUE AND LORE
 
 Talk to people as people, not as vending machines for quest keywords. The keyword is only how the MUD interface finds a subject; the response should reveal what this character has seen, believes, fears, or refuses to explain.
@@ -681,5 +700,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","put","give","map","automap","story","journal","quests","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
+	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","put","give","map","automap","story","journal","quests","current","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
 }
