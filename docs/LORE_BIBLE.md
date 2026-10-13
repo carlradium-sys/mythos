@@ -44,6 +44,8 @@ The first shore is a future story destination and a conceptual anchor: a place w
 ### Ancient Greece
 Asterion is a small village beneath Olympus. The mountain's creatures are behaving with unusual intent: the Harpy steals letters and keepsakes rather than food or coin; other monsters leave signs around sealed shrines. Delphi can sense the player's thread but cannot identify its origin. Theron treats monster remains as dangerous memories that can be shaped into gear.
 
+The feather-folded letter found in the foothills is a witness statement, not a collectible joke: its unnamed writer stayed behind at a sealed shrine so a younger sister could escape. The Harpy's habit of carrying keepsakes is tied to this unresolved act of protection. The surviving three-line mark links the letter to the prayer strip in the Manticore Den, but neither clue should immediately identify the writer or explain why the mark recurs.
+
 ### The Underworld
 Charon and the shades offer conflicting testimony about memory and responsibility. The river, Asphodel, judgment, Cerberus, and Tartarus should feel like connected institutions with different purposes. Optional quests deepen the player's understanding and may grant persistent memories, oaths, or echoes.
 
