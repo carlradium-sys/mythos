@@ -35,6 +35,7 @@ type Character struct {
 	Curses     []string
 	Echoes     []string
 	Quests     map[string]int
+	TrackedQuest string
 	StoryFlags map[string]bool
 	LifeGift string
 	LifeGiftUsed bool
