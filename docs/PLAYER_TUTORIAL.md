@@ -39,7 +39,7 @@ The storehouse contains useful objects and signs of previous travelers. A practi
 - `get <name>` or `get <item> from <container>`: pick up an available object; `get all` collects visible takeable objects.
 - `examine <name>`, `search <name>`, and `read <name>`: investigate details, search an open container, or read a written clue.
 - `offer <item> to <object>`: make a story offering when the situation calls for one; `offer memory <moment>` records a player-authored memory in Asphodel.
-- `inv` reviews carried items. `drop <name>` leaves ordinary non-quest items in the room.
+- `inv` reviews carried items. `drop <name>` leaves ordinary non-quest items in the room. `put <item> in <container>` stores an ordinary item in an open container; `get <item> from <container>` retrieves it.
 - `eq`, `wield <name>`, and `wear <name>`: review and change equipment.
 - `attack <name>`: begin combat when the player chooses to fight.
 - `help <topic>`, `quests`, and `journal`: look up rules and recover the larger story context.
