@@ -2113,7 +2113,21 @@ func compactText(value string, limit int) string {
 	}
 	return string(runes[:limit-1]) + "…"
 }
+// encounterDefeatedFlag scopes a victory to the character's current life.
+// A reconnect must not silently respawn a one-off encounter and award its
+// experience, loot, or quest progress a second time. Rebirth creates a new
+// life and can therefore open these encounters again.
+func encounterDefeatedFlag(roomID string, life int) string {
+	return fmt.Sprintf("encounter_defeated_%s_life_%d", roomID, life)
+}
+
 func (s *Session) spawnEnemy() {
+	if s.Character != nil && s.Character.HasStoryFlag(encounterDefeatedFlag(s.Character.RoomID, s.Character.Life)) {
+		s.Enemy = nil
+		s.EnemyAggressive = false
+		s.EncounterClearedRoom = s.Character.RoomID
+		return
+	}
 	s.RelicWardSpent = false
 	s.RelicStrikeSpent = false
 	s.EnemyAggressive = true
@@ -2515,6 +2529,9 @@ func (s *Session) defeatEnemy(divine bool) {
 		return
 	}
 	enemy := s.Enemy
+	if s.Character != nil {
+		s.Character.SetStoryFlag(encounterDefeatedFlag(s.Character.RoomID, s.Character.Life))
+	}
 	if strings.HasPrefix(s.Character.RoomID, "tutorial_") {
 		s.Character.SetStoryFlag("tutorial_enemy_slain_" + s.Character.RoomID)
 	}
