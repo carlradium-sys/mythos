@@ -102,7 +102,7 @@ Use `help`, `look`, `scan`, `iscan`, `examine`, `listen`, `search`, `open`, `clo
 - The tutorial creatures do not attack first. Inspect them before deciding to fight; after the Practice Satyr, return south to the courtyard, go east to the storehouse, then north through the marble gate when ready.
 - The gate returns you to Asterion. Travel north through the village lane to the Olympus foothills. Look around, examine the coin in the ash, and inspect the wary Harpy before deciding how to deal with it.
 - Continue north to the Oracle Path. The Satyr there is passive until challenged, but it guards the road; defeat it when you're ready to proceed to Pythia.
-- Use `talk choices`, then choose `trust` or `defy`. Continue north to the Delphi Sanctum; follow the clues and exits as you explore.
+- Ask Pythia about the thread or prophecy to hear her warning. Then use `talk choices` and choose `trust` or `defy`. Continue north to the Delphi Sanctum, where the broken inscription rewards close examination.
 - Grow stronger and explore the Underworld. The Styx opens at level 7 and Cerberus at level 9.
 - At level 10, use `rebirth` to begin Life II in modern Athens. Your soul flags, memories, and relics persist.
 
