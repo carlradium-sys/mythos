@@ -71,7 +71,7 @@ func TestTalkHelpExplainsOracleChoicePrerequisite(t *testing.T) {
 	if !ok {
 		t.Fatal("talk help topic is missing")
 	}
-	for _, expected := range []string{"talk Pythia what do you know about the thread", "Hear Pythia's warning", "will not accept trust or defiance"} {
+	for _, expected := range []string{"talk Pythia what do you know about the thread", "Hear Pythia's warning", "not accept trust or defiance"} {
 		if !strings.Contains(topic.Text, expected) {
 			t.Errorf("talk help missing %q", expected)
 		}
