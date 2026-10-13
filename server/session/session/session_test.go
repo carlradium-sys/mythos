@@ -1778,25 +1778,24 @@ func TestPutItemInContainerPreservesPropertiesAndHidesContentsWhenClosed(t *test
 	if len(s.Character.Inventory) != 0 {
 		t.Fatal("putting the bandage away should remove it from inventory")
 	}
-	var stored *world.Object
-	for _, object := range r.Objects {
-		if object != nil && object.Name == "practice bandage" && object.ContainerID == chest.ID {
-			stored = object
-			break
-		}
-	}
-	if stored == nil || stored.StoredItem == nil || stored.StoredItem.Healing != 20 {
-		t.Fatal("the stored object should preserve its original consumable data")
+	key := containerStorageKey(r.ID, chest.ID)
+	stored := s.Character.ContainerStorage[key]
+	if len(stored) != 1 || stored[0].Name != "practice bandage" || stored[0].Healing != 20 {
+		t.Fatal("the character's stored item should preserve its original consumable data")
 	}
 
 	s.closeContainer([]string{"chest"})
-	if findRoomObject(r, "practice bandage", "chest", s.Character) != nil {
-		t.Fatal("contents of a closed container must remain hidden")
+	s.getObject([]string{"bandage", "from", "chest"})
+	if len(s.Character.Inventory) != 0 || len(s.Character.ContainerStorage[key]) != 1 {
+		t.Fatal("contents of a closed container must remain stored and unavailable")
 	}
 	s.openContainer([]string{"chest"})
 	s.getObject([]string{"bandage", "from", "chest"})
 	if len(s.Character.Inventory) != 1 || s.Character.Inventory[0].Healing != 20 {
 		t.Fatal("retrieving the item should restore its healing property")
+	}
+	if len(s.Character.ContainerStorage[key]) != 0 {
+		t.Fatal("retrieved items should be removed from container storage")
 	}
 }
 
