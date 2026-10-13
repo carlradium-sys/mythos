@@ -704,7 +704,7 @@ func (s *Session) updateQuests() {
  for _,q:=range quest.All() {
   if !s.questUnlocked(q) {continue}
   if s.Character.Quests[q.ID]>=q.Required {continue}
-  goalReached := q.TargetRoom!="" && q.TargetEnemy=="" && s.Character.RoomID==q.TargetRoom
+  goalReached := q.TargetRoom!="" && q.TargetEnemy=="" && q.CompletionFlag=="" && s.Character.RoomID==q.TargetRoom
   if q.CompletionFlag!="" && s.Character.HasStoryFlag(q.CompletionFlag) { goalReached = true }
   if goalReached {
    old:=s.Character.Quests[q.ID];s.Character.Quests[q.ID]=q.Required
@@ -1560,6 +1560,20 @@ func (s *Session) listen(args []string) {
 				s.persist()
 			} else {
 				s.WriteLine("The well gives you only its quiet rhythm now. Once heard, the distant oars are difficult to mistake for ordinary water.")
+			}
+			return
+		}
+	case "styx_shore":
+		if strings.Contains(target, "water") || strings.Contains(target, "river") || strings.Contains(target, "shore") || strings.Contains(target, "oar") || strings.Contains(target, "voice") {
+			if !s.Character.HasStoryFlag("heard_styx_whisper") {
+				s.Character.SetStoryFlag("heard_styx_whisper")
+				s.WriteLine("You kneel beside the black water. It does not lap against the shore; it draws away from it, as if the river were breathing in.")
+				s.WriteLine("Beneath the silence comes the creak of an oar and a voice too old to belong to any one dead person: 'What you surrender is not always what you lose. What you keep is not always what you carry.'")
+				s.WriteLine("The black thread at your wrist tightens, then eases. The river has recognized something in you.")
+				s.updateQuests()
+				s.persist()
+			} else {
+				s.WriteLine("The Styx keeps its quiet rhythm. You have heard its question; the black thread still remembers the answer.")
 			}
 			return
 		}
