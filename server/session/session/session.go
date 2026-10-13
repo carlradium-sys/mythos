@@ -204,6 +204,12 @@ func (s *Session) handleCommand(input string) bool {
 		s.getObject(parts[1:])
 	case "drop", "discard":
 		s.dropItem(parts[1:])
+	case "open":
+		s.openContainer(parts[1:])
+	case "close":
+		s.closeContainer(parts[1:])
+	case "read":
+		s.readObject(parts[1:])
 	case "scan":
 		s.scanTargets()
 	case "iscan", "itemscan", "scanitems":
@@ -1343,13 +1349,79 @@ func (s *Session) describeObject(object *world.Object, r *world.Room, character 
 		}
 	}
 	if object.Container {
-		var contents []string
-		for _, child := range r.Objects {
-			if child != nil && child.ContainerID == object.ID && child.Visible && (character == nil || !character.HasStoryFlag("object_taken_"+child.ID)) { contents = append(contents, child.Name) }
+		if !object.Open {
+			s.WriteLine("It is closed. You will need to open it before you can see what lies inside.")
+		} else {
+			var contents []string
+			for _, child := range r.Objects {
+				if child != nil && child.ContainerID == object.ID && child.Visible && (character == nil || !character.HasStoryFlag("object_taken_"+child.ID)) { contents = append(contents, child.Name) }
+			}
+			if len(contents) > 0 { s.WriteLine("Within it you can make out: %s.", strings.Join(contents, ", ")) } else { s.WriteLine("It appears to be empty.") }
 		}
-		if len(contents) > 0 { s.WriteLine("Within it you can make out: %s.", strings.Join(contents, ", ")) } else { s.WriteLine("It appears to be empty.") }
 	}
 	if object.Takeable { s.WriteLine("You could pick it up with 'get %s'.", strings.ToLower(object.Name)) } else { s.WriteLine("It is part of the place and cannot be taken.") }
+}
+
+func (s *Session) openContainer(args []string) {
+	if len(args) == 0 { s.WriteLine("Open what? Use 'iscan' to find containers."); return }
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("There is nowhere here to open anything."); return }
+	object := findRoomObject(r, strings.Join(args, " "), "", s.Character)
+	if object == nil { s.WriteLine("You see no such object here."); return }
+	if !object.Container { s.WriteLine("%s is not a container.", object.Name); return }
+	if object.Open { s.WriteLine("%s is already open.", object.Name); return }
+	object.Open = true
+	s.WriteLine("You work the stubborn clasp loose. %s opens with a dry wooden sigh.", object.Name)
+	if object.ID == "tomb_coffer" {
+		s.Character.SetStoryFlag("opened_tomb_coffer")
+		s.WriteLine("Inside lies a narrow strip of charred parchment. The coffer was not locked against thieves; it was waiting for someone to choose to look.")
+		s.updateQuests()
+	}
+	s.persist()
+}
+
+func (s *Session) closeContainer(args []string) {
+	if len(args) == 0 { s.WriteLine("Close what?"); return }
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("There is nowhere here to close anything."); return }
+	object := findRoomObject(r, strings.Join(args, " "), "", s.Character)
+	if object == nil { s.WriteLine("You see no such object here."); return }
+	if !object.Container { s.WriteLine("%s is not a container.", object.Name); return }
+	if !object.Open { s.WriteLine("%s is already closed.", object.Name); return }
+	object.Open = false
+	s.WriteLine("You close %s.", object.Name)
+	s.persist()
+}
+
+func (s *Session) readObject(args []string) {
+	if len(args) == 0 { s.WriteLine("Read what? Try 'read prayer strip'."); return }
+	query := strings.ToLower(strings.Join(args, " "))
+	found := false
+	for _, carried := range s.Character.Inventory {
+		if strings.Contains(strings.ToLower(carried.Name), query) || strings.Contains(query, strings.ToLower(carried.Name)) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		r := s.World.GetRoom(s.Character.RoomID)
+		if object := findRoomObject(r, query, "", s.Character); object != nil { found = true }
+	}
+	if !found { s.WriteLine("You cannot find anything readable matching '%s'.", query); return }
+	if strings.Contains(query, "prayer") || strings.Contains(query, "strip") || strings.Contains(query, "parchment") {
+		if !s.Character.HasStoryFlag("opened_tomb_coffer") {
+			s.WriteLine("The words remain hidden. You must first open the coffer in the Manticore Den.")
+			return
+		}
+		s.Character.SetStoryFlag("read_charred_prayer")
+		s.Character.Memories = append(s.Character.Memories, "I read the charred prayer strip: someone asked not to be remembered, only for another to remember why they stayed.")
+		s.WriteLine("You read the surviving words slowly. They do not name a god, a hero, or a king. They describe someone who stayed beside a frightened person when every sensible instinct urged them to flee.")
+		s.WriteLine("The three-line mark beneath the words is not a signature. It is a witness mark — proof that someone else was there.")
+		s.updateQuests()
+		s.persist()
+		return
+	}
+	s.examineTarget(args)
 }
 
 func (s *Session) getObject(args []string) {
