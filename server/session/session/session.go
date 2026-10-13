@@ -1590,6 +1590,22 @@ func (s *Session) getObject(args []string) {
 		}
 	}
 	object := findRoomObject(r, target, source, s.Character)
+	if object == nil && source != "" {
+		container := findRoomObject(r, source, "", s.Character)
+		if container != nil && container.Container && container.Open {
+			key := containerStorageKey(r.ID, container.ID)
+			storedItems := s.Character.ContainerStorage[key]
+			for i, stored := range storedItems {
+				if strings.Contains(strings.ToLower(stored.Name), strings.ToLower(target)) {
+					s.Character.Inventory = append(s.Character.Inventory, stored)
+					s.Character.ContainerStorage[key] = append(storedItems[:i], storedItems[i+1:]...)
+					s.WriteLine("\x1b[1;32mYou take %s from %s.\x1b[0m", stored.Name, container.Name)
+					s.persist()
+					return
+				}
+			}
+		}
+	}
 	if object == nil {
 		if source != "" { s.WriteLine("You cannot find %s in %s here.", target, source) } else { s.WriteLine("You cannot find '%s' here. Use 'look' or 'iscan' to see what is present.", target) }
 		return
