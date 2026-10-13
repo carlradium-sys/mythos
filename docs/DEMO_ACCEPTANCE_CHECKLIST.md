@@ -32,6 +32,8 @@ This is the release gate for calling a build a **playable demo**, rather than me
 - [ ] The Manticore Den's sealed coffer can be discovered, opened, and its prayer strip read.
 - [ ] Charon's memory quest and the Shade's response make sense as a connected story, not a disconnected fetch chain.
 - [ ] The Oracle's trust/defiance choice is persistent and mutually exclusive; it unlocks the appropriate branch without silently overwriting the choice.
+- [ ] The Oracle's Whisper completes only after asking Pythia about the thread or prophecy; entering a room alone does not substitute for the conversation.
+- [ ] The River of Memory completes only after using `listen water` at the ancient Styx, not on arrival.
 - [ ] Quest progress survives disconnect/reconnect.
 - [ ] `current quests` lists active quests with stable numeric IDs; `current quests track <ID>` selects one; `current quest` shows its checklist and a useful next lead; `current quests untrack` clears it.
 - [ ] Every quest checklist has meaningful wording and actionable hints, and completing one quest does not falsely complete another.
