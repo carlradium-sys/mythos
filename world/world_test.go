@@ -1,6 +1,11 @@
 package world
 
-import ("testing"; "strings")
+import (
+	"fmt"
+	"strings"
+	"sync"
+	"testing"
+)
 
 func TestNewWorldHasNoDanglingExits(t *testing.T) {
 	w := NewWorld()
@@ -190,4 +195,38 @@ func TestManticoreCofferContainsHiddenReadableClue(t *testing.T) {
 	if prayer.VisibleIn(den.Objects) { t.Fatal("prayer strip must stay hidden until the coffer is opened") }
 	coffer.Open = true
 	if !prayer.VisibleIn(den.Objects) { t.Fatal("opening the coffer should reveal the prayer strip") }
+}
+
+
+func TestRoomObjectSnapshotsStayStableWhileObjectsAreAdded(t *testing.T) {
+	room := NewRoom("test", "Test Room", "A room used to verify safe shared-world object access.")
+	room.AddObject(NewObject("first", "first object", ""))
+	snapshot := room.ObjectsSnapshot()
+	if len(snapshot) != 1 {
+		t.Fatalf("initial snapshot length = %d, want 1", len(snapshot))
+	}
+
+	var workers sync.WaitGroup
+	for worker := 0; worker < 4; worker++ {
+		workers.Add(1)
+		go func(worker int) {
+			defer workers.Done()
+			for i := 0; i < 50; i++ {
+				room.AddObject(NewObject(
+					fmt.Sprintf("object-%d-%d", worker, i),
+					fmt.Sprintf("object %d %d", worker, i),
+					"",
+				))
+				_ = room.ObjectsSnapshot()
+			}
+		}(worker)
+	}
+	workers.Wait()
+
+	if got := len(room.ObjectsSnapshot()); got != 201 {
+		t.Fatalf("room object count = %d, want 201", got)
+	}
+	if len(snapshot) != 1 || snapshot[0].ID != "first" {
+		t.Fatal("a previously returned snapshot should not change when the room gains objects")
+	}
 }
