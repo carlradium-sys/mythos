@@ -54,7 +54,9 @@ func (a *Account) NewCharacter(name string)(*CharacterRecord,error){
  name=strings.TrimSpace(name);if len(name)<2||len(name)>24{return nil,errors.New("character name must be 2-24 characters")}
  for _,c:=range a.Characters{if strings.EqualFold(c.Name,name){return nil,errors.New("you already have a character with that name")}}
  b:=make([]byte,8);if _,err:=rand.Read(b);err!=nil{return nil,err}
- return &CharacterRecord{ID:hex.EncodeToString(b),Character:character.New(name)},nil
+ c := character.New(name)
+ c.SetStoryFlag("tutorial_available")
+ return &CharacterRecord{ID:hex.EncodeToString(b),Character:c},nil
 }
 func (a *Account) DeleteCharacter(id string) error {
  for i,c:=range a.Characters{if c.ID==id{a.Characters=append(a.Characters[:i],a.Characters[i+1:]...);return nil}}
