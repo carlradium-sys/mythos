@@ -1303,3 +1303,29 @@ func TestQuestGoldRewardIsGrantedOnlyOnce(t *testing.T) {
 		t.Fatal("forge quest completion should be recorded")
 	}
 }
+
+
+func TestCharonsMemoryQuestCompletesThroughDialogue(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "styx_shore"
+	s.talk([]string{"Charon", "memory"})
+	if !s.Character.HasStoryFlag("charon_memory_heard") {
+		t.Fatal("talking to Charon about memory should unlock the side quest")
+	}
+	q, ok := quest.Get("charons_memory")
+	if !ok {
+		t.Fatal("Charon's memory quest is missing from the catalogue")
+	}
+	if s.Character.Quests[q.ID] >= q.Required {
+		t.Fatal("quest should not complete before the player speaks to the shade")
+	}
+
+	s.Character.RoomID = "fields_asphodel"
+	s.talk([]string{"Unremembered", "memory"})
+	if !s.Character.HasStoryFlag("asphodel_memory_returned") {
+		t.Fatal("sharing the memory with the shade should record the story flag")
+	}
+	if s.Character.Quests[q.ID] != q.Required {
+		t.Fatalf("quest progress = %d, want %d", s.Character.Quests[q.ID], q.Required)
+	}
+}

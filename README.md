@@ -29,6 +29,7 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Consumable use is bounded by maximum health/mana and ineffective use does not waste the item
 - Monster materials and a forge crafting loop with three equipment recipes
 - Story conversations with Charon, an Asphodel shade, a modern museum curator, and the Lunar Oracle
+- Optional Underworld side quest linking Charon's memory lesson to the Unremembered Shade, with XP and gold rewards
 
 ## Run a local demo (Termux or Linux)
 
