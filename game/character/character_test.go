@@ -87,3 +87,22 @@ func TestEnsureLifeGiftMigratesOlderCharacter(t *testing.T) {
 		t.Fatal("newly migrated life-gift should be available")
 	}
 }
+
+
+func TestCombatPreferencesAndQuicklistPersistThroughJSON(t *testing.T) {
+	c := New("Quickcaster")
+	c.AutoCombat = false
+	c.CombatModeSet = true
+	c.Quicklist = [4]string{"Stormspark", "Thunderfall", "", "Judgment of the Sky"}
+
+	data, err := json.Marshal(c)
+	if err != nil { t.Fatalf("marshal character: %v", err) }
+	var restored Character
+	if err := json.Unmarshal(data, &restored); err != nil { t.Fatalf("unmarshal character: %v", err) }
+	if restored.AutoCombat || !restored.CombatModeSet {
+		t.Fatal("manual combat preference was not persisted")
+	}
+	if restored.Quicklist != c.Quicklist {
+		t.Fatalf("quicklist after persistence = %#v, want %#v", restored.Quicklist, c.Quicklist)
+	}
+}
