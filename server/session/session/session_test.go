@@ -1762,6 +1762,7 @@ func TestPutItemInContainerPreservesPropertiesAndHidesContentsWhenClosed(t *test
 	s := newChoiceTestSession(t)
 	s.World = world.NewWorld()
 	s.Character.RoomID = "tutorial_storehouse"
+	s.Character.Inventory = nil
 	s.Character.Inventory = append(s.Character.Inventory, item.Item{
 		Name: "practice bandage",
 		Description: "A clean linen bandage.",
@@ -1803,6 +1804,7 @@ func TestStoryCriticalItemsCannotBePutAway(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.World = world.NewWorld()
 	s.Character.RoomID = "tutorial_storehouse"
+	s.Character.Inventory = nil
 	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name:"feather-folded letter", Kind:"quest"})
 	s.openContainer([]string{"practice chest"})
 	s.putItem([]string{"letter", "in", "chest"})
