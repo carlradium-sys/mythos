@@ -200,6 +200,8 @@ func (s *Session) handleCommand(input string) bool {
 		}
 	case "examine", "inspect":
 		s.examineTarget(parts[1:])
+	case "listen":
+		s.listen(parts[1:])
 	case "get", "take", "pickup":
 		s.getObject(parts[1:])
 	case "drop", "discard":
@@ -1285,6 +1287,50 @@ func (s *Session) lookTarget(args []string) {
 		}
 	}
 	s.WriteLine("You see no person, creature, or path matching '%s'. Try 'look' for the room summary.", target)
+}
+
+func (s *Session) listen(args []string) {
+	if len(args) == 0 {
+		s.WriteLine("You pause and listen. Name what you want to hear, such as 'listen well' or 'listen to the water'.")
+		return
+	}
+	target := strings.ToLower(strings.Join(args, " "))
+	target = strings.TrimPrefix(target, "to ")
+	switch s.Character.RoomID {
+	case "village_square":
+		if strings.Contains(target, "well") || strings.Contains(target, "water") || strings.Contains(target, "bowl") {
+			if !s.Character.HasStoryFlag("listened_village_well") {
+				s.Character.SetStoryFlag("listened_village_well")
+				s.WriteLine("You lean over the old well. Beneath the soft movement of water, you hear a second sound: oars dipping into a river, followed by a passenger whispering a name you almost recognize. The sound comes from below the stone, not from the water itself.")
+				s.WriteLine("When you straighten, the village sounds return — a cart wheel, a dog, someone calling for bread. Yet the rhythm of the oars stays with you.")
+				s.updateQuests()
+				s.persist()
+			} else {
+				s.WriteLine("The well gives you only its quiet rhythm now. Once heard, the distant oars are difficult to mistake for ordinary water.")
+			}
+			return
+		}
+	case "modern_styx":
+		if strings.Contains(target, "water") || strings.Contains(target, "river") || strings.Contains(target, "tunnel") || strings.Contains(target, "track") || strings.Contains(target, "platform") {
+			if !s.Character.HasStoryFlag("listened_village_well") {
+				s.WriteLine("The dark water murmurs beneath the station, but the sound has no pattern you can follow. It feels as if you have arrived in the middle of a conversation.")
+				s.WriteLine("Perhaps you have heard its beginning somewhere else.")
+				return
+			}
+			if !s.Character.HasStoryFlag("heard_modern_styx") {
+				s.Character.SetStoryFlag("heard_modern_styx")
+				s.Character.Memories = append(s.Character.Memories, "Beneath modern Athens, I heard the same oars that sounded under Asterion's old well. The river connects places that should never touch.")
+				s.WriteLine("You close your eyes. The station's electrical hum falls away, and the oars return — the same measured dip, the same pause, the same whisper from the well. The two places are not imitating one another. They are listening to the same river.")
+				s.WriteLine("A train passes overhead. For one impossible second, every window reflects a black shoreline under a starless sky.")
+				s.updateQuests()
+				s.persist()
+			} else {
+				s.WriteLine("The river's rhythm is familiar now. The city roars above it, but the oars continue at their patient, impossible pace.")
+			}
+			return
+		}
+	}
+	s.WriteLine("You listen carefully, but nothing nearby answers in a way you can place. Try naming a sound or feature in the room.")
 }
 
 func (s *Session) examineTarget(args []string) {
