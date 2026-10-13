@@ -2177,6 +2177,8 @@ func (s *Session) spawnEnemy() {
 	case "fields_asphodel":
 		s.Enemy = &combat.Enemy{Name: "Restless Shade", Behavior: "wary", Description: "A shade rises among the pale flowers, clutching at a memory that has almost slipped away. It does not seem cruel, only frightened; when you approach, its grief hardens into a defensive stare.", Level: 3, HP: 92, MaxHP: 92, Defense: 5, Damage: 10, XP: 95}
 	case "modern_plaka":
+		s.Enemy = &combat.Enemy{Name: "Street Shade", Behavior: "wary", Description: "A human-shaped shadow slips between the neon signs, moving against the light. It watches from the edge of the crowd and does not close in unless threatened.", Level: 2, HP: 80, MaxHP: 80, Defense: 5, Damage: 10, XP: 90}
+	case "modern_metro":
 		s.Enemy = &combat.Enemy{Name: "Echo Hound", Description: "A hound made of static and old memories emerges from the empty train.", Level: 4, HP: 145, MaxHP: 145, Defense: 7, Damage: 15, XP: 170}
 	case "modern_styx":
 		s.Enemy = &combat.Enemy{Name: "Styx Wraith", Description: "Black water rises into the shape of a veiled figure, carrying coins from lives you never lived.", Level: 5, HP: 185, MaxHP: 185, Defense: 8, Damage: 18, XP: 230}
