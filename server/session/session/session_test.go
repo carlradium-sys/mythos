@@ -66,6 +66,11 @@ func TestVillageTutorialRequiresHintBeforeRoadTopic(t *testing.T) {
 func TestOracleTrustChoiceLeavesPersistentOath(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.choose([]string{"trust"})
+	if s.Character.HasStoryFlag("oracle_choice_made") {
+		t.Fatal("the Oracle choice should wait until the player hears her warning")
+	}
+	s.talk([]string{"pythia", "thread"})
+	s.choose([]string{"trust"})
 
 	if !s.Character.HasStoryFlag("oracle_choice_made") || !s.Character.HasStoryFlag("oracle_trust") {
 		t.Fatal("trust choice flags were not recorded")
@@ -88,6 +93,7 @@ func TestOracleTrustChoiceLeavesPersistentOath(t *testing.T) {
 
 func TestOracleDefianceLeavesPersistentScar(t *testing.T) {
 	s := newChoiceTestSession(t)
+	s.talk([]string{"pythia", "thread"})
 	s.choose([]string{"defy"})
 
 	if !s.Character.HasStoryFlag("oracle_choice_made") || !s.Character.HasStoryFlag("oracle_defied") {
@@ -838,8 +844,9 @@ func TestOracleChoiceWaitsUntilCombatEnds(t *testing.T) {
 	s.choose([]string{"trust"})
 	if s.Character.HasStoryFlag("oracle_choice_made") { t.Fatal("choice was accepted during combat") }
 	s.Enemy = nil
+	s.talk([]string{"pythia", "thread"})
 	s.choose([]string{"trust"})
-	if !s.Character.HasStoryFlag("oracle_trust") { t.Fatal("choice was not accepted after combat") }
+	if !s.Character.HasStoryFlag("oracle_trust") { t.Fatal("choice was not accepted after combat and hearing the warning") }
 }
 
 
