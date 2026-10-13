@@ -761,6 +761,7 @@ func (s *Session) huntContract(args []string) {
 	if s.Character == nil {
 		return
 	}
+	s.ensureQuests()
 	action := "show"
 	if len(args) > 0 {
 		action = strings.ToLower(args[0])
@@ -831,6 +832,7 @@ func (s *Session) advanceHuntContract(enemy, roomID string) {
 	if s.Character == nil {
 		return
 	}
+	s.ensureQuests()
 	target := activeHuntContract(s.Character)
 	if target == "" || !repeatableHuntingGround(roomID) || !strings.EqualFold(target, enemy) {
 		return
