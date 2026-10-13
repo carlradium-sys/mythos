@@ -2121,8 +2121,20 @@ func encounterDefeatedFlag(roomID string, life int) string {
 	return fmt.Sprintf("encounter_defeated_%s_life_%d", roomID, life)
 }
 
+// repeatableHuntingGround marks ordinary hunting areas whose creatures return
+// after the traveler leaves or reconnects. These encounters award ordinary
+// combat rewards, but do not permanently close the room for the current life.
+func repeatableHuntingGround(roomID string) bool {
+	switch roomID {
+	case "ancient_athens", "olympus_garden", "fields_asphodel", "modern_plaka", "modern_metro", "modern_rooftop":
+		return true
+	default:
+		return false
+	}
+}
+
 func (s *Session) spawnEnemy() {
-	if s.Character != nil && s.Character.HasStoryFlag(encounterDefeatedFlag(s.Character.RoomID, s.Character.Life)) {
+	if s.Character != nil && !repeatableHuntingGround(s.Character.RoomID) && s.Character.HasStoryFlag(encounterDefeatedFlag(s.Character.RoomID, s.Character.Life)) {
 		s.Enemy = nil
 		s.EnemyAggressive = false
 		s.EncounterClearedRoom = s.Character.RoomID
@@ -2158,14 +2170,20 @@ func (s *Session) spawnEnemy() {
 		s.Enemy = &combat.Enemy{Name: "Cerberus", Description: "Three enormous heads rise from the darkness. One snarls, one watches, and one whispers your name.", Level: 9, HP: 350, MaxHP: 350, Defense: 12, Damage: 28, XP: 450}
 	case "tartarus_edge":
 		s.Enemy = &combat.Enemy{Name: "Tartarus Brute", Description: "A colossal shape claws its way up from the abyss, dragging chains that were forged before the gods had names.", Level: 10, HP: 390, MaxHP: 390, Defense: 13, Damage: 31, XP: 520}
+	case "ancient_athens":
+		s.Enemy = &combat.Enemy{Name: "Bronze Hoplite", Behavior: "wary", Description: "A spectral hoplite steps from the crowd, bronze shield raised. Its armor bears the marks of a battle no historian remembers; it studies you, then waits to see whether you mean harm.", Level: 2, HP: 68, MaxHP: 68, Defense: 4, Damage: 8, XP: 65}
+	case "olympus_garden":
+		s.Enemy = &combat.Enemy{Name: "Ambrosia Wisp", Behavior: "wary", Description: "A small light drifts between the silver leaves. It carries the scent of honey and rain, but the flowers curl wherever its shadow passes. It watches you without striking first.", Level: 4, HP: 112, MaxHP: 112, Defense: 6, Damage: 12, XP: 125}
+	case "fields_asphodel":
+		s.Enemy = &combat.Enemy{Name: "Restless Shade", Behavior: "wary", Description: "A shade rises among the pale flowers, clutching at a memory that has almost slipped away. It does not seem cruel, only frightened; when you approach, its grief hardens into a defensive stare.", Level: 3, HP: 92, MaxHP: 92, Defense: 5, Damage: 10, XP: 95}
 	case "modern_plaka":
-		s.Enemy = &combat.Enemy{Name: "Street Shade", Behavior: "wary", Description: "A human-shaped shadow slips between the neon signs, moving against the light. It watches from the edge of the crowd and does not close in unless threatened.", Level: 2, HP: 80, MaxHP: 80, Defense: 5, Damage: 10, XP: 90}
-	case "modern_metro":
 		s.Enemy = &combat.Enemy{Name: "Echo Hound", Description: "A hound made of static and old memories emerges from the empty train.", Level: 4, HP: 145, MaxHP: 145, Defense: 7, Damage: 15, XP: 170}
 	case "modern_styx":
 		s.Enemy = &combat.Enemy{Name: "Styx Wraith", Description: "Black water rises into the shape of a veiled figure, carrying coins from lives you never lived.", Level: 5, HP: 185, MaxHP: 185, Defense: 8, Damage: 18, XP: 230}
 	case "modern_sanctum":
 		s.Enemy = &combat.Enemy{Name: "Bronze Sentinel", Description: "A bronze guardian unfolds from the hidden temple wall, its eyes burning with borrowed starlight.", Level: 6, HP: 220, MaxHP: 220, Defense: 9, Damage: 20, XP: 280}
+	case "modern_rooftop":
+		s.Enemy = &combat.Enemy{Name: "Storm Crow", Behavior: "wary", Description: "A crow the size of a wolf lands on a satellite dish, feathers flickering with blue-white lightning. It tilts its head as if listening to thunder from another age, then spreads its wings in warning.", Level: 5, HP: 155, MaxHP: 155, Defense: 7, Damage: 15, XP: 175}
 	case "future_city":
 		s.Enemy = &combat.Enemy{Name: "Chronal Warden", Behavior: "wary", Description: "A guardian of fractured seconds steps from a ripple in the air, studying you as if comparing several possible futures.", Level: 2, HP: 95, MaxHP: 95, Defense: 5, Damage: 11, XP: 100}
 	case "future_skyway":
@@ -2529,7 +2547,7 @@ func (s *Session) defeatEnemy(divine bool) {
 		return
 	}
 	enemy := s.Enemy
-	if s.Character != nil {
+	if s.Character != nil && !repeatableHuntingGround(s.Character.RoomID) {
 		s.Character.SetStoryFlag(encounterDefeatedFlag(s.Character.RoomID, s.Character.Life))
 	}
 	if strings.HasPrefix(s.Character.RoomID, "tutorial_") {
@@ -2545,6 +2563,14 @@ func (s *Session) defeatEnemy(divine bool) {
 		material = item.Item{Name:"satyr horn", Tier:item.Common, Kind:"material"}
 	case "Manticore":
 		material = item.Item{Name:"manticore spine", Tier:item.Uncommon, Kind:"material"}
+	case "Bronze Hoplite":
+		material = item.Item{Name:"hoplite bronze", Tier:item.Common, Kind:"material"}
+	case "Ambrosia Wisp":
+		material = item.Item{Name:"ambrosia residue", Tier:item.Uncommon, Kind:"material"}
+	case "Restless Shade":
+		material = item.Item{Name:"asphodel dust", Tier:item.Common, Kind:"material"}
+	case "Storm Crow":
+		material = item.Item{Name:"storm feather", Tier:item.Uncommon, Kind:"material"}
 	}
 	if material.Name != "" {
 		s.Character.Inventory = append(s.Character.Inventory, material)
