@@ -1598,3 +1598,18 @@ func TestClosingCofferHidesUncollectedContentsAgain(t *testing.T) {
 		t.Fatal("closing the coffer should hide contents that have not been taken")
 	}
 }
+
+
+func TestReadingUnrelatedItemDoesNotCompletePrayerQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	s.Character.SetStoryFlag("opened_tomb_coffer")
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name:"old prayer book", Description:"A common prayer book.", Kind:"lore"})
+	s.readObject([]string{"prayer book"})
+	if s.Character.HasStoryFlag("read_charred_prayer") {
+		t.Fatal("reading an unrelated prayer book must not count as reading the hidden strip")
+	}
+	if s.Character.HasStoryFlag("quest_completed_prayer_without_name") {
+		t.Fatal("the clue quest should not complete without its specific object")
+	}
+}
