@@ -121,11 +121,13 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("\x1b[1;36mFATEWALKER: BEYOND THE STYX\x1b[0m")
 	s.WriteLine("\x1b[90mA Greek mythic fantasy of death, choice, and rebirth.\x1b[0m")
 	if !s.login(scanner) { return }
-	defer s.persist()
 	if !s.selectCharacter(scanner) { return }
 	if !s.registerOnline() {
+		// A rejected duplicate session must not save its stale copy over the
+		// character data owned by the already-connected session.
 		return
 	}
+	defer s.persist()
 	defer s.unregisterOnline()
 	s.prepareTutorial()
 	s.storyIntro()
