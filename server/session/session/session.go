@@ -1403,29 +1403,37 @@ func (s *Session) closeContainer(args []string) {
 func (s *Session) readObject(args []string) {
 	if len(args) == 0 { s.WriteLine("Read what? Try 'read prayer strip'."); return }
 	query := strings.ToLower(strings.Join(args, " "))
-	found := false
+	found, isPrayerStrip := false, false
 	for _, carried := range s.Character.Inventory {
-		if strings.Contains(strings.ToLower(carried.Name), query) || strings.Contains(query, strings.ToLower(carried.Name)) {
+		name := strings.ToLower(carried.Name)
+		if strings.Contains(name, query) || strings.Contains(query, name) {
 			found = true
-			break
+			if strings.Contains(name, "charred prayer strip") { isPrayerStrip = true }
 		}
 	}
 	if !found {
 		r := s.World.GetRoom(s.Character.RoomID)
-		if object := findRoomObject(r, query, "", s.Character); object != nil { found = true }
+		if object := findRoomObject(r, query, "", s.Character); object != nil {
+			found = true
+			isPrayerStrip = object.ID == "charred_prayer_strip"
+		}
 	}
 	if !found { s.WriteLine("You cannot find anything readable matching '%s'.", query); return }
-	if strings.Contains(query, "prayer") || strings.Contains(query, "strip") || strings.Contains(query, "parchment") {
+	if isPrayerStrip {
 		if !s.Character.HasStoryFlag("opened_tomb_coffer") {
 			s.WriteLine("The words remain hidden. You must first open the coffer in the Manticore Den.")
 			return
 		}
-		s.Character.SetStoryFlag("read_charred_prayer")
-		s.Character.Memories = append(s.Character.Memories, "I read the charred prayer strip: someone asked not to be remembered, only for another to remember why they stayed.")
-		s.WriteLine("You read the surviving words slowly. They do not name a god, a hero, or a king. They describe someone who stayed beside a frightened person when every sensible instinct urged them to flee.")
-		s.WriteLine("The three-line mark beneath the words is not a signature. It is a witness mark — proof that someone else was there.")
-		s.updateQuests()
-		s.persist()
+		if !s.Character.HasStoryFlag("read_charred_prayer") {
+			s.Character.SetStoryFlag("read_charred_prayer")
+			s.Character.Memories = append(s.Character.Memories, "I read the charred prayer strip: someone asked not to be remembered, only for another to remember why they stayed.")
+			s.WriteLine("You read the surviving words slowly. They do not name a god, a hero, or a king. They describe someone who stayed beside a frightened person when every sensible instinct urged them to flee.")
+			s.WriteLine("The three-line mark beneath the words is not a signature. It is a witness mark — proof that someone else was there.")
+			s.updateQuests()
+			s.persist()
+		} else {
+			s.WriteLine("You read the prayer again. The words have not changed, but the choice they describe feels heavier now.")
+		}
 		return
 	}
 	s.examineTarget(args)
