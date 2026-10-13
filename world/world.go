@@ -61,6 +61,16 @@ func NewWorld() *World {
 	practiceToken := NewObject("practice_token", "clay practice token", "A small clay disk stamped with a simple spiral. It has no value, but its weight makes it easier to understand how objects become part of your inventory.", "token", "clay disk", "practice coin")
 	practiceToken.Takeable = true
 	tutStore.Objects = append(tutStore.Objects, practiceToken)
+	practiceChest := NewObject("tutorial_practice_chest", "practice supply chest", "A small cedar chest sits beneath the equipment labels. Its lid is latched but not locked; this is a safe place to practice opening containers.", "chest", "supply chest", "practice chest")
+	practiceChest.Container = true
+	practiceChest.Open = false
+	practiceChest.Takeable = false
+	practiceBandage := NewObject("tutorial_practice_bandage", "practice bandage", "A clean linen bandage bundled with a note: 'Use consumables from your inventory with the use command.'", "bandage", "linen bandage", "healing bandage")
+	practiceBandage.ContainerID = practiceChest.ID
+	practiceBandage.Takeable = true
+	bandageItem := item.Item{Name:"practice bandage", Description:practiceBandage.Description, Tier:item.Common, Kind:"consumable", Healing:20}
+	practiceBandage.StoredItem = &bandageItem
+	tutStore.Objects = append(tutStore.Objects, practiceChest, practiceBandage)
 	tutGate := NewRoom("tutorial_gate", "The Gate of First Steps", "The tutorial ends at a pale marble gate. Beyond it, the road descends toward Asterion Village and the first true choices of your life. This threshold opens only once. Once you leave, the way back will be sealed.")
 	tutShore.Exits["north"] = tutCamp.ID
 	tutCamp.Exits["south"] = tutShore.ID
