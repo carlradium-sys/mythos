@@ -2448,6 +2448,10 @@ func (s *Session) defeatEnemy(divine bool) {
 	if s.Character.RoomID == "olympus_foothills" && s.TutorialStep == 11 && enemy.Name == "Harpy" {
 		s.advanceTutorial(12)
 	}
+	if s.Character.RoomID == "tutorial_grove" && enemy.Name == "Practice Satyr" {
+		s.WriteLine("The satyr lowers its staff and steps aside. There is no road north through the grove; the familiar courtyard lies south.")
+		s.WriteLine("From the courtyard, the storehouse is east, and the marble gate beyond it leads back into the wider world. You can take that route whenever you are ready.")
+	}
 }
 
 func (s *Session) applySoulRelicWard(damage int) (int, int) {
