@@ -566,7 +566,7 @@ func Get(name string) (Topic, bool) {
 			return Topic{Name: p.Name, Text: fmt.Sprintf(
 				"%s\n\nDOMAIN: %s\nUNLOCK LEVEL: %d\nMANA COST: %d\nBASE DAMAGE: %d\n\n%s\n\nCASTING\n  cast %s\n\nCOMBAT QUICKLIST\n  ql set 1 %s\n  ql 1 <target>\n\nThe power must be unlocked for your current domain and character level. Casting consumes its normal mana cost and follows normal combat rules.",
 				p.Name, p.Domain, p.UnlockLevel, p.ManaCost, p.Damage, p.Description, p.Name, p.Name,
-			), true
+			)}, true
 		}
 	}
 	return Topic{}, false
