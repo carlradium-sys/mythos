@@ -26,7 +26,7 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Inventory and equipment foundation
 - Real room objects with descriptions, keywords, containers, and takeable state
 - Object inspection, searching, and pickup: `look coin`, `examine coin`, `search ash`, `get coin from ash`, and `get all`
-- Stateful containers: `open`, `close`, and `look in` reveal contents without making hidden items visible prematurely
+- Stateful containers: `open`, `close`, `look in`, and `put <item> in <container>` support hiding, storing, and retrieving objects while preserving item properties
 - Readable clues and offerings: `read prayer strip` and `offer coin to bowl` advance story quests through discovery and player choice
 - Tutorial practice chest and bandage teach scanning, opening, pickup, and examination safely
 - Separate `scan` (people/creatures/objects) and `iscan` (interactable objects) commands
@@ -91,7 +91,7 @@ to inspect logs.
 
 ### First-life progression
 
-Use `help`, `look`, `scan`, `iscan`, `examine`, `listen`, `search`, `open`, `close`, `read`, `get`, `offer`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. For example, in the Olympus foothills, try `look coin`, `get coin from ash`, then `examine coin` to uncover a small piece of the larger mystery. You can also `get letter from ash` and `read letter` to learn why the Harpy carries keepsakes but leaves coins behind; later, `offer letter to shade` in Asphodel lets the letter become testimony for someone who has lost their own past. You can return to the village and `offer coin to bowl` if you want to see what the well remembers; later, `open` the sealed coffer in the Manticore Den and `read` the prayer strip inside. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
+Use `help`, `look`, `scan`, `iscan`, `examine`, `listen`, `search`, `open`, `close`, `read`, `get`, `put`, `offer`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. For example, in the Olympus foothills, try `look coin`, `get coin from ash`, then `examine coin` to uncover a small piece of the larger mystery. You can also `get letter from ash` and `read letter` to learn why the Harpy carries keepsakes but leaves coins behind; later, `offer letter to shade` in Asphodel lets the letter become testimony for someone who has lost their own past. You can return to the village and `offer coin to bowl` if you want to see what the well remembers; later, `open` the sealed coffer in the Manticore Den and `read` the prayer strip inside. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
 
 ### Suggested first-life route
 
