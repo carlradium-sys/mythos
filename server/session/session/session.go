@@ -169,6 +169,9 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 		case line, ok := <-commands:
 			if !ok { return }
 			if !s.handleCommand(strings.TrimSpace(line)) { return }
+			// Save after every command so story choices, quest tracking, and
+			// exploration progress survive an abrupt disconnect or server restart.
+			s.persist()
 			s.refreshOnline()
 			s.WriteLine("")
 			s.WriteLine("%s", s.prompt())
