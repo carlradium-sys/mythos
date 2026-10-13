@@ -1811,3 +1811,19 @@ func TestStoryCriticalItemsCannotBePutAway(t *testing.T) {
 		t.Fatal("story-critical items must remain carried to avoid quest softlocks")
 	}
 }
+
+
+func TestOfferingUnrelatedItemToShadeDoesNotTriggerLetterClue(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.World = world.NewWorld()
+	s.Character.RoomID = "fields_asphodel"
+	s.Character.Inventory = nil
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name:"scratched bronze coin", Kind:"quest"})
+	s.offerItem("coin", "shade")
+	if s.Character.HasStoryFlag("offered_harpy_letter_to_shade") {
+		t.Fatal("offering an unrelated item must not advance the letter quest")
+	}
+	if len(s.Character.Inventory) != 1 || s.Character.Inventory[0].Name != "scratched bronze coin" {
+		t.Fatal("the unrelated item must remain in inventory")
+	}
+}
