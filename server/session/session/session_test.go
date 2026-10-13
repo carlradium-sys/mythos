@@ -1692,3 +1692,36 @@ func TestModernStyxListeningNeedsTheVillageClueFirst(t *testing.T) {
 		t.Fatal("the modern echo should remain unclear until the village clue is heard")
 	}
 }
+
+
+func TestHarpyLetterRequiresPickupAndReadingToAdvanceQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.World = world.NewWorld()
+	s.Character.RoomID = "olympus_foothills"
+
+	s.readObject([]string{"letter"})
+	if s.Character.HasStoryFlag("read_harpy_letter") {
+		t.Fatal("the letter should not be read while it is still on the ground")
+	}
+	if s.Character.Quests["letter_among_feathers"] >= 1 {
+		t.Fatal("the letter quest must not complete before pickup and reading")
+	}
+
+	s.getObject([]string{"letter", "from", "ash"})
+	if !s.Character.HasStoryFlag("object_taken_harpy_letter") {
+		t.Fatal("taking the letter should unlock its reading quest")
+	}
+	s.readObject([]string{"letter"})
+	if !s.Character.HasStoryFlag("read_harpy_letter") {
+		t.Fatal("reading the carried letter should record the clue")
+	}
+	if s.Character.Quests["letter_among_feathers"] < 1 {
+		t.Fatal("reading the letter should complete its quest")
+	}
+
+	before := len(s.Character.Memories)
+	s.readObject([]string{"letter"})
+	if len(s.Character.Memories) != before {
+		t.Fatal("rereading the letter must not duplicate its permanent memory")
+	}
+}
