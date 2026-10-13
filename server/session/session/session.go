@@ -970,7 +970,7 @@ func (s *Session) look() {
 	if len(r.Items) > 0 {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;33mOBJECTS\x1b[0m")
-		for i, object := range r.Items { s.WriteLine("  [ITEM %d] %s", i+1, object.Name) }
+		for i, object := range r.Items { if !s.Character.HasStoryFlag(roomItemFlag(r.ID, object.Name)) { s.WriteLine("  [ITEM %d] %s", i+1, object.Name) } }
 	}
 	npcs := s.World.NPCs[s.Character.RoomID]
 	if len(npcs) > 0 {
@@ -1010,6 +1010,7 @@ func (s *Session) lookTarget(args []string) {
 		return
 	}
 	for i, object := range r.Items {
+		if s.Character.HasStoryFlag(roomItemFlag(r.ID, object.Name)) { continue }
 		name := strings.ToLower(object.Name)
 		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
 			s.WriteLine("\x1b[1;33m%s\x1b[0m", object.Name)
@@ -1045,6 +1046,10 @@ func (s *Session) lookTarget(args []string) {
 	s.WriteLine("You see no person, creature, or path matching '%s'. Try 'look' for the room summary.", target)
 }
 
+func roomItemFlag(roomID, name string) string {
+ return "room_item_taken_" + roomID + "_" + strings.ReplaceAll(strings.ToLower(name), " ", "_")
+}
+
 func describeRoomItem(object item.Item) string {
 	switch strings.ToLower(object.Kind) {
 	case "clue":
@@ -1073,7 +1078,7 @@ func (s *Session) getItem(args []string) {
 	}
 	if match < 0 { s.WriteLine("You cannot find an object matching '%s' here. Use 'iscan' to check what's available.", strings.Join(args, " ")); return }
 	object := r.Items[match]
-	r.Items = append(r.Items[:match], r.Items[match+1:]...)
+	s.Character.SetStoryFlag(roomItemFlag(r.ID, object.Name))
 	s.Character.Inventory = append(s.Character.Inventory, object)
 	s.WriteLine("You pick up %s.", object.Name)
 	if object.Kind == "clue" { s.Character.SetStoryFlag("found_"+strings.ReplaceAll(strings.ToLower(object.Name), " ", "_")) }
@@ -1083,7 +1088,9 @@ func (s *Session) scanItems() {
 	r := s.World.GetRoom(s.Character.RoomID)
 	if r == nil || len(r.Items) == 0 { s.WriteLine("You find no loose, interactable objects here."); return }
 	s.WriteLine("\x1b[1;33mINTERACTABLE OBJECTS\x1b[0m")
-	for i, object := range r.Items { s.WriteLine("  %d. %s — %s", i+1, object.Name, describeRoomItem(object)) }
+	count := 0
+	for _, object := range r.Items { if s.Character.HasStoryFlag(roomItemFlag(r.ID, object.Name)) { continue }; count++; s.WriteLine("  %d. %s — %s", count, object.Name, describeRoomItem(object)) }
+	if count == 0 { s.WriteLine("You have already taken everything loose here."); return }
 	s.WriteLine("Use 'examine <name>' to inspect one, or 'get <name>' to pick it up.")
 }
 
