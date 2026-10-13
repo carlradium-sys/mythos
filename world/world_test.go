@@ -153,3 +153,21 @@ func TestCoreLoreCluesAppearInWorldDescriptions(t *testing.T) {
 		}
 	}
 }
+
+
+func TestFoothillsHasInspectableCoinInAsh(t *testing.T) {
+	w := NewWorld()
+	r := w.GetRoom("olympus_foothills")
+	if r == nil { t.Fatal("foothills room missing") }
+	ash, coin := false, false
+	for _, object := range r.Objects {
+		if object.ID == "campfire_ash" && object.Container { ash = true }
+		if object.ID == "scratched_bronze_coin" && object.ContainerID == "campfire_ash" && object.Takeable { coin = true }
+	}
+	if !ash || !coin { t.Fatal("foothills should contain a takeable bronze coin discoverable in campfire ash") }
+}
+
+func TestObjectKeywordsMatchNaturalNames(t *testing.T) {
+	o := NewObject("coin", "scratched bronze coin", "A coin.", "coin", "token")
+	if !o.Matches("bronze") || !o.Matches("token") { t.Fatal("object should match name fragments and keywords") }
+}
