@@ -2006,3 +2006,29 @@ func TestContainerOpenStateIsIsolatedBetweenPlayers(t *testing.T) {
 		t.Fatal("the second character should see their own chest as closed")
 	}
 }
+
+
+func TestDuplicateCharacterSessionIsRejectedAndCanReconnectAfterLogout(t *testing.T) {
+	first := newChoiceTestSession(t)
+	second := newChoiceTestSession(t)
+	first.Character.Name = "SameWalker"
+	second.Character.Name = "samewalker"
+
+	if !first.registerOnline() {
+		t.Fatal("first session should register")
+	}
+	defer first.unregisterOnline()
+	if second.registerOnline() {
+		second.unregisterOnline()
+		t.Fatal("a second simultaneous session for the same character should be rejected")
+	}
+	if got := len(first.onlineSnapshotList()); got != 1 {
+		t.Fatalf("online roster contains %d entries for one character, want 1", got)
+	}
+
+	first.unregisterOnline()
+	if !second.registerOnline() {
+		t.Fatal("character should be able to reconnect after the previous session unregisters")
+	}
+	second.unregisterOnline()
+}
