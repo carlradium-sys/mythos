@@ -715,19 +715,143 @@ func (s *Session) showCurrentQuest(q quest.Quest) {
 	s.WriteLine("Quest ID: %s", q.ID); s.WriteLine("Status: %s (%d/%d)", status, p, q.Required)
 	s.WriteLine(""); s.WriteLine("%s", q.Description); s.WriteLine(""); s.WriteLine("Your task: %s", q.Goal)
 	s.WriteLine("Progress: %d of %d objective(s) complete.", p, q.Required)
+	steps := questTrackerSteps(q.ID)
+	if len(steps) > 0 {
+		s.WriteLine("")
+		s.WriteLine("What you have uncovered:")
+		for _, step := range steps {
+			done := s.Character.HasStoryFlag(step.Flag)
+			if p >= q.Required { done = true }
+			mark := "[ ]"
+			if done { mark = "[x]" }
+			s.WriteLine("  %s %s", mark, step.Text)
+		}
+	}
 	if p < q.Required {
-		switch {
-		case q.TargetRoom != "" && q.TargetEnemy != "":
-			if s.Character.RoomID == q.TargetRoom { s.WriteLine("Next lead: You are in the right place. Look around and deal with the threat when you are ready.") } else if room := s.World.GetRoom(q.TargetRoom); room != nil { s.WriteLine("Next lead: Find your way to %s.", room.Name) } else { s.WriteLine("Next lead: Follow the clues toward %s.", strings.ReplaceAll(q.TargetRoom, "_", " ")) }
-		case q.TargetRoom != "":
-			if s.Character.RoomID == q.TargetRoom { s.WriteLine("Next lead: You have reached the place tied to this thread. Look around and examine anything unusual.") } else if room := s.World.GetRoom(q.TargetRoom); room != nil { s.WriteLine("Next lead: Travel toward %s and pay attention to what the place reveals.", room.Name) }
-		case q.RequiredFlag != "" && !s.Character.HasStoryFlag(q.RequiredFlag): s.WriteLine("Next lead: %s.", questUnlockHint(q.RequiredFlag))
-		case q.CompletionFlag != "" && !s.Character.HasStoryFlag(q.CompletionFlag): s.WriteLine("Next lead: Examine, read, listen, or offer the relevant object to uncover the next clue.")
-		default: s.WriteLine("Next lead: Revisit the people and places connected to this story, and examine anything that seems significant.")
+		if hint := s.questNextLead(q, steps); hint != "" {
+			s.WriteLine("Next lead: %s", hint)
 		}
 	}
 	if q.RewardXP > 0 { s.WriteLine("Reward: %d XP and %d gold.", q.RewardXP, q.RewardGold) }
 	s.WriteLine(""); s.WriteLine("Tip: use 'look', 'examine <thing>', 'listen', or 'talk <person>' when following a clue.")
+}
+
+type questTrackerStep struct {
+	Flag string
+	Text string
+	Hint string
+}
+
+// questTrackerSteps turns persistent discoveries into a concise, story-aware checklist.
+func questTrackerSteps(id string) []questTrackerStep {
+	switch id {
+	case "coin_in_the_ash":
+		return []questTrackerStep{
+			{Flag:"found_scratched_coin", Text:"Recover the bronze coin from the cold ash.", Hint:"Search the remains of the cold campfire beneath Olympus."},
+			{Flag:"examined_scratched_coin", Text:"Examine the coin's scratched mark.", Hint:"Examine the coin closely; its damage appears deliberate."},
+		}
+	case "black_thread":
+		return []questTrackerStep{
+			{Flag:"room_discovered_olympus_foothills", Text:"Follow the black thread into the foothills.", Hint:"Take the mountain road beyond Asterion and look around when you arrive."},
+			{Flag:"quest_completed_black_thread", Text:"Resolve the danger guarding the foothills.", Hint:"Inspect the Harpy before deciding whether to fight."},
+		}
+	case "oracle_whisper":
+		return []questTrackerStep{
+			{Flag:"room_discovered_delphi_sanctum", Text:"Find the Delphi Sanctum.", Hint:"Follow the road toward Delphi and use 'exits' if the route is unclear."},
+			{Flag:"quest_completed_oracle_whisper", Text:"Hear Pythia's warning about the thread.", Hint:"Speak with Pythia about the thread, prophecy, or rebirth."},
+		}
+	case "river_of_memory":
+		return []questTrackerStep{
+			{Flag:"quest_completed_oracle_whisper", Text:"Learn what the Oracle knows of the Styx.", Hint:"The Oracle's warning points toward the river."},
+			{Flag:"styx_memory_recovered", Text:"Face the choice waiting at the ancient Styx.", Hint:"Travel to the Shores of the Styx and investigate what the crossing asks of you."},
+		}
+	case "oath_across_the_river":
+		return []questTrackerStep{
+			{Flag:"oracle_trust", Text:"Accept the Oracle's warning.", Hint:"Listen to the Oracle before deciding what to do with her warning."},
+			{Flag:"quest_completed_oath_across_the_river", Text:"Carry the warning to the Temple of the First Dawn.", Hint:"Find the Temple of the First Dawn and enter its grounds."},
+		}
+	case "unwritten_path":
+		return []questTrackerStep{
+			{Flag:"oracle_defied", Text:"Choose to defy the Oracle's prophecy.", Hint:"When the Oracle asks for your answer, choose your own path."},
+			{Flag:"quest_completed_unwritten_path", Text:"Reach Ancient Athens on your own terms.", Hint:"Follow the road to Ancient Athens without accepting the Oracle's blessing."},
+		}
+	case "echoes_in_glass":
+		return []questTrackerStep{
+			{Flag:"styx_memory_recovered", Text:"Carry the Styx memory into another life.", Hint:"The memory must first be recovered at the ancient river."},
+			{Flag:"quest_completed_echoes_in_glass", Text:"Find the river beneath modern Athens.", Hint:"In modern Athens, listen for a place where the water sounds strangely familiar."},
+		}
+	case "museum_echo":
+		return []questTrackerStep{
+			{Flag:"styx_memory_recovered", Text:"Recover the memory that makes the artifact familiar.", Hint:"The artifact's reflection may make more sense after the ancient Styx."},
+			{Flag:"examined_museum_artifact", Text:"Examine the black-glass funerary mask.", Hint:"Find the museum artifact and examine it closely."},
+		}
+	case "delphi_trials":
+		return []questTrackerStep{
+			{Flag:"room_discovered_delphi_sanctum", Text:"Discover the Delphi Sanctum.", Hint:"Find the sanctum where the Oracle keeps her broken inscription."},
+			{Flag:"examined_delphi_inscription", Text:"Examine the broken inscription.", Hint:"Examine the inscription, then listen for what its silence seems to preserve."},
+		}
+	case "gate_of_three":
+		return []questTrackerStep{
+			{Flag:"styx_memory_recovered", Text:"Recover the memory of the Styx.", Hint:"The way to the deepest gate begins with the memory left by the river."},
+			{Flag:"cerberus_defeated", Text:"Defeat the guardian at the Gate of Three.", Hint:"Find the gate beneath the river and prepare before challenging its guardian."},
+		}
+	case "forge_remembers":
+		return []questTrackerStep{
+			{Flag:"forge_discovered", Text:"Find Theron's Forge.", Hint:"Visit Theron's workshop beyond the foothills."},
+			{Flag:"crafted_any_gear", Text:"Craft a piece of equipment.", Hint:"Speak with Theron and use the crafting options available at the forge."},
+		}
+	case "charons_memory":
+		return []questTrackerStep{
+			{Flag:"charon_memory_heard", Text:"Hear Charon's account of memory and responsibility.", Hint:"Speak with Charon about memory, the dead, or the river."},
+			{Flag:"asphodel_memory_returned", Text:"Bring that meaning to the Unremembered Shade.", Hint:"Find the Unremembered Shade in Asphodel and offer what may help it remember."},
+		}
+	case "prayer_without_name":
+		return []questTrackerStep{
+			{Flag:"opened_tomb_coffer", Text:"Open the sealed votive coffer.", Hint:"Search the Manticore Den for a coffer that can be opened."},
+			{Flag:"read_charred_prayer", Text:"Read the charred prayer strip.", Hint:"Take the prayer strip from the coffer and read it."},
+		}
+	case "a_witness_for_the_shade":
+		return []questTrackerStep{
+			{Flag:"read_harpy_letter", Text:"Read the letter found among the feathers.", Hint:"Inspect the ash the Harpy guards; it may be carrying something other than coins."},
+			{Flag:"offered_harpy_letter_to_shade", Text:"Offer the letter to the Unremembered Shade.", Hint:"Carry the letter to Asphodel and offer it to the Shade."},
+		}
+	case "letter_among_feathers":
+		return []questTrackerStep{
+			{Flag:"object_taken_harpy_letter", Text:"Recover the feather-folded letter.", Hint:"Search the ash in the foothills after inspecting the Harpy's behavior."},
+			{Flag:"read_harpy_letter", Text:"Read the letter.", Hint:"Read the letter from your inventory to discover why it was kept."},
+		}
+	case "two_cities_one_river":
+		return []questTrackerStep{
+			{Flag:"listened_village_well", Text:"Listen at Asterion's old well.", Hint:"Return to the village well and listen carefully."},
+			{Flag:"heard_modern_styx", Text:"Recognize the same oars beneath modern Athens.", Hint:"In modern Athens, listen near the place where the river's echo returns."},
+		}
+	case "return_the_coin":
+		return []questTrackerStep{
+			{Flag:"examined_scratched_coin", Text:"Examine the scratched coin.", Hint:"Examine the coin to understand why it may belong at the well."},
+			{Flag:"offered_coin_at_well", Text:"Offer the coin to the clay bowl beside the old well.", Hint:"Return to Asterion's square and offer the coin to the bowl."},
+		}
+	default:
+		return nil
+	}
+}
+
+func (s *Session) questNextLead(q quest.Quest, steps []questTrackerStep) string {
+	for _, step := range steps {
+		if !s.Character.HasStoryFlag(step.Flag) { return step.Hint }
+	}
+	if q.TargetEnemy != "" {
+		if s.Character.RoomID == q.TargetRoom {
+			return fmt.Sprintf("You are near the danger tied to this quest. Examine %s before choosing how to act.", q.TargetEnemy)
+		}
+		if room := s.World.GetRoom(q.TargetRoom); room != nil { return fmt.Sprintf("Find your way to %s.", room.Name) }
+		return "Follow the clues toward " + strings.ReplaceAll(q.TargetRoom, "_", " ") + "."
+	}
+	if q.TargetRoom != "" && s.Character.RoomID != q.TargetRoom {
+		if room := s.World.GetRoom(q.TargetRoom); room != nil { return fmt.Sprintf("Travel toward %s and pay attention to what the place reveals.", room.Name) }
+	}
+	if q.RequiredFlag != "" && !s.Character.HasStoryFlag(q.RequiredFlag) { return questUnlockHint(q.RequiredFlag) + "." }
+	if q.CompletionFlag != "" && !s.Character.HasStoryFlag(q.CompletionFlag) { return "Examine, read, listen, or offer the relevant object to uncover the next clue." }
+	return "Revisit the people and places connected to this story, and examine anything that seems significant."
 }
 
 func (s *Session) questList() {
