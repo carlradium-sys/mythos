@@ -295,7 +295,7 @@ func TestFactionStandingChangesNPCGreeting(t *testing.T) {
 }
 
 
-func TestRiverQuestRequiresOracleProphecy(t *testing.T) {
+func TestRiverQuestRequiresOracleProphecyAndListening(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "styx_shore"
 	s.updateQuests()
@@ -304,11 +304,19 @@ func TestRiverQuestRequiresOracleProphecy(t *testing.T) {
 	}
 	s.Character.Quests["oracle_whisper"] = 1
 	s.updateQuests()
-	if got := s.Character.Quests["river_of_memory"]; got != 1 {
-		t.Fatalf("river quest progress after oracle prophecy = %d, want 1", got)
+	if got := s.Character.Quests["river_of_memory"]; got != 0 {
+		t.Fatalf("entering the shore after the prophecy should not complete the river quest; progress = %d", got)
 	}
-	if !s.Character.HasStoryFlag("styx_memory_recovered") {
-		t.Fatal("completing river quest should record its persistent soul discovery")
+	if s.Character.HasStoryFlag("styx_memory_recovered") {
+		t.Fatal("the Styx memory should not be recorded before listening to the river")
+	}
+
+	s.listen([]string{"water"})
+	if got := s.Character.Quests["river_of_memory"]; got != 1 {
+		t.Fatalf("river quest progress after listening = %d, want 1", got)
+	}
+	if !s.Character.HasStoryFlag("heard_styx_whisper") || !s.Character.HasStoryFlag("styx_memory_recovered") {
+		t.Fatal("listening should record both the discovery and its persistent soul memory")
 	}
 }
 
@@ -317,8 +325,12 @@ func TestRiverMemoryUnlocksModernEraQuest(t *testing.T) {
 	s.Character.RoomID = "styx_shore"
 	s.Character.Quests["oracle_whisper"] = 1
 	s.updateQuests()
+	if s.Character.HasStoryFlag("styx_memory_recovered") {
+		t.Fatal("arriving at the Styx should not automatically record its memory")
+	}
+	s.listen([]string{"water"})
 	if !s.Character.HasStoryFlag("styx_memory_recovered") {
-		t.Fatal("river memory was not recorded")
+		t.Fatal("listening to the river should record the memory")
 	}
 	s.Character.RebirthTo("modern", "modern_crossroads")
 	s.Character.RoomID = "modern_styx"
