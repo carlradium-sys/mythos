@@ -16,6 +16,7 @@ func TestCharacterStateSurvivesAccountSaveAndLogin(t *testing.T) {
 	if err != nil { t.Fatal(err) }
 	rec.Level = 4
 	rec.SetStoryFlag("oracle_trust")
+	rec.OpenContainers["tutorial_storehouse/tutorial_practice_chest"] = true
 	a.Characters = append(a.Characters, *rec)
 	if err := store.Save(a); err != nil { t.Fatal(err) }
 	loaded, err := store.Login("wanderer_1", "my-test-passphrase")
@@ -24,5 +25,8 @@ func TestCharacterStateSurvivesAccountSaveAndLogin(t *testing.T) {
 	got := loaded.Characters[0].Character
 	if got.Name != "Odysseus" || got.Level != 4 || !got.HasStoryFlag("oracle_trust") {
 		t.Fatalf("saved character state was not restored: %#v", got)
+	}
+	if !got.OpenContainers["tutorial_storehouse/tutorial_practice_chest"] {
+		t.Fatal("per-character container state should survive account save and login")
 	}
 }
