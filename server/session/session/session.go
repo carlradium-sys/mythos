@@ -3018,10 +3018,6 @@ func (s *Session) offerItem(itemName, recipient string) {
 		return
 	}
 	if s.Character.RoomID == "fields_asphodel" && (strings.Contains(recipient, "shade") || strings.Contains(recipient, "asphodel")) {
-		if !s.Character.HasStoryFlag("read_harpy_letter") {
-			s.WriteLine(`The shade studies the paper from a distance. "A mark without its words is only a shape. Read the letter first, and decide what you are carrying here."`)
-			return
-		}
 		if s.Character.HasStoryFlag("offered_harpy_letter_to_shade") {
 			s.WriteLine(`The shade rests one hand over the place where the letter was kept. "I have the witness now. I will not ask you to surrender it twice."`)
 			return
@@ -3035,6 +3031,10 @@ func (s *Session) offerItem(itemName, recipient string) {
 		}
 		if selected < 0 {
 			s.WriteLine("You need to be carrying the feather-folded letter. The shade cannot receive a story from an empty hand.")
+			return
+		}
+		if !s.Character.HasStoryFlag("read_harpy_letter") {
+			s.WriteLine(`The shade studies the paper from a distance. "A mark without its words is only a shape. Read the letter first, and decide what you are carrying here."`)
 			return
 		}
 		present := false
