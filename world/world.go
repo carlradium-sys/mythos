@@ -25,7 +25,10 @@ func NewWorld() *World {
 	coin := NewObject("scratched_bronze_coin", "scratched bronze coin", "A bronze coin lies half-buried in the ash, still faintly warm despite the cold fire. One face has been scratched away. On the other, a tiny mark resembles a thread tied in a knot.", "coin", "bronze coin", "token")
 	coin.ContainerID = ashBed.ID
 	coin.Takeable = true
-	foothills.Objects = append(foothills.Objects, ashBed, coin)
+	letter := NewObject("harpy_letter", "feather-folded letter", "A folded letter lies beneath a black feather at the edge of the ash. The paper is creased from being opened and closed many times; the seal has been broken carefully rather than torn.", "letter", "folded letter", "feather letter", "message")
+	letter.ContainerID = ashBed.ID
+	letter.Takeable = true
+	foothills.Objects = append(foothills.Objects, ashBed, coin, letter)
 
 	// A sealed coffer rewards players who inspect, open, search, and read rather
 	// than treating every room description as a checklist.
