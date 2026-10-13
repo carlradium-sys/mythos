@@ -1862,3 +1862,61 @@ func TestQuestTrackerNextLeadUsesFirstUnfinishedClue(t *testing.T) {
 		t.Fatalf("next lead after recovering coin = %q, want %q", got, steps[1].Hint)
 	}
 }
+
+
+func TestEveryQuestHasUsableStoryTrackerGuidance(t *testing.T) {
+	seenNumbers := map[int]string{}
+	for _, q := range quest.All() {
+		if q.Number <= 0 {
+			t.Errorf("quest %q has no stable player-facing number", q.ID)
+		}
+		if previous, exists := seenNumbers[q.Number]; exists {
+			t.Errorf("quests %q and %q share tracker number %d", previous, q.ID, q.Number)
+		}
+		seenNumbers[q.Number] = q.ID
+		steps := questTrackerSteps(q.ID)
+		if len(steps) == 0 {
+			t.Errorf("quest %q has no story checklist", q.ID)
+			continue
+		}
+		seenFlags := map[string]bool{}
+		for i, step := range steps {
+			if strings.TrimSpace(step.Flag) == "" {
+				t.Errorf("quest %q checklist step %d has no persistent story flag", q.ID, i+1)
+			}
+			if strings.TrimSpace(step.Text) == "" {
+				t.Errorf("quest %q checklist step %d has no player-facing description", q.ID, i+1)
+			}
+			if strings.TrimSpace(step.Hint) == "" {
+				t.Errorf("quest %q checklist step %d has no actionable hint", q.ID, i+1)
+			}
+			if seenFlags[step.Flag] {
+				t.Errorf("quest %q repeats checklist flag %q", q.ID, step.Flag)
+			}
+			seenFlags[step.Flag] = true
+		}
+	}
+}
+
+func TestTutorialSatyrDoesNotRespawnWhenPlayerLooksAfterDefeat(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_grove"
+	s.spawnEnemy()
+	if s.Enemy == nil || s.Enemy.Name != "Practice Satyr" {
+		t.Fatal("tutorial grove should initially contain the practice satyr")
+	}
+
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	if s.EncounterClearedRoom != "tutorial_grove" {
+		t.Fatalf("cleared room = %q, want tutorial_grove", s.EncounterClearedRoom)
+	}
+
+	s.look()
+	if s.Enemy != nil {
+		t.Fatalf("looking around after the satyr is defeated respawned %q", s.Enemy.Name)
+	}
+	if !s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_grove") {
+		t.Fatal("satyr defeat should be recorded so reconnecting cannot reset the encounter")
+	}
+}
