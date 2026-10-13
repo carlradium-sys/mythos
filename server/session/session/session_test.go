@@ -1764,7 +1764,7 @@ func TestPutItemInContainerPreservesPropertiesAndHidesContentsWhenClosed(t *test
 	s.Character.RoomID = "tutorial_storehouse"
 	s.Character.Inventory = nil
 	s.Character.Inventory = append(s.Character.Inventory, item.Item{
-		Name: "practice bandage",
+		Name: "spare bandage",
 		Description: "A clean linen bandage.",
 		Kind: "consumable",
 		Healing: 20,
@@ -1774,23 +1774,23 @@ func TestPutItemInContainerPreservesPropertiesAndHidesContentsWhenClosed(t *test
 	if chest == nil { t.Fatal("expected tutorial practice chest") }
 
 	s.openContainer([]string{"chest"})
-	s.putItem([]string{"bandage", "in", "chest"})
+	s.putItem([]string{"spare", "in", "chest"})
 	if len(s.Character.Inventory) != 0 {
 		t.Fatal("putting the bandage away should remove it from inventory")
 	}
 	key := containerStorageKey(r.ID, chest.ID)
 	stored := s.Character.ContainerStorage[key]
-	if len(stored) != 1 || stored[0].Name != "practice bandage" || stored[0].Healing != 20 {
+	if len(stored) != 1 || stored[0].Name != "spare bandage" || stored[0].Healing != 20 {
 		t.Fatal("the character's stored item should preserve its original consumable data")
 	}
 
 	s.closeContainer([]string{"chest"})
-	s.getObject([]string{"bandage", "from", "chest"})
+	s.getObject([]string{"spare", "from", "chest"})
 	if len(s.Character.Inventory) != 0 || len(s.Character.ContainerStorage[key]) != 1 {
 		t.Fatal("contents of a closed container must remain stored and unavailable")
 	}
 	s.openContainer([]string{"chest"})
-	s.getObject([]string{"bandage", "from", "chest"})
+	s.getObject([]string{"spare", "from", "chest"})
 	if len(s.Character.Inventory) != 1 || s.Character.Inventory[0].Healing != 20 {
 		t.Fatal("retrieving the item should restore its healing property")
 	}
