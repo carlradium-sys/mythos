@@ -1738,7 +1738,7 @@ func TestOfferingHarpyLetterToShadeAdvancesUnderworldFollowUp(t *testing.T) {
 		Kind: "lore",
 	})
 
-	s.offerItem("letter", "shade")
+	s.handleCommand("give letter to shade")
 	if !s.Character.HasStoryFlag("offered_harpy_letter_to_shade") {
 		t.Fatal("offering the read letter to the shade should record the witness")
 	}
