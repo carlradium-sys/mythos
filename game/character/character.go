@@ -27,6 +27,7 @@ type Character struct {
 	Weapon     string
 	Armor      string
 	Inventory  []item.Item
+	ContainerStorage map[string][]item.Item
 	Memories   []string
 	Scars      []string
 	Oaths      []string
@@ -54,6 +55,7 @@ func New(name string) *Character {
 		Gold: 50,
 		LifeGift: "Thread Sense", AutoCombat: true, CombatModeSet: true,
 		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}, item.StarterArmor()},
+		ContainerStorage: map[string][]item.Item{},
 	}
 }
 
