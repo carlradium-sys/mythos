@@ -422,6 +422,18 @@ QUEST CHAINS ACROSS LIVES
   Myrto may recognize what you did in an earlier life.
 
 Quests reward exploration and combat without forcing a linear path.`},
+	"hunt": {"hunt", `HUNTING CONTRACTS
+
+Repeatable hunting contracts give you a reason to return to dangerous places
+between story chapters. They are separate from unique story encounters.
+
+  hunt             Read the local board or review your active contract.
+  hunt accept      Accept the contract posted in your current hunting ground.
+  hunt turnin      Claim the reward after defeating the target three times.
+  hunt cancel      Abandon your active contract without a reward.
+
+Only matching victories in repeatable hunting grounds count. Contract progress
+is saved with your character; story quests and one-time rewards remain separate.`},
 	"current": {"current", `CURRENT QUEST TRACKER
 
 Use the tracker when you want a focused view of one story thread.
