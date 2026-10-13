@@ -461,6 +461,9 @@ Use:
   talk choices      Hear the Oracle's first major choice.
   choose trust      Trust Pythia's warning; gain Delphi reputation and a lasting oath.
   choose defy       Reject her interpretation; gain a lasting scar.
+
+Hear Pythia's warning about the thread or prophecy before choosing. She will
+not accept trust or defiance until you understand what you are answering.
   offer memory <text>  Share a detailed personal memory with the Asphodel shade.
 
 For the optional Underworld story, hear Charon's lesson, listen to the shade's
