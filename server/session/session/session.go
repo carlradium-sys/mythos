@@ -2896,6 +2896,44 @@ func (s *Session) offerItem(itemName, recipient string) {
 		s.WriteLine("The %s leaves you no room to make an offering.", s.Enemy.Name)
 		return
 	}
+	if s.Character.RoomID == "fields_asphodel" && (strings.Contains(recipient, "shade") || strings.Contains(recipient, "asphodel")) {
+		if !s.Character.HasStoryFlag("read_harpy_letter") {
+			s.WriteLine("The shade studies the paper from a distance. "A mark without its words is only a shape. Read the letter first, and decide what you are carrying here."")
+			return
+		}
+		if s.Character.HasStoryFlag("offered_harpy_letter_to_shade") {
+			s.WriteLine("The shade rests one hand over the place where the letter was kept. "I have the witness now. I will not ask you to surrender it twice."")
+			return
+		}
+		selected := -1
+		for i, carried := range s.Character.Inventory {
+			if strings.Contains(strings.ToLower(carried.Name), "feather-folded letter") && strings.Contains(strings.ToLower(carried.Name), strings.ToLower(itemName)) {
+				selected = i
+				break
+			}
+		}
+		if selected < 0 {
+			s.WriteLine("You need to be carrying the feather-folded letter. The shade cannot receive a story from an empty hand.")
+			return
+		}
+		present := false
+		for _, npc := range s.World.NPCs[s.Character.RoomID] {
+			if npc.ID == "asphodel_shade" { present = true; break }
+		}
+		if !present {
+			s.WriteLine("There is no shade here to receive the letter.")
+			return
+		}
+		s.Character.Inventory = append(s.Character.Inventory[:selected], s.Character.Inventory[selected+1:]...)
+		s.Character.SetStoryFlag("offered_harpy_letter_to_shade")
+		s.Character.Memories = append(s.Character.Memories, "I gave the feather-folded letter to the Unremembered Shade. It recognized the three-line witness mark but could not recover the writer's name.")
+		s.WriteLine("The shade takes the letter with both hands. Its fingers stop at the three-line mark.")
+		s.WriteLine(""I know this mark," it whispers. "Or I know the space it leaves behind. Someone stood in a doorway so another could pass. I cannot tell you who they were, and I will not pretend that recognition is the same as remembering. But this is a witness. Let it stay here, where the forgotten are still allowed to matter."")
+		s.WriteLine("The shade folds the letter carefully and places it beside the clay token. For the first time, the token's unfinished groove fills with a thin line of light.")
+		s.updateQuests()
+		s.persist()
+		return
+	}
 	if s.Character.RoomID != "village_square" || !(strings.Contains(recipient, "bowl") || strings.Contains(recipient, "offering") || strings.Contains(recipient, "well")) {
 		s.WriteLine("There is no suitable recipient here for that offering.")
 		return
