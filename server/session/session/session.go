@@ -3450,6 +3450,10 @@ func (s *Session) choose(args []string) {
 		s.WriteLine("Pythia shakes her head. \"The river has recorded your answer. The choice belongs to your soul now.\"")
 		return
 	}
+	if !s.Character.HasStoryFlag("oracle_whisper_heard") {
+		s.WriteLine("Pythia raises a hand. \"Before you trust or refuse me, hear what I have seen. Ask me about the thread or the prophecy; a choice made in ignorance is only another kind of surrender.\"")
+		return
+	}
 	if s.Character.StoryFlags == nil {
 		s.Character.StoryFlags = map[string]bool{}
 	}
