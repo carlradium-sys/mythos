@@ -32,6 +32,7 @@ type onlineSnapshot struct {
 
 var onlineMu sync.RWMutex
 var onlineSessions = map[*Session]onlineSnapshot{}
+var activeAccounts = map[string]*Session{}
 
 type Session struct {
 	writeMu sync.Mutex
@@ -121,14 +122,19 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	s.WriteLine("\x1b[1;36mFATEWALKER: BEYOND THE STYX\x1b[0m")
 	s.WriteLine("\x1b[90mA Greek mythic fantasy of death, choice, and rebirth.\x1b[0m")
 	if !s.login(scanner) { return }
+	if !s.reserveAccount() {
+		s.WriteLine("This account already has an active session. Disconnect it before logging in again.")
+		return
+	}
+	defer s.releaseAccount()
 	if !s.selectCharacter(scanner) { return }
 	if !s.registerOnline() {
-		// A rejected duplicate session must not save its stale copy over the
+		// A rejected duplicate character must not save a stale copy over the
 		// character data owned by the already-connected session.
 		return
 	}
-	defer s.persist()
 	defer s.unregisterOnline()
+	defer s.persist()
 	s.prepareTutorial()
 	s.storyIntro()
 	s.updateQuests()
@@ -317,6 +323,32 @@ func (s *Session) handleCommand(input string) bool {
 	if s.Character.HasStoryFlag("tutorial_available") { s.advancePrologueForCommand(parts) }
 	s.persist()
 	return true
+}
+
+func (s *Session) reserveAccount() bool {
+	if s.Account == nil || strings.TrimSpace(s.Account.Username) == "" {
+		return false
+	}
+	key := strings.ToLower(s.Account.Username)
+	onlineMu.Lock()
+	defer onlineMu.Unlock()
+	if owner, exists := activeAccounts[key]; exists && owner != s {
+		return false
+	}
+	activeAccounts[key] = s
+	return true
+}
+
+func (s *Session) releaseAccount() {
+	if s.Account == nil {
+		return
+	}
+	key := strings.ToLower(s.Account.Username)
+	onlineMu.Lock()
+	if activeAccounts[key] == s {
+		delete(activeAccounts, key)
+	}
+	onlineMu.Unlock()
 }
 
 func (s *Session) registerOnline() bool {
