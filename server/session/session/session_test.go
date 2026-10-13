@@ -207,16 +207,17 @@ func TestEnteringFoothillsDoesNotCompleteBlackThread(t *testing.T) {
 	}
 }
 
-func TestRoomQuestCompletesOnArrival(t *testing.T) {
+func TestOracleQuestRequiresConversationWhileDelphiTrialRequiresExamination(t *testing.T) {
 	s := newChoiceTestSession(t)
+	s.Character.Quests["black_thread"] = 1
 	s.Character.RoomID = "delphi_sanctum"
 	s.Character.SetStoryFlag("room_discovered_delphi_sanctum")
 	s.updateQuests()
-	if got := s.Character.Quests["oracle_whisper"]; got != 1 {
-		t.Fatalf("oracle_whisper progress = %d, want 1", got)
+	if got := s.Character.Quests["oracle_whisper"]; got != 0 {
+		t.Fatalf("oracle_whisper progress on room entry = %d, want 0 until Pythia's warning is heard", got)
 	}
-	if s.Character.Experience != 120 {
-		t.Fatalf("experience = %d, want 120 (Oracle's Whisper only; the inscription still needs examining)", s.Character.Experience)
+	if s.Character.Experience != 0 {
+		t.Fatalf("experience on room entry = %d, want 0 before either interaction", s.Character.Experience)
 	}
 	if got := s.Character.Quests["delphi_trials"]; got != 0 {
 		t.Fatalf("Delphi trials progress on room entry = %d, want 0 until the inscription is examined", got)
@@ -225,8 +226,8 @@ func TestRoomQuestCompletesOnArrival(t *testing.T) {
 	if got := s.Character.Quests["delphi_trials"]; got != 1 {
 		t.Fatalf("Delphi trials progress after examining inscription = %d, want 1", got)
 	}
-	if s.Character.Experience != 210 {
-		t.Fatalf("experience after examining inscription = %d, want 210", s.Character.Experience)
+	if s.Character.Experience != 90 {
+		t.Fatalf("experience after examining inscription = %d, want 90", s.Character.Experience)
 	}
 }
 
@@ -853,6 +854,7 @@ func TestFirstLifeRouteCompletesCoreQuests(t *testing.T) {
 	s.move("north")
 	s.Enemy.HP = 0
 	s.defeatEnemy(false)
+	s.talk([]string{"pythia", "thread"})
 	s.choose([]string{"trust"})
 	s.move("north")
 	s.examineTarget([]string{"inscription"})
