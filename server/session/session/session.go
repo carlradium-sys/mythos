@@ -523,7 +523,14 @@ func (s *Session) selectCharacter(scanner *bufio.Scanner) bool {
   if !scanner.Scan(){return false}
   p:=strings.Fields(scanner.Text());if len(p)==0{continue}
   switch strings.ToLower(p[0]) {
-  case "logout": if !s.login(scanner){return false}; continue
+  case "logout":
+   s.releaseAccount()
+   if !s.login(scanner) { return false }
+   if !s.reserveAccount() {
+    s.WriteLine("This account already has an active session. Disconnect it before logging in again.")
+    return false
+   }
+   continue
   case "quit","exit": return false
   case "create":
    if len(p)<2{s.WriteLine("Create which character?");continue}
