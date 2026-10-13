@@ -1963,3 +1963,40 @@ func TestWaryCreatureBecomesHostileWhenPlayerAttacks(t *testing.T) {
 		t.Fatal("attacking a wary creature should make it hostile")
 	}
 }
+
+
+func TestContainerOpenStateIsIsolatedBetweenPlayers(t *testing.T) {
+	w := world.NewWorld()
+	first := newChoiceTestSession(t)
+	second := newChoiceTestSession(t)
+	first.World = w
+	second.World = w
+	first.Character.RoomID = "tutorial_storehouse"
+	second.Character.RoomID = "tutorial_storehouse"
+
+	room := w.GetRoom("tutorial_storehouse")
+	chest := findRoomObjectByID(room, "tutorial_practice_chest")
+	if chest == nil {
+		t.Fatal("expected shared tutorial supply chest")
+	}
+
+	first.openContainer([]string{"chest"})
+	if !containerIsOpen(room, chest, first.Character) {
+		t.Fatal("the first character should see the chest they opened as open")
+	}
+	if containerIsOpen(room, chest, second.Character) {
+		t.Fatal("opening a chest for one character must not open it for another")
+	}
+	if chest.Open {
+		t.Fatal("player interaction must not mutate the shared room object's default open state")
+	}
+
+	second.openContainer([]string{"chest"})
+	second.closeContainer([]string{"chest"})
+	if !containerIsOpen(room, chest, first.Character) {
+		t.Fatal("closing the chest for the second character must not close it for the first")
+	}
+	if containerIsOpen(room, chest, second.Character) {
+		t.Fatal("the second character should see their own chest as closed")
+	}
+}
