@@ -317,8 +317,10 @@ Use listen <sound or feature> to pay attention to a place instead of simply pass
 Examples:
   listen well       Hear what the old well in Asterion conceals.
   listen to water   Follow a sound in the room when the water or river is nearby.
+  listen water      At the ancient Styx, hear the river's question.
+  listen water      In modern Athens, recognize the oars if you first heard them at the village well.
 
-Some clues connect places across eras. If a sound seems incomplete, remember where you first heard it and return when the world has changed. Listening does not start combat; it reveals details only when you are in the right place and pay attention to the right thing.`},
+Some clues connect places across eras. The River of Memory advances when you listen at the ancient shore, not merely when you arrive. If a sound seems incomplete, remember where you first heard it and return when the world has changed. Listening does not start combat; it reveals details only when you are in the right place and pay attention to the right thing.`},
 	"scan": {"scan", `SCANNING & ROOM OBJECTS
 
 Use scan to list visible people, creatures, and objects that stand out.
