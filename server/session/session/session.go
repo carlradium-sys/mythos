@@ -810,8 +810,8 @@ func questTrackerSteps(id string) []questTrackerStep {
 		}
 	case "oracle_whisper":
 		return []questTrackerStep{
-			{Flag:"room_discovered_delphi_sanctum", Text:"Find the Delphi Sanctum.", Hint:"Follow the road toward Delphi and use 'exits' if the route is unclear."},
-			{Flag:"quest_completed_oracle_whisper", Text:"Hear Pythia's warning about the thread.", Hint:"Speak with Pythia about the thread, prophecy, or rebirth."},
+			{Flag:"room_discovered_oracle_path", Text:"Reach the Oracle Path beyond the foothills.", Hint:"Follow the northern road from the foothills and look for Pythia among the cypress trees."},
+			{Flag:"oracle_whisper_heard", Text:"Hear Pythia's warning about the black thread.", Hint:"Talk to Pythia about the thread, prophecy, or rebirth before continuing north."},
 		}
 	case "river_of_memory":
 		return []questTrackerStep{
