@@ -53,6 +53,8 @@ This is the release gate for calling a build a **playable demo**, rather than me
 - [ ] `who` has no duplicate stale entries; disconnecting removes a player from the roster.
 - [ ] Room emotes and speech reach players in the same room; world chat reaches online players; `tell` reaches only the intended recipient.
 - [ ] Two sessions can fight or move independently without corrupting one another's state or terminal output.
+- [ ] Opening or closing a container in one session does not reveal or hide its contents for another character.
+- [ ] A character cannot be logged in simultaneously through two sessions; after disconnecting, reconnecting works without stale state overwriting newer progress.
 
 ## 6. Terminal presentation and help
 
