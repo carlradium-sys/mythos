@@ -1920,3 +1920,46 @@ func TestTutorialSatyrDoesNotRespawnWhenPlayerLooksAfterDefeat(t *testing.T) {
 		t.Fatal("satyr defeat should be recorded so reconnecting cannot reset the encounter")
 	}
 }
+
+
+func TestCreatureAggressionVariesByEncounter(t *testing.T) {
+	tests := []struct {
+		room string
+		name string
+		aggressive bool
+	}{
+		{room: "olympus_foothills", name: "Harpy", aggressive: false},
+		{room: "oracle_path", name: "Satyr", aggressive: false},
+		{room: "manticore_den", name: "Manticore", aggressive: true},
+		{room: "cerberus_gate", name: "Cerberus", aggressive: true},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			s := newChoiceTestSession(t)
+			s.Character.RoomID = tc.room
+			s.spawnEnemy()
+			if s.Enemy == nil || s.Enemy.Name != tc.name {
+				t.Fatalf("spawned enemy = %#v, want %s", s.Enemy, tc.name)
+			}
+			if s.EnemyAggressive != tc.aggressive {
+				t.Fatalf("%s aggressive = %t, want %t", tc.name, s.EnemyAggressive, tc.aggressive)
+			}
+		})
+	}
+}
+
+func TestWaryCreatureBecomesHostileWhenPlayerAttacks(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.spawnEnemy()
+	if s.EnemyAggressive {
+		t.Fatal("Harpy should be wary before the player provokes it")
+	}
+	s.attack([]string{"harpy"})
+	if s.Enemy == nil {
+		t.Fatal("Harpy should remain present if the first strike does not defeat it")
+	}
+	if !s.EnemyAggressive && s.Enemy.HP > 0 {
+		t.Fatal("attacking a wary creature should make it hostile")
+	}
+}
