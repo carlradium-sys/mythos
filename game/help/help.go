@@ -1,6 +1,11 @@
 package help
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"fatewalker/game/power"
+)
 
 type Topic struct {
 	Name string
@@ -10,56 +15,44 @@ type Topic struct {
 var topics = map[string]Topic{
 	"start": {"start", `FATEWALKER: GETTING STARTED
 
-You have entered a world with its own history, grudges, rituals, and unanswered questions. Your first life begins in Ancient Greece, but the story does not belong to a single age. Choices leave marks on the soul, and rebirth can carry those marks into a changed world.
+You are not following a linear quest. You are entering a living myth.
 
-There is no required sequence of commands beyond the occasional situation that needs a direct action. Read what a place tells you. Speak to people as people, not as vending machines for quests. Examine unfamiliar things. Follow a rumor if it interests you, and return to an unfinished mystery when you are ready.
+Your first life begins in Ancient Greece. Explore, fight, learn, awaken,
+make choices, and uncover why the Fates have marked you for rebirth.
 
-WHEN YOU NEED A HAND
-  look                  Read the current room and its visible people or threats.
-  look <name>            Inspect a person, creature, or connected place.
-  talk <name> <question> Ask an NPC about something in natural language.
-  hint                   Request an optional nudge from someone nearby.
-  exits / map            Understand routes and nearby connections.
-  inv / eq               Review carried items and equipped gear.
-  scan / iscan           Find visible targets or interactable objects.
-  examine <object>       Read an object closely; get <object> picks it up.
-  quests / journal       Review objectives and story threads you have found.
-  help <topic>           Read a detailed reference without losing your place.
+BASIC LOOP
+  look                 Read the room, its objects, and visible occupants.
+  look <thing>         Inspect a person, creature, object, or exit.
+  get <item> [from <container>]  Pick up a takeable object.
+  get all              Pick up all visible takeable objects in the room.
+  drop <item>          Leave a non-equipped, non-quest item in the current room.
+  iscan                List objects you can inspect or handle.
+  scan                 List people, creatures, and visible objects.
+  who                  List connected players.
+  hint                 Ask a nearby NPC what to ask or do next.
+  north/south/east/west Travel through discovered paths.
+  attack               Fight with your equipped weapon.
+  powers               See divine powers and their unlock levels.
+  awaken <domain>      Choose your first divine resonance at level 3.
+  score                Review your character.
+  inventory             Review carried items and their bonuses.
+  wield / wear <item>  Equip a weapon or armor.
+  use <item>           Consume a healing or mana-restoration item.
+  craft <recipe>       Make gear at Theron's forge from monster materials.
+  map                  Show the local map now.
+  automap on/off       Show or hide the local map after movement.
+  help <topic>         Read a detailed help file (try inventory or powers).
+  journal              See the current story thread without a forced quest path.
+  quests               Review active, completed, and choice-locked quests.
+  soul                 Review memories, oaths, scars, echoes, and faction standing.
+  invoke               Use your once-per-life manifestation.
+  rebirth              At level 10, cross the Styx and begin another life.
 
-COMBAT AND GROWTH
-  attack <target>        Begin a weapon attack when you choose to fight.
-  cast <power>           Use a divine power you have unlocked.
-  ql                     Review your combat quicklist.
-  awaken <domain>        At level 3, choose a divine resonance.
-  rebirth                At level 10, begin another life and enter a new era.
+First-time visits to places grant exploration XP, so discovery matters as
+much as combat. You can revisit places, but a room's discovery reward is one-time.
 
-Rooms describe what is present; they do not all represent combat encounters. Some creatures attack on sight, others defend themselves, and some may have no interest in you at all. Looking around should not restart a defeated encounter. Discovery, conversation, and exploration can matter as much as victory.
-
-The help files explain the rules. The world itself tells the story.`},
-	"objects": {"objects", `OBJECTS & INTERACTION
-
-Rooms can contain loose objects as well as people and creatures. Objects are
-not automatically loot, and not every object needs to be picked up.
-
-  look                       Read the room and its visible objects.
-  examine <name>             Inspect an object without taking it.
-  look <name>                Equivalent to examine for people, creatures,
-                             objects, and connected rooms.
-  iscan                      List loose objects you can interact with.
-  get <name>                 Pick up an available object.
-  get 1                      Pick up the first available object in the list.
-  scan                       List visible people and creatures.
-
-An object's description may hint at its history or use. Some are supplies;
-others are tools, evidence, or keepsakes. Picking something up records that
-choice for your character, so it does not vanish for everyone else in a
-shared room. Use inv to review what you carry. A consumable can be used with
-use <name> when its effect would be helpful.
-
-Scanning is informational and does not start combat. Inspect a creature
-before deciding whether to attack; some beings are hostile, while others
-will leave you alone unless you provoke them.`},
-
+There is no single correct way to play. The story gives you mysteries and
+consequences; the sandbox gives you room to decide what they mean.`},
 	"movement": {"movement", `MOVEMENT & EXPLORATION
 
 Use north, south, east, west, up, down, in, or out. Short forms also
@@ -265,6 +258,26 @@ Item tiers:
   Mythic      Bright red/divine
 
 Inventory shows each item's tier, damage, and armor. Use equip <item> to change your weapon or armor.
+
+WORLD OBJECTS
+  look <thing>              Read a room object's description.
+  examine <thing>           Inspect an object more closely.
+  look in <container>       See what is visible inside a container.
+  open <container>          Open a container and reveal hidden contents.
+  close <container>         Close an open container.
+  read <item>               Read a carried or visible written object.
+  get <item> from <source>  Collect a takeable item.
+  get <item> <source>       Short form for the same action.
+  get all                   Collect all visible takeable objects.
+  drop <item>               Leave a non-equipped, non-quest item in the room.
+  offer <item> to <object>  Make a story offering when a quest calls for one.
+  offer memory <moment>     Offer a specific remembered experience in Asphodel.
+  iscan                     List room objects and whether they can be taken.
+  scan                      List visible people, creatures, and objects.
+
+Objects are physical room fixtures, not just text in a description. Some are
+scenery and cannot be collected; containers may hold hidden items until opened. Readable objects can reveal new quest steps when examined in context.
+Your collected objects appear in inventory and can be examined there.
 Soul relics are marked in your inventory and persist through rebirth. The
 Styxglass Shard is the first relic: recover it by completing The River of
 Memory at the Styx. Once per encounter, its river-ward absorbs up to 8 damage.
@@ -272,10 +285,29 @@ The ward refreshes when a new enemy encounter begins. Repeating a reward
 cannot create a second copy.
 An Oracle's Thread from the trust branch absorbs up to 4 damage once per
 encounter. The defiance branch grants an Unwritten Ember, adding 6 damage to
-your first successful weapon strike each encounter. Finding the Delphi
-Sanctum also completes the Trials of the Seer and grants the Laurel of the
-Seer, which adds 3 damage to your first successful weapon strike each
-encounter. Defensive relics do not stack; the strongest available ward is used.`},
+your first successful weapon strike each encounter. Examining the broken inscription in the Delphi
+Sanctum completes the Trials of the Seer and grants the Laurel of the Seer,
+which adds 3 damage to your first successful weapon strike each encounter. Defensive relics do not stack; the strongest available ward is used.`},
+	"communication": {"communication", "PLAYER COMMUNICATION\n\nWHO\n  who                 List connected players, their life, level, era, and room.\n\nROOM MESSAGES\n  say <message>       Speak to players in your current room.\n  emote <action>      Describe an action to players in the same room.\n\nPLAYER MESSAGES\n  tell <player> <text> Send a private message to an online player.\n  chat <message>      Send a world-wide message to connected players.\n  gossip <message>    Alias for chat.\n\nNPC dialogue remains separate: use talk <NPC> <topic>, or say <NPC> <topic>\nwhen you want to address someone in the room. Use who to see who is online."},
+	"scan": {"scan", `SCANNING & ROOM OBJECTS
+
+Use scan to list visible people, creatures, and objects that stand out.
+Use iscan to focus on objects you can inspect, open, or pick up.
+
+OBJECT INTERACTION
+  look coin                  Read an object description.
+  examine coin               Same as look coin.
+  inspect campfire ash       Inspect a container or fixture.
+  get coin                   Pick up a visible takeable item.
+  get coin from ash          Specify the container holding an item.
+  get coin ash               Short form accepted for the same action.
+  get all                    Pick up all visible takeable objects.
+  drop laurel poultice       Leave a carried item in the room.
+
+Items listed in a room are not necessarily takeable. Lamps, altars, doors,
+and other fixtures may be scenery; containers can hold discoverable items.
+A carried object appears in inventory and can be examined there too.
+Room objects are world objects, not merely text in the room description.`},
 	"story": {"story", `STORY & SANDBOX
 
 Fatewalker is built around two promises:
@@ -356,29 +388,58 @@ QUEST CHAINS ACROSS LIVES
   Myrto may recognize what you did in an earlier life.
 
 Quests reward exploration and combat without forcing a linear path.`},
-	"talk": {"talk", `NPC DIALOGUE
+	"talk": {"talk", `NPC DIALOGUE AND LORE
+
+Talk to people as people, not as vending machines for quest keywords. The keyword is only how the MUD interface finds a subject; the response should reveal what this character has seen, believes, fears, or refuses to explain.
 
 Prefer targeting people by name:
   talk Damon hello
-  talk Damon <topic>
-  talk Pythia choices
+  talk Damon what happened at the well
+  talk Damon why does the Harpy steal letters
+  talk Pythia what do you know about the thread
+  talk Charon what does the river take
+  talk Unremembered why does judgment frighten you
+  talk Eleni what did the mirror show
+  talk choices
 
-You can also use a number selector, such as talk 1 hello or talk 1 choices.
-Questions may be phrased naturally: 'talk Damon can you please tell me about the village?' and 'talk Damon where is the road?' resolve by matching topic keywords and aliases, not by requiring an exact sentence.
-NPC names and numbers are shown by look.
+You can also use a number selector, such as talk 1 hello or talk 1 choices. Natural-language questions work when they contain a recognized subject or topic; try different phrasing if an NPC does not understand. Use look to see who is present.
+
+Listen for concrete details: objects, customs, dates, contradictions, repeated symbols, and things a character admits they cannot know. A witness can be honest and still be mistaken. Compare accounts rather than assuming the first explanation is the whole truth.
 
 Use:
-  talk
   talk thread
   talk fate
-  talk choices      Show the Oracle’s first major choice.
-  choose trust      Trust Pythia; gain Delphi reputation and a lasting oath.
-  choose defy       Reject prophecy; lose Delphi reputation and gain a scar.
+  talk memory
+  talk choices      Hear the Oracle's first major choice.
+  choose trust      Trust Pythia's warning; gain Delphi reputation and a lasting oath.
+  choose defy       Reject her interpretation; gain a lasting scar.
+  offer memory <text>  Share a detailed personal memory with the Asphodel shade.
 
-Story choices are recorded on your character and survive logout and rebirth.
-Some choices can only be made once; the world remembers what you decide.
+For the optional Underworld story, hear Charon's lesson, listen to the shade's
+fragments, then offer a specific memory in your own words. A short phrase is
+not enough; describe a moment that could matter even if its owner's name is lost.
+
+Story choices are recorded on your character and survive logout and rebirth. Consequences may return as changed dialogue, soul memories, faction standing, quests, or evidence in a later era.
 
 Use soul (or legacy) to inspect the marks your decisions leave behind.`},
+	"offer": {"offer", `OFFERING A MEMORY
+
+The optional Underworld quest asks you to share a real, specific memory with
+the Unremembered Shade in Asphodel.
+
+First, hear Charon's lesson at the Shores of the Styx:
+  talk Charon memory
+
+Then listen to the shade's fragments:
+  talk Unremembered memory
+  talk Unremembered token
+
+Finally, offer a detailed memory in your own words:
+  offer memory I remember someone singing off-key to comfort me when I feared the dark.
+
+A short phrase is not enough. Describe a moment with enough detail that it
+feels like a lived experience. The offered text is recorded in your soul
+memories and becomes part of this character's story across later lives.`},
 	"soul": {"soul", `SOUL LEGACY
 
 Use:
@@ -565,10 +626,27 @@ your current story progress.`},
 func Get(name string) (Topic, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" { name = "start" }
-	t, ok := topics[name]
-	return t, ok
+	if t, ok := topics[name]; ok {
+		return t, true
+	}
+
+	// Resolve spell help from the combat power catalogue so that the details
+	// shown here remain aligned with the actual ability definitions.
+	compact := strings.ReplaceAll(name, " ", "")
+	for _, domain := range []power.Domain{power.Storm, power.Tide, power.Ember, power.Aegis} {
+		for _, p := range power.ForDomain(domain) {
+			if strings.ToLower(strings.ReplaceAll(p.Name, " ", "")) != compact {
+				continue
+			}
+			return Topic{Name: p.Name, Text: fmt.Sprintf(
+				"%s\n\nDOMAIN: %s\nUNLOCK LEVEL: %d\nMANA COST: %d\nBASE DAMAGE: %d\n\n%s\n\nCASTING\n  cast %s\n\nCOMBAT QUICKLIST\n  ql set 1 %s\n  ql 1 <target>\n\nThe power must be unlocked for your current domain and character level. Casting consumes its normal mana cost and follows normal combat rules.",
+				p.Name, p.Domain, p.UnlockLevel, p.ManaCost, p.Damage, p.Description, p.Name, p.Name,
+			)}, true
+		}
+	}
+	return Topic{}, false
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","hint","soul","invoke","shop","buy","crafting","consumables","tutorial"}
+	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","map","automap","story","journal","quests","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
 }
