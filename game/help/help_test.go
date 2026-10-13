@@ -14,7 +14,7 @@ func TestEveryListedHelpTopicExists(t *testing.T) {
 }
 
 func TestCoreTopicsAreDetailed(t *testing.T) {
-	for _, name := range []string{"start", "movement", "combat", "guard", "progression", "economy", "world", "status", "invoke", "crafting", "consumables", "tutorial"} {
+	for _, name := range []string{"start", "movement", "combat", "guard", "progression", "economy", "world", "status", "invoke", "crafting", "consumables", "tutorial", "current"} {
 		topic, ok := Get(name)
 		if !ok {
 			t.Errorf("missing core help topic %q", name)
@@ -37,4 +37,17 @@ func TestSpellNamesResolveToDetailedHelp(t *testing.T) {
 func TestSpellHelpMatchesCaseAndSpacing(t *testing.T) {
 	topic, ok := Get("judgment of the sky")
 	if !ok || topic.Name != "Judgment of the Sky" { t.Fatalf("got topic %#v, ok=%v", topic, ok) }
+}
+
+
+func TestCurrentQuestHelpExplainsTrackerWorkflow(t *testing.T) {
+	topic, ok := Get("current")
+	if !ok {
+		t.Fatal("current help topic is missing")
+	}
+	for _, expected := range []string{"current quests", "current quests track <ID>", "current quest", "current quests untrack", "checklist", "next lead"} {
+		if !strings.Contains(topic.Text, expected) {
+			t.Errorf("current quest help missing %q", expected)
+		}
+	}
 }
