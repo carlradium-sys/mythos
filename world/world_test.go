@@ -104,6 +104,8 @@ func TestLoreTopicsResolveThroughNPCDialogue(t *testing.T) {
 		{"village_lane", "village_guide", "death"},
 		{"oracle_path", "pythia", "thread"},
 		{"therons_forge", "hephaestus_apprentice", "craft"},
+		{"therons_forge", "hephaestus_apprentice", "coffer"},
+		{"therons_forge", "hephaestus_apprentice", "prayer"},
 		{"styx_shore", "charon", "fates"},
 		{"fields_asphodel", "asphodel_shade", "token"},
 		{"modern_museum", "museum_curator", "metro"},
