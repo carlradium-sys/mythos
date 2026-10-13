@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fatewalker/game/account"
 	"fatewalker/game/power"
 	"io"
 	"net"
@@ -2031,4 +2032,26 @@ func TestDuplicateCharacterSessionIsRejectedAndCanReconnectAfterLogout(t *testin
 		t.Fatal("character should be able to reconnect after the previous session unregisters")
 	}
 	second.unregisterOnline()
+}
+
+
+func TestAccountSessionReservationPreventsConcurrentStaleAccountCopies(t *testing.T) {
+	first := newChoiceTestSession(t)
+	second := newChoiceTestSession(t)
+	first.Account = &account.Account{Username: "shared_account"}
+	second.Account = &account.Account{Username: "SHARED_ACCOUNT"}
+
+	if !first.reserveAccount() {
+		t.Fatal("first session should reserve the account")
+	}
+	defer first.releaseAccount()
+	if second.reserveAccount() {
+		second.releaseAccount()
+		t.Fatal("a second session must not load and save a stale copy of the same account")
+	}
+	first.releaseAccount()
+	if !second.reserveAccount() {
+		t.Fatal("account should become available after the first session releases it")
+	}
+	second.releaseAccount()
 }
