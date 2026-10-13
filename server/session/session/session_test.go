@@ -1756,3 +1756,57 @@ func TestOfferingHarpyLetterToShadeAdvancesUnderworldFollowUp(t *testing.T) {
 		t.Fatal("repeating the offer should not duplicate the permanent memory")
 	}
 }
+
+
+func TestPutItemInContainerPreservesPropertiesAndHidesContentsWhenClosed(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.World = world.NewWorld()
+	s.Character.RoomID = "tutorial_storehouse"
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "practice bandage",
+		Description: "A clean linen bandage.",
+		Kind: "consumable",
+		Healing: 20,
+	})
+	r := s.World.GetRoom(s.Character.RoomID)
+	chest := findRoomObjectByID(r, "tutorial_practice_chest")
+	if chest == nil { t.Fatal("expected tutorial practice chest") }
+
+	s.openContainer([]string{"chest"})
+	s.putItem([]string{"bandage", "in", "chest"})
+	if len(s.Character.Inventory) != 0 {
+		t.Fatal("putting the bandage away should remove it from inventory")
+	}
+	var stored *world.Object
+	for _, object := range r.Objects {
+		if object != nil && object.Name == "practice bandage" && object.ContainerID == chest.ID {
+			stored = object
+			break
+		}
+	}
+	if stored == nil || stored.StoredItem == nil || stored.StoredItem.Healing != 20 {
+		t.Fatal("the stored object should preserve its original consumable data")
+	}
+
+	s.closeContainer([]string{"chest"})
+	if findRoomObject(r, "practice bandage", "chest", s.Character) != nil {
+		t.Fatal("contents of a closed container must remain hidden")
+	}
+	s.openContainer([]string{"chest"})
+	s.getObject([]string{"bandage", "from", "chest"})
+	if len(s.Character.Inventory) != 1 || s.Character.Inventory[0].Healing != 20 {
+		t.Fatal("retrieving the item should restore its healing property")
+	}
+}
+
+func TestStoryCriticalItemsCannotBePutAway(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.World = world.NewWorld()
+	s.Character.RoomID = "tutorial_storehouse"
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name:"feather-folded letter", Kind:"quest"})
+	s.openContainer([]string{"practice chest"})
+	s.putItem([]string{"letter", "in", "chest"})
+	if len(s.Character.Inventory) != 1 {
+		t.Fatal("story-critical items must remain carried to avoid quest softlocks")
+	}
+}
