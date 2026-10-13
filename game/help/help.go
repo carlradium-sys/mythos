@@ -266,6 +266,7 @@ WORLD OBJECTS
   open <container>          Open a container and reveal hidden contents.
   close <container>         Close an open container.
   read <item>               Read a carried or visible written object.
+  search <thing>            Search a visible object or open container for contents.
   get <item> from <source>  Collect a takeable item.
   get <item> <source>       Short form for the same action.
   get all                   Collect all visible takeable objects.
