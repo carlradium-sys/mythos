@@ -970,7 +970,8 @@ func (s *Session) look() {
 	if len(r.Items) > 0 {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;33mOBJECTS\x1b[0m")
-		for i, object := range r.Items { if !s.Character.HasStoryFlag(roomItemFlag(r.ID, object.Name)) { s.WriteLine("  [ITEM %d] %s", i+1, object.Name) } }
+		itemNumber := 0
+		for _, object := range r.Items { if s.Character.HasStoryFlag(roomItemFlag(r.ID, object.Name)) { continue }; itemNumber++; s.WriteLine("  [ITEM %d] %s", itemNumber, object.Name) }
 	}
 	npcs := s.World.NPCs[s.Character.RoomID]
 	if len(npcs) > 0 {
@@ -1009,10 +1010,12 @@ func (s *Session) lookTarget(args []string) {
 		} else { s.WriteLine("There is no visible path %s from here.", direction) }
 		return
 	}
-	for i, object := range r.Items {
+	itemNumber := 0
+	for _, object := range r.Items {
 		if s.Character.HasStoryFlag(roomItemFlag(r.ID, object.Name)) { continue }
+		itemNumber++
 		name := strings.ToLower(object.Name)
-		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
+		if target == strconv.Itoa(itemNumber) || strings.Contains(name, target) || strings.Contains(target, name) {
 			s.WriteLine("\x1b[1;33m%s\x1b[0m", object.Name)
 			s.WriteLine("%s", describeRoomItem(object))
 			s.WriteLine("This object can be picked up. Use 'get %s' to take it.", object.Name)
@@ -1069,9 +1072,12 @@ func (s *Session) getItem(args []string) {
 	if r == nil || len(r.Items) == 0 { s.WriteLine("There is nothing here that you can pick up."); return }
 	target := strings.ToLower(strings.Join(args, " "))
 	match := -1
-	for i, object := range r.Items {
+	itemNumber := 0
+	for _, object := range r.Items {
+		if s.Character.HasStoryFlag(roomItemFlag(r.ID, object.Name)) { continue }
+		itemNumber++
 		name := strings.ToLower(object.Name)
-		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
+		if target == strconv.Itoa(itemNumber) || strings.Contains(name, target) || strings.Contains(target, name) {
 			if match >= 0 { s.WriteLine("More than one object matches. Use 'iscan' and try a more specific name."); return }
 			match = i
 		}
