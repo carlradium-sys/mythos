@@ -51,3 +51,16 @@ func TestCurrentQuestHelpExplainsTrackerWorkflow(t *testing.T) {
 		}
 	}
 }
+
+
+func TestListenHelpExplainsInteractionDrivenRiverProgress(t *testing.T) {
+	topic, ok := Get("listen")
+	if !ok {
+		t.Fatal("listen help topic is missing")
+	}
+	for _, expected := range []string{"listen well", "listen water", "River of Memory", "not merely when you arrive"} {
+		if !strings.Contains(topic.Text, expected) {
+			t.Errorf("listen help missing %q", expected)
+		}
+	}
+}
