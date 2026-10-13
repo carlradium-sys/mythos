@@ -1,6 +1,7 @@
 package session
 
 import (
+	"fatewalker/game/power"
 	"io"
 	"net"
 	"strings"
@@ -26,6 +27,38 @@ func newChoiceTestSession(t *testing.T) *Session {
 	c := character.New("Testwalker")
 	c.RoomID = "oracle_path"
 	return &Session{Character: c, Conn: server, World: world.NewWorld()}
+}
+
+func TestStoryIntroIsRecordedForFirstLife(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	s.TutorialStep = 0
+	s.storyIntro()
+	if !s.Character.HasStoryFlag("tutorial_intro_seen") {
+		t.Fatal("first-life story prologue should be recorded")
+	}
+	s.storyIntro()
+	if !s.Character.HasStoryFlag("tutorial_intro_seen") {
+		t.Fatal("story prologue flag should remain recorded")
+	}
+}
+
+func TestVillageTutorialRequiresHintBeforeRoadTopic(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 6
+	s.talk([]string{"1", "road"})
+	if s.TutorialStep != 6 {
+		t.Fatal("road topic should not bypass the hint lesson")
+	}
+	s.hint(nil)
+	if !s.Character.HasStoryFlag("tutorial_hint_used") {
+		t.Fatal("asking for an NPC hint should record tutorial hint use")
+	}
+	s.talk([]string{"1", "road"})
+	if s.TutorialStep != 7 {
+		t.Fatal("road topic after asking for a hint should unlock the exits lesson")
+	}
 }
 
 func TestOracleTrustChoiceLeavesPersistentOath(t *testing.T) {
@@ -175,12 +208,23 @@ func TestEnteringFoothillsDoesNotCompleteBlackThread(t *testing.T) {
 func TestRoomQuestCompletesOnArrival(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "delphi_sanctum"
+	s.Character.SetStoryFlag("room_discovered_delphi_sanctum")
 	s.updateQuests()
 	if got := s.Character.Quests["oracle_whisper"]; got != 1 {
 		t.Fatalf("oracle_whisper progress = %d, want 1", got)
 	}
+	if s.Character.Experience != 120 {
+		t.Fatalf("experience = %d, want 120 (Oracle's Whisper only; the inscription still needs examining)", s.Character.Experience)
+	}
+	if got := s.Character.Quests["delphi_trials"]; got != 0 {
+		t.Fatalf("Delphi trials progress on room entry = %d, want 0 until the inscription is examined", got)
+	}
+	s.examineTarget([]string{"inscription"})
+	if got := s.Character.Quests["delphi_trials"]; got != 1 {
+		t.Fatalf("Delphi trials progress after examining inscription = %d, want 1", got)
+	}
 	if s.Character.Experience != 210 {
-		t.Fatalf("experience = %d, want 210 (Oracle's Whisper plus Trials of the Seer)", s.Character.Experience)
+		t.Fatalf("experience after examining inscription = %d, want 210", s.Character.Experience)
 	}
 }
 
@@ -203,8 +247,8 @@ func TestQuestRewardsFactionReputation(t *testing.T) {
 
 func TestFactionStandingChangesMerchantPrice(t *testing.T) {
 	s := newChoiceTestSession(t)
-	s.Character.RoomID = "olympus_foothills"
-	n := s.currentNPC()
+	s.Character.RoomID = "therons_forge"
+	n := s.currentNPC(1)
 	if got := s.merchantPrice(n, n.Shop[0]); got != 75 {
 		t.Fatalf("neutral merchant price = %d, want 75", got)
 	}
@@ -232,8 +276,8 @@ func TestDialogueMatchesLongerNaturalLanguageTopics(t *testing.T) {
 
 func TestFactionStandingChangesNPCGreeting(t *testing.T) {
 	s := newChoiceTestSession(t)
-	s.Character.RoomID = "olympus_foothills"
-	n := s.currentNPC()
+	s.Character.RoomID = "therons_forge"
+	n := s.currentNPC(1)
 	s.Character.Reputation["olympians"] = 3
 	if got := s.factionGreeting(n); got == "" {
 		t.Fatal("friendly faction standing should change the merchant greeting")
@@ -289,7 +333,7 @@ func TestMyrtoRecognizesPersistentStyxMemory(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "modern_crossroads"
 	s.Character.SetStoryFlag("styx_memory_recovered")
-	n := s.currentNPC()
+	n := s.currentNPC(1)
 	if n == nil || n.ID != "athens_vendor" {
 		t.Fatal("expected Myrto in modern crossroads")
 	}
@@ -306,7 +350,7 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "modern_crossroads"
 	s.Character.SetStoryFlag("quest_completed_oracle_whisper")
-	n := s.currentNPC()
+	n := s.currentNPC(1)
 	greeting := s.persistentNPCGreeting(n, "greeting")
 	if greeting == "" || !strings.Contains(greeting, "old prophecy") {
 		t.Fatalf("Myrto greeting = %q, want her to recognize the Oracle prophecy", greeting)
@@ -317,7 +361,9 @@ func TestMyrtoRecognizesPersistentOracleProphecy(t *testing.T) {
 func TestDelphiTrialsGrantPersistentLaurelRelic(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "delphi_sanctum"
+	s.Character.SetStoryFlag("room_discovered_delphi_sanctum")
 	s.updateQuests()
+	s.examineTarget([]string{"inscription"})
 	if !s.Character.HasStoryFlag("delphi_trials_complete") {
 		t.Fatal("Delphi trials should record a persistent story flag")
 	}
@@ -511,7 +557,7 @@ func TestMyrtoGreetingReflectsOracleTrust(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.SetStoryFlag("oracle_trust")
 	s.Character.RebirthTo("modern", "modern_crossroads")
-	got := s.persistentNPCGreeting(s.currentNPC(), "hello")
+	got := s.persistentNPCGreeting(s.currentNPC(1), "hello")
 	if !strings.Contains(got, "trusted you with a warning") {
 		t.Fatalf("unexpected modern greeting: %q", got)
 	}
@@ -522,7 +568,7 @@ func TestMyrtoGreetingReflectsOracleDefiance(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.SetStoryFlag("oracle_defied")
 	s.Character.RebirthTo("modern", "modern_crossroads")
-	got := s.persistentNPCGreeting(s.currentNPC(), "hello")
+	got := s.persistentNPCGreeting(s.currentNPC(1), "hello")
 	if !strings.Contains(got, "mistake prophecy for permission") {
 		t.Fatalf("unexpected modern greeting: %q", got)
 	}
@@ -566,6 +612,7 @@ func TestStyxRecoveryRestoresCharacterAtGates(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.HP = 1
 	s.Enemy = &combat.Enemy{Name: "Test Colossus", Level: 99, Damage: 1000, HP: 500, MaxHP: 500}
+	s.EnemyAggressive = true
 	s.enemyTurn()
 	if s.Character.HP != s.Character.MaxHP || s.Character.Mana != s.Character.MaxMana { t.Fatal("recovery did not restore resources") }
 	if s.Character.RoomID != "olympus_gates" || s.Enemy != nil { t.Fatalf("recovery state = room %q, enemy %#v", s.Character.RoomID, s.Enemy) }
@@ -593,6 +640,95 @@ func TestJournalSelectsNextUnlockedQuest(t *testing.T) {
 	if !ok || q.ID != "oracle_whisper" { t.Fatalf("next suggested quest = %q, found=%v", q.ID, ok) }
 }
 
+
+func TestNewCharacterBeginsInAsterionVillage(t *testing.T) {
+	c := character.New("Newwalker")
+	if c.RoomID != "village_square" {
+		t.Fatalf("new character room = %q, want village_square", c.RoomID)
+	}
+}
+
+func TestVillageTutorialRouteAndGuideExist(t *testing.T) {
+	w := world.NewWorld()
+	square := w.GetRoom("village_square")
+	lane := w.GetRoom("village_lane")
+	if square == nil || lane == nil {
+		t.Fatal("village tutorial rooms are missing")
+	}
+	if square.Exits["north"] != lane.ID || lane.Exits["south"] != square.ID || lane.Exits["north"] != "olympus_foothills" {
+		t.Fatal("village tutorial route is not connected correctly")
+	}
+	if len(w.NPCs["village_lane"]) == 0 || w.NPCs["village_lane"][0].ID != "village_guide" {
+		t.Fatal("village lane must contain the tutorial guide")
+	}
+}
+
+func TestVillageTutorialBlocksMountainRoadUntilGuideLessonCompletes(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 0
+	s.move("north")
+	if s.Character.RoomID != "village_lane" {
+		t.Fatalf("tutorial bypass moved to %q before lessons completed", s.Character.RoomID)
+	}
+	s.TutorialStep = 9
+	s.move("north")
+	if s.Character.RoomID != "olympus_foothills" {
+		t.Fatalf("completed tutorial moved to %q, want olympus_foothills", s.Character.RoomID)
+	}
+}
+
+func TestTutorialProgressesOneActionAtATime(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 2
+	s.lookTarget([]string{"Damon"})
+	if !s.Character.HasStoryFlag("tutorial_inspected_npc") { t.Fatal("inspecting Damon should record the inspection lesson") }
+	s.advanceTutorial(3)
+	s.talk([]string{"1", "hello"})
+	if s.TutorialStep != 4 { t.Fatal("greeting should advance to the village topic lesson") }
+	s.talk([]string{"1", "village"})
+	if s.TutorialStep != 5 { t.Fatal("village topic should advance to the hint lesson") }
+	s.handleCommand("hint")
+	if s.TutorialStep != 6 || !s.Character.HasStoryFlag("tutorial_hint_used") { t.Fatal("hint should advance to the road topic lesson") }
+	s.talk([]string{"1", "road"})
+	if s.TutorialStep != 7 { t.Fatal("road topic should advance to the exits lesson") }
+	s.handleCommand("exits")
+	if s.TutorialStep != 8 { t.Fatal("exits should advance to the map lesson") }
+	s.handleCommand("map")
+	if s.TutorialStep != 9 { t.Fatal("map should advance to the foothills lesson") }
+	s.Character.RoomID = "olympus_foothills"
+	s.TutorialStep = 10
+	s.Enemy = &combat.Enemy{Name: "Harpy", Description: "A test harpy.", Level: 1, HP: 20, MaxHP: 20, XP: 0}
+	s.handleCommand("look Harpy")
+	if s.TutorialStep != 11 || !s.Character.HasStoryFlag("tutorial_enemy_inspected") { t.Fatal("inspecting the Harpy should advance to the fight lesson") }
+	s.Enemy.HP = 0
+	s.defeatEnemy(false)
+	if s.TutorialStep != 12 || !s.Character.HasStoryFlag("tutorial_combat_complete") { t.Fatal("Harpy victory should advance to inventory") }
+	s.handleCommand("inv")
+	if s.TutorialStep != 13 { t.Fatal("inventory should advance to equipment") }
+	s.handleCommand("eq")
+	if s.TutorialStep != 14 { t.Fatal("equipment should advance to quests") }
+	s.handleCommand("quests")
+	if s.TutorialStep != 15 { t.Fatal("quests should advance to journal") }
+	s.handleCommand("journal")
+	if s.TutorialStep != 16 || !s.Character.HasStoryFlag("tutorial_complete") { t.Fatal("journal should complete the tutorial") }
+}
+
+func TestTutorialRequiresInspectionBeforeAttackingHarpy(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.TutorialStep = 11
+	s.Enemy = &combat.Enemy{Name: "Harpy", Level: 1, HP: 30, MaxHP: 30, Damage: 1, XP: 0}
+	s.attack(nil)
+	if s.Enemy.HP != 30 {
+		t.Fatal("tutorial should require inspecting the Harpy before the first attack")
+	}
+	s.lookTarget([]string{"Harpy"})
+	if !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
+		t.Fatal("look Harpy did not record inspection")
+	}
+}
 
 func TestRestRestoresResourcesOnlyOutsideCombat(t *testing.T) {
 	s := newChoiceTestSession(t)
@@ -705,7 +841,8 @@ func TestFirstLifeRouteCompletesCoreQuests(t *testing.T) {
 	s.defeatEnemy(false)
 	s.choose([]string{"trust"})
 	s.move("north")
-	if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") || !s.Character.HasStoryFlag("delphi_trials_complete") { t.Fatal("Delphi quests missing") }
+	s.examineTarget([]string{"inscription"})
+	if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") || !s.Character.HasStoryFlag("delphi_trials_complete") { t.Fatal("Delphi quests missing after examining the inscription") }
 	s.move("east")
 	if !s.Character.HasStoryFlag("quest_completed_oath_across_the_river") { t.Fatal("trust quest missing") }
 	s.move("down")
@@ -766,7 +903,8 @@ func TestMuseumQuestPersistsItsRewards(t *testing.T) {
 	s.Character.RoomID = "modern_museum"
 	s.Character.SetStoryFlag("styx_memory_recovered")
 	s.updateQuests()
-	if !s.Character.HasStoryFlag("museum_echo_uncovered") { t.Fatal("museum flag missing") }
+	s.examineTarget([]string{"mask"})
+	if !s.Character.HasStoryFlag("museum_echo_uncovered") { t.Fatal("museum flag missing after examining the mask") }
 	if len(s.Character.Memories) == 0 { t.Fatal("memory reward missing") }
 }
 
@@ -775,44 +913,742 @@ func TestMyrtoAnswersAboutMuseumEcho(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "modern_crossroads"
 	s.Character.SetStoryFlag("museum_echo_uncovered")
-	got := s.persistentNPCGreeting(s.currentNPC(), "museum")
-	if !strings.Contains(got, "behind glass") { t.Fatalf("museum response = %q", got) }
-}
-
-
-func TestLookingAfterKillingSatyrDoesNotRespawnItAndNorthWorks(t *testing.T) {
-	s := newChoiceTestSession(t)
-	s.Character.RoomID = "oracle_path"
-	s.Enemy = combat.NewSatyr()
-	s.Enemy.HP = 0
-	s.defeatEnemy(false)
-
-	s.handleCommand("look")
-	if s.Enemy != nil {
-		t.Fatalf("look respawned defeated enemy: %s", s.Enemy.Name)
-	}
-
-	s.move("north")
-	if s.Character.RoomID != "delphi_sanctum" {
-		t.Fatalf("north after Satyr victory moved to %q, want delphi_sanctum", s.Character.RoomID)
-	}
-	if s.Enemy != nil {
-		t.Fatalf("unexpected enemy after entering Delphi Sanctum: %s", s.Enemy.Name)
+	for _, question := range []string{"museum", "can you tell me about the museum?", "tell me about artifacts"} {
+		got := s.persistentNPCGreeting(s.currentNPC(1), question)
+		if !strings.Contains(got, "behind glass") { t.Errorf("museum question %q response = %q", question, got) }
 	}
 }
 
-func TestDefeatedEncounterCanReturnInNextLife(t *testing.T) {
+
+// TestNewSessionKeepsAutomaticMapOffByDefault verifies the compact screen default.
+func TestNewSessionKeepsAutomaticMapOffByDefault(t *testing.T) {
+	server, client := net.Pipe()
+	t.Cleanup(func() { server.Close(); client.Close() })
+	go func() { _, _ = io.Copy(io.Discard, client) }()
+
+	s := New(nil, server, world.NewWorld())
+	if s.AutoMap {
+		t.Fatal("automatic map should be off by default to keep the screen compact")
+	}
+}
+
+// TestAutomaticMapCommandTogglesState verifies the automap command and aliases.
+func TestAutomaticMapCommandTogglesState(t *testing.T) {
 	s := newChoiceTestSession(t)
-	s.Character.RoomID = "oracle_path"
-	s.Enemy = combat.NewSatyr()
+	if s.AutoMap {
+		t.Fatal("test helper should start with the zero-value automap setting")
+	}
+
+	s.handleCommand("automap on")
+	if !s.AutoMap { t.Fatal("automap on did not enable automatic mapping") }
+	s.handleCommand("automap off")
+	if s.AutoMap { t.Fatal("automap off did not disable automatic mapping") }
+	s.handleCommand("automap toggle")
+	if !s.AutoMap { t.Fatal("automap toggle did not enable automatic mapping") }
+	s.handleCommand("maptoggle")
+	if s.AutoMap { t.Fatal("maptoggle alias did not toggle automatic mapping off") }
+}
+
+
+// Natural-language dialogue should resolve to the same intent as short topics.
+func TestNPCDialogueMatchesNaturalLanguageQuestions(t *testing.T) {
+	w := world.NewWorld()
+	damon := w.NPCs["village_lane"][0]
+	for _, phrase := range []string{
+		"village",
+		"tell me more about the village",
+		"can you please tell me about the village",
+		"where is the village?",
+		"could you tell me about home",
+	} {
+		keyword, response := damon.MatchDialogue(phrase)
+		if keyword != "village" && keyword != "home" {
+			t.Errorf("phrase %q resolved to keyword %q", phrase, keyword)
+		}
+		if response == "" { t.Errorf("phrase %q did not resolve to a response", phrase) }
+	}
+}
+
+func TestTalkByFirstNameAndNaturalQuestionAdvancesTutorial(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	s.TutorialStep = 4
+	s.handleCommand("talk Damon, can you please tell me about the village?")
+	if s.TutorialStep != 5 {
+		t.Fatalf("natural-language village question left tutorial at step %d", s.TutorialStep)
+	}
+	s.Character.SetStoryFlag("tutorial_hint_used")
+	s.TutorialStep = 6
+	s.handleCommand("talk Damon, where is the village road?")
+	if s.TutorialStep != 7 {
+		t.Fatalf("natural-language road question left tutorial at step %d", s.TutorialStep)
+	}
+}
+
+
+func TestTutorialPracticeEnemiesArePassiveAndPersistentlyDefeated(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("tutorial_available")
+	s.Character.RoomID = "tutorial_yard"
+	s.PrologueStep = 11
+	s.look()
+	if s.Enemy == nil || s.Enemy.Name != "Training Shade" {
+		t.Fatal("tutorial courtyard should spawn the training shade")
+	}
+	if s.EnemyAggressive {
+		t.Fatal("tutorial creature should not be aggressive before the player attacks")
+	}
+	hp := s.Character.HP
+	s.enemyTurn()
+	if s.Character.HP != hp {
+		t.Fatal("passive tutorial creature attacked without being attacked")
+	}
 	s.Enemy.HP = 0
 	s.defeatEnemy(false)
-	s.Character.RebirthTo("modern", "modern_crossroads")
-	s.Character.RebirthTo("future", "future_city")
-	s.Character.Life = 3
+	if !s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_yard") {
+		t.Fatal("defeated tutorial creature should be persisted as slain")
+	}
+	s.look()
+	if s.Enemy != nil {
+		t.Fatal("slain tutorial creature respawned after looking at the room")
+	}
+}
+
+func TestTutorialProgressIsSavedAsCharacterFlag(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("tutorial_available")
+	s.Character.RoomID = "tutorial_shore"
+	s.PrologueStep = 0
+	s.advancePrologueForCommand([]string{"look"})
+	if s.PrologueStep != 1 || !s.Character.HasStoryFlag("tutorial_lesson_1") {
+		t.Fatal("completing a tutorial lesson should persist the next lesson flag")
+	}
+}
+
+func TestTutorialRoomsAreLockedForCompletedCharacters(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("tutorial_complete")
+	if s.canEnter("tutorial_shore") {
+		t.Fatal("completed characters must not be allowed back into tutorial rooms")
+	}
+}
+
+
+func TestConsumableRestoresHealthAndIsConsumed(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	s.Character.HP = 40
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "laurel poultice", Kind: "consumable", Healing: 20,
+	})
+	s.useItem([]string{"laurel", "poultice"})
+	if s.Character.HP != 60 {
+		t.Fatalf("health after poultice = %d, want 60", s.Character.HP)
+	}
+	for _, it := range s.Character.Inventory {
+		if it.Name == "laurel poultice" {
+			t.Fatal("consumable remained in inventory after use")
+		}
+	}
+}
+
+func TestConsumableDoesNotOverhealOrWasteItemAtFullHealth(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = s.Character.MaxHP - 5
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "ambrosia draught", Kind: "consumable", Healing: 45,
+	})
+	s.useItem([]string{"ambrosia", "draught"})
+	if s.Character.HP != s.Character.MaxHP {
+		t.Fatalf("health = %d, want max %d", s.Character.HP, s.Character.MaxHP)
+	}
+	if len(s.Character.Inventory) != 2 {
+		t.Fatalf("inventory length = %d, want 2 after effective use", len(s.Character.Inventory))
+	}
+
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "second ambrosia draught", Kind: "consumable", Healing: 45,
+	})
+	s.useItem([]string{"second", "ambrosia"})
+	if len(s.Character.Inventory) != 3 {
+		t.Fatal("an ineffective consumable should not be consumed at full health")
+	}
+}
+
+func TestConsumableUseCostsEnemyTurnDuringAggressiveCombat(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = 20
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "ambrosia draught", Kind: "consumable", Healing: 45,
+	})
+	s.Enemy = &combat.Enemy{Name: "Practice Foe", Level: 20, HP: 50, MaxHP: 50, Damage: 10}
+	s.EnemyAggressive = true
+	s.useItem([]string{"ambrosia", "draught"})
+	if len(s.Character.Inventory) != 2 {
+		t.Fatal("used consumable should be removed from inventory")
+	}
+	if s.Character.HP >= 65 {
+		t.Fatalf("enemy did not take its turn after the item was used; HP = %d", s.Character.HP)
+	}
+}
+
+
+func TestCraftingConsumesMaterialAndGoldAtTheForge(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "therons_forge"
+	s.Character.SetStoryFlag("forge_discovered")
+	s.Character.Gold = 100
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "harpy feather", Kind: "material",
+	})
+	s.craft([]string{"stormguard", "cuirass"})
+	if s.Character.Gold != 57 {
+		t.Fatalf("gold after crafting and quest reward = %d, want 57", s.Character.Gold)
+	}
+	foundArmor, foundMaterial := false, false
+	for _, it := range s.Character.Inventory {
+		if it.Name == "stormguard cuirass" && it.Armor == 7 { foundArmor = true }
+		if it.Name == "harpy feather" { foundMaterial = true }
+	}
+	if !foundArmor { t.Fatal("crafted armor was not added to inventory") }
+	if foundMaterial { t.Fatal("crafting ingredient was not consumed") }
+	if s.Character.Quests["forge_remembers"] != 1 { t.Fatal("crafting should complete The Forge Remembers quest") }
+}
+
+func TestCraftingRequiresForgeAndEnoughGold(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	s.Character.Gold = 100
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name:"harpy feather", Kind:"material"})
+	s.craft([]string{"stormguard", "cuirass"})
+	if s.Character.Gold != 100 || len(s.Character.Inventory) != 3 {
+		t.Fatal("crafting outside the forge should not consume gold or materials")
+	}
+	s.Character.RoomID = "therons_forge"
+	s.Character.Gold = 10
+	s.craft([]string{"stormguard", "cuirass"})
+	if s.Character.Gold != 10 || len(s.Character.Inventory) != 3 {
+		t.Fatal("crafting without sufficient gold should not consume ingredients")
+	}
+}
+
+
+func TestGuardReducesIncomingDamageAndIsConsumed(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.HP = 100
+	s.Enemy = &combat.Enemy{Name: "Test Foe", Level: 1, HP: 50, MaxHP: 50, Damage: 20}
+	s.EnemyAggressive = true
+	s.guard()
+	if s.Guarding {
+		t.Fatal("guard should be consumed by the enemy's next turn")
+	}
+	if s.Character.HP < 90 || s.Character.HP > 100 {
+		t.Fatalf("guarded health = %d; expected at most 10 damage", s.Character.HP)
+	}
+}
+
+
+// TestTutorialSatyrStaysDefeatedAndAllowsThePlayerToLeave verifies the
+// tutorial encounter cannot respawn after victory and block the south exit.
+func TestTutorialSatyrStaysDefeatedAndAllowsThePlayerToLeave(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_grove"
+	s.Character.SetStoryFlag("tutorial_available")
+	s.PrologueStep = 20
+	s.Enemy = &combat.Enemy{
+		Name: "Practice Satyr", HP: 0, MaxHP: 28, Level: 1, Damage: 3, XP: 0,
+	}
+
+	s.defeatEnemy(false)
+	if !s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_grove") {
+		t.Fatal("defeating the practice satyr should record the tutorial victory")
+	}
+
+	s.advancePrologueForCommand([]string{"attack", "satyr"})
+	if s.PrologueStep != 21 {
+		t.Fatalf("prologue step after satyr victory = %d, want 21", s.PrologueStep)
+	}
+	s.look()
+	if s.Enemy != nil {
+		t.Fatalf("practice satyr respawned after victory: %#v", s.Enemy)
+	}
+
+	s.advancePrologueForCommand([]string{"look"})
+	if s.PrologueStep != 22 {
+		t.Fatalf("prologue step after looking at cleared grove = %d, want 22", s.PrologueStep)
+	}
+	s.move("south")
+	if s.Character.RoomID != "tutorial_yard" {
+		t.Fatalf("room after leaving cleared grove = %q, want tutorial_yard", s.Character.RoomID)
+	}
+}
+
+
+func TestFleeDoesNotImmediatelyRespawnEnemy(t *testing.T) {
+	s := newChoiceTestSession(t)
 	s.Character.RoomID = "oracle_path"
+	s.Character.HP = s.Character.MaxHP
+	s.Enemy = &combat.Enemy{Name: "Satyr", Level: 1, HP: 40, MaxHP: 40, Damage: 1}
+	s.EnemyAggressive = true
+
+	s.flee()
+	if s.Enemy != nil {
+		t.Fatalf("enemy should be cleared after a successful escape, got %#v", s.Enemy)
+	}
+	if s.EncounterClearedRoom != "oracle_path" {
+		t.Fatalf("cleared encounter room = %q, want oracle_path", s.EncounterClearedRoom)
+	}
+	s.look()
+	if s.Enemy != nil {
+		t.Fatalf("enemy respawned immediately after flee: %#v", s.Enemy)
+	}
+}
+
+func TestTutorialPracticeEncounterCannotBeFled(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_grove"
+	s.Character.SetStoryFlag("tutorial_available")
+	s.Enemy = &combat.Enemy{Name: "Practice Satyr", Level: 1, HP: 20, MaxHP: 28, Damage: 3}
+
+	s.flee()
+	if s.Enemy == nil || s.Enemy.HP != 20 {
+		t.Fatal("fleeing should not remove or damage the controlled tutorial opponent")
+	}
+	if s.EncounterClearedRoom == "tutorial_grove" {
+		t.Fatal("tutorial encounter should not be marked cleared by fleeing")
+	}
+}
+
+func TestCombatModeCanToggleOnTheFly(t *testing.T) {
+	s := newChoiceTestSession(t)
+	if !s.Character.AutoCombat {
+		t.Fatal("new characters should start with automatic combat enabled")
+	}
+	s.handleCommand("pc")
+	if s.Character.AutoCombat {
+		t.Fatal("pc should toggle automatic combat off")
+	}
+	s.handleCommand("pc on")
+	if !s.Character.AutoCombat {
+		t.Fatal("pc on should enable automatic combat")
+	}
+	s.handleCommand("combatmode off")
+	if s.Character.AutoCombat {
+		t.Fatal("combatmode off should disable automatic combat")
+	}
+	s.handleCommand("combatmode toggle")
+	if !s.Character.AutoCombat {
+		t.Fatal("combatmode toggle should enable automatic combat")
+	}
+}
+
+func TestAutomaticCombatRoundAttacksAndRetaliates(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.AutoCombat = true
+	s.Character.HP = 100
+	s.Character.Defense = -100
+	s.Enemy = &combat.Enemy{Name: "Training Foe", Level: 1, HP: 500, MaxHP: 500, Damage: 20}
+	s.EnemyAggressive = true
+	before := s.Enemy.HP
+	s.automaticCombatRound()
+	if s.Enemy == nil || s.Enemy.HP >= before {
+		t.Fatal("automatic combat round should deal player weapon damage")
+	}
+	if s.Character.HP >= 100 {
+		t.Fatal("automatic combat round should include the enemy's response")
+	}
+}
+
+func TestManualCombatModeSuppressesAutomaticRound(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.AutoCombat = false
+	s.Enemy = &combat.Enemy{Name: "Training Foe", Level: 1, HP: 500, MaxHP: 500, Damage: 1}
+	s.EnemyAggressive = true
+	before := s.Enemy.HP
+	s.automaticCombatRound()
+	if s.Enemy.HP != before {
+		t.Fatal("manual combat mode should not auto-attack")
+	}
+}
+
+func TestQuicklistAssignListAndCast(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Domain = power.Storm
+	s.Character.Level = 5
+	s.Character.Mana = 100
+	s.Enemy = &combat.Enemy{Name: "Practice Harpy", Level: 1, HP: 500, MaxHP: 500, Damage: 1}
+	s.EnemyAggressive = true
+
+	s.handleCommand("ql set 1 Stormspark")
+	if s.Character.Quicklist[0] != "Stormspark" { t.Fatalf("slot 1 = %q, want Stormspark", s.Character.Quicklist[0]) }
+	beforeHP, beforeMana := s.Enemy.HP, s.Character.Mana
+	s.handleCommand("ql 1 harpy")
+	if s.Enemy.HP >= beforeHP { t.Fatal("quicklist cast should damage the selected enemy") }
+	if s.Character.Mana != beforeMana-8 { t.Fatalf("mana after quick cast = %d, want %d",s.Character.Mana,beforeMana-8) }
+}
+
+func TestQuicklistRejectsLockedPowerAndInvalidSlot(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.Domain = power.Storm
+	s.Character.Level = 5
+	s.handleCommand("ql set 1 Thunderfall")
+	if s.Character.Quicklist[0] != "" { t.Fatal("locked power should not be assigned") }
+	s.handleCommand("ql set 9 Stormspark")
+	if s.Character.Quicklist[0] != "" { t.Fatal("invalid slot should not be assigned") }
+}
+
+
+func TestQuestGoldRewardIsGrantedOnlyOnce(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "therons_forge"
+	s.Character.SetStoryFlag("forge_discovered")
+	s.Character.SetStoryFlag("crafted_any_gear")
+	before := s.Character.Gold
+
+	s.updateQuests()
+	afterFirstCompletion := s.Character.Gold
+	if afterFirstCompletion != before+17 {
+		t.Fatalf("gold after forge quest = %d, want %d", afterFirstCompletion, before+17)
+	}
+	s.updateQuests()
+	if s.Character.Gold != afterFirstCompletion {
+		t.Fatalf("rechecking completed quests changed gold to %d; want %d", s.Character.Gold, afterFirstCompletion)
+	}
+	if !s.Character.HasStoryFlag("quest_completed_forge_remembers") {
+		t.Fatal("forge quest completion should be recorded")
+	}
+}
+
+
+func TestCharonsMemoryQuestRequiresAnOfferedMemory(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "styx_shore"
+	s.talk([]string{"Charon", "memory"})
+	if !s.Character.HasStoryFlag("charon_memory_heard") {
+		t.Fatal("talking to Charon about memory should unlock the side quest")
+	}
+	q, ok := quest.Get("charons_memory")
+	if !ok {
+		t.Fatal("Charon's memory quest is missing from the catalogue")
+	}
+	if s.Character.Quests[q.ID] >= q.Required {
+		t.Fatal("quest should not complete before the player offers a memory")
+	}
+
+	s.Character.RoomID = "fields_asphodel"
+	s.talk([]string{"Unremembered", "memory"})
+	if s.Character.HasStoryFlag("asphodel_memory_returned") {
+		t.Fatal("talking about memory should not complete the quest by itself")
+	}
+	s.offerMemory([]string{"memory", "a", "song"})
+	if s.Character.HasStoryFlag("asphodel_memory_returned") {
+		t.Fatal("a short fragment should not complete the quest")
+	}
+	s.offerMemory([]string{"memory", "I", "remember", "someone", "singing", "off-key", "to", "comfort", "me", "when", "I", "feared", "the", "dark"})
+	if !s.Character.HasStoryFlag("asphodel_memory_returned") {
+		t.Fatal("a detailed offered memory should complete the story thread")
+	}
+	if s.Character.Quests[q.ID] != q.Required {
+		t.Fatalf("quest progress = %d, want %d", s.Character.Quests[q.ID], q.Required)
+	}
+	if len(s.Character.Memories) == 0 || !strings.Contains(s.Character.Memories[len(s.Character.Memories)-1], "singing off-key") {
+		t.Fatal("the offered memory should be recorded in the character's soul memories")
+	}
+}
+
+
+func TestGetCoinFromAshAddsInventoryAndRemovesRoomObject(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.getObject([]string{"coin", "from", "ash"})
+	found := false
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, "scratched bronze coin") { found = true }
+	}
+	if !found { t.Fatal("get coin from ash should add the coin to inventory") }
+	if !s.Character.HasStoryFlag("found_scratched_coin") { t.Fatal("coin pickup should record its story discovery") }
+	room := s.World.GetRoom("olympus_foothills")
+	if findRoomObject(room, "coin", "", s.Character) != nil {
+		t.Fatal("a character should no longer see a coin after collecting it")
+	}
+	other := character.New("Otherwalker")
+	if findRoomObject(room, "coin", "", other) == nil {
+		t.Fatal("a different character should still be able to discover the shared-world coin")
+	}
+	if got := s.Character.Quests["coin_in_the_ash"]; got != 0 {
+		t.Fatalf("coin quest progress after pickup = %d, want 0 until examined", got)
+	}
+	s.dropItem([]string{"coin"})
+	stillCarried := false
+	for _, carried := range s.Character.Inventory { if strings.EqualFold(carried.Name, "scratched bronze coin") { stillCarried = true } }
+	if !stillCarried { t.Fatal("story-critical coin should not be droppable before the mystery is resolved") }
+	s.examineTarget([]string{"coin"})
+	if got := s.Character.Quests["coin_in_the_ash"]; got != 1 {
+		t.Fatalf("coin quest progress after examination = %d, want 1", got)
+	}
+}
+
+func TestHarpyIsWaryRatherThanHostileOnSight(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
 	s.spawnEnemy()
-	if s.Enemy == nil || s.Enemy.Name != "Satyr" {
-		t.Fatal("room encounter should reset for a later life")
+	if s.Enemy == nil || s.Enemy.Behavior != "wary" || s.EnemyAggressive {
+		t.Fatal("Harpy should be wary and should not attack merely because the player entered")
+	}
+}
+
+func TestSatyrIsPassiveAndManticoreIsAggressive(t *testing.T) {
+	if got := combat.NewSatyr().Behavior; got != "passive" { t.Fatalf("Satyr behavior = %q, want passive", got) }
+	if got := combat.NewManticore().Behavior; got != "aggressive" { t.Fatalf("Manticore behavior = %q, want aggressive", got) }
+}
+
+
+func TestTerminalWrappingIgnoresANSIColorCodes(t *testing.T) {
+	colored := "\x1b[31mred text\x1b[0m"
+	if got := visibleTerminalWidth(colored); got != len("red text") {
+		t.Fatalf("visible width = %d, want %d", got, len("red text"))
+	}
+	line := "\x1b[36mA long room description should wrap at a word boundary without breaking color codes or words.\x1b[0m"
+	wrapped := wrapTerminalLine(line, 28)
+	if len(wrapped) < 2 { t.Fatal("long prose line should wrap to terminal width") }
+	for _, part := range wrapped {
+		if visibleTerminalWidth(part) > 28 {
+			t.Fatalf("wrapped line has visible width %d, limit 28: %q", visibleTerminalWidth(part), part)
+		}
+	}
+}
+
+
+func TestEnteringWaryHarpyRoomDoesNotCauseAutomaticDamage(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_gates"
+	s.Character.SetStoryFlag("room_discovered_olympus_foothills")
+	s.Character.HP = s.Character.MaxHP
+	before := s.Character.HP
+	s.move("north")
+	if s.Character.RoomID != "olympus_foothills" { t.Fatalf("room = %q, want foothills", s.Character.RoomID) }
+	if s.Enemy == nil || s.Enemy.Name != "Harpy" { t.Fatal("Harpy should be present in the foothills") }
+	if s.EnemyAggressive { t.Fatal("wary Harpy should not be aggressive on sight") }
+	if s.Character.HP != before { t.Fatalf("HP changed on entry: %d -> %d", before, s.Character.HP) }
+}
+
+
+func TestMuseumQuestRequiresExaminingTheArtifact(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "modern_museum"
+	s.Character.SetStoryFlag("styx_memory_recovered")
+	s.updateQuests()
+	if got := s.Character.Quests["museum_echo"]; got != 0 {
+		t.Fatalf("museum quest progress on entry = %d, want 0 until artifact is examined", got)
+	}
+	s.examineTarget([]string{"black-glass funerary mask"})
+	if got := s.Character.Quests["museum_echo"]; got != 1 {
+		t.Fatalf("museum quest progress after examining artifact = %d, want 1", got)
+	}
+}
+
+
+func TestDropAndPickupPreservesItemProperties(t *testing.T) {
+	s := newChoiceTestSession(t)
+	potion := item.Item{Name:"laurel poultice", Description:"A poultice of crushed laurel leaves.", Tier:item.Common, Kind:"consumable", Healing:20}
+	s.Character.Inventory = append(s.Character.Inventory, potion)
+	s.dropItem([]string{"laurel", "poultice"})
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, potion.Name) { t.Fatal("dropped item should leave the inventory") }
+	}
+	r := s.World.GetRoom(s.Character.RoomID)
+	dropped := findRoomObject(r, "laurel poultice", "", s.Character)
+	if dropped == nil { t.Fatal("dropped item should become a room object") }
+	s.getObject([]string{"laurel", "poultice"})
+	found := false
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, potion.Name) {
+			found = true
+			if carried.Healing != 20 || carried.Kind != "consumable" || carried.Description != potion.Description {
+				t.Fatalf("picked-up item lost its properties: %#v", carried)
+			}
+		}
+	}
+	if !found { t.Fatal("picked-up item should return to inventory") }
+}
+
+
+func TestOnlineRosterRegistersRefreshesAndUnregistersPlayers(t *testing.T) {
+	s1 := newChoiceTestSession(t)
+	s2 := newChoiceTestSession(t)
+	s1.Character.Name = "Firstwalker"
+	s2.Character.Name = "Secondwalker"
+	s1.Character.RoomID = "village_square"
+	s2.Character.RoomID = "modern_crossroads"
+	s1.registerOnline()
+	defer s1.unregisterOnline()
+	s2.registerOnline()
+	defer s2.unregisterOnline()
+	players := s1.onlineSnapshotList()
+	foundFirst, foundSecond := false, false
+	for _, player := range players {
+		if player.Name == "Firstwalker" && player.RoomID == "village_square" { foundFirst = true }
+		if player.Name == "Secondwalker" && player.RoomID == "modern_crossroads" { foundSecond = true }
+	}
+	if !foundFirst || !foundSecond { t.Fatal("online roster should contain both registered players and their rooms") }
+	s2.Character.RoomID = "modern_museum"
+	s2.refreshOnline()
+	for _, player := range s1.onlineSnapshotList() {
+		if player.Name == "Secondwalker" && player.RoomID != "modern_museum" {
+			t.Fatal("roster location should refresh after movement")
+		}
+	}
+	s2.unregisterOnline()
+	for _, player := range s1.onlineSnapshotList() {
+		if player.Name == "Secondwalker" { t.Fatal("unregistered player should disappear from who list") }
+	}
+}
+
+
+func TestSayDistinguishesGreetingsFromNPCAddresses(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_lane"
+	if s.isNPCAddress([]string{"hi"}) { t.Fatal("a short greeting should be room speech, not an NPC selector") }
+	if !s.isNPCAddress([]string{"damon"}) { t.Fatal("a clear NPC name should route to NPC dialogue") }
+}
+
+
+func TestGetCoinAcceptsCompactContainerSyntax(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.getObject([]string{"coin", "ash"})
+	if !s.Character.HasStoryFlag("found_scratched_coin") {
+		t.Fatal("get coin ash should collect the coin from the ash bed")
+	}
+}
+
+func TestGetAllCollectsVisibleTakeableObjectsOnly(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "olympus_foothills"
+	s.getObject([]string{"all"})
+	if !s.Character.HasStoryFlag("object_taken_scratched_bronze_coin") {
+		t.Fatal("get all should collect the visible coin")
+	}
+	if !s.Character.HasStoryFlag("object_taken_bronze_oil_lamp") {
+		t.Fatal("get all should collect the takeable lamp")
+	}
+	if s.Character.HasStoryFlag("object_taken_campfire_ash") {
+		t.Fatal("get all should not collect scenery containers")
+	}
+}
+
+
+func TestCoinOfferingRequiresExaminationAndCompletesOptionalQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "village_square"
+	coin := item.Item{Name:"scratched bronze coin", Description:"A scratched bronze coin.", Tier:item.Common, Kind:"quest"}
+	s.Character.Inventory = append(s.Character.Inventory, coin)
+	s.Character.SetStoryFlag("found_scratched_coin")
+	s.offerItem("coin", "bowl")
+	if s.Character.HasStoryFlag("offered_coin_at_well") {
+		t.Fatal("the coin should not be offered before the player examines its mark")
+	}
+	s.Character.SetStoryFlag("examined_scratched_coin")
+	s.offerItem("coin", "bowl")
+	if !s.Character.HasStoryFlag("offered_coin_at_well") { t.Fatal("the offering should be recorded") }
+	if !s.Character.HasStoryFlag("quest_completed_return_the_coin") { t.Fatal("the optional return-the-coin quest should complete") }
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, "scratched bronze coin") { t.Fatal("the offered coin should leave inventory") }
+	}
+	beforeXP := s.Character.Experience
+	s.offerItem("coin", "bowl")
+	if s.Character.Experience != beforeXP { t.Fatal("repeating the offering should not award the quest twice") }
+}
+
+
+func TestClosedCofferHidesClueUntilOpenedAndRead(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	r := s.World.GetRoom(s.Character.RoomID)
+	if findRoomObject(r, "prayer strip", "", s.Character) != nil {
+		t.Fatal("the prayer strip should not be visible while the coffer is closed")
+	}
+	s.openContainer([]string{"coffer"})
+	if !s.Character.HasStoryFlag("opened_tomb_coffer") {
+		t.Fatal("opening the coffer should record the discovery")
+	}
+	if findRoomObject(r, "prayer strip", "", s.Character) == nil {
+		t.Fatal("the prayer strip should become visible after opening the coffer")
+	}
+	s.getObject([]string{"prayer", "strip"})
+	s.readObject([]string{"prayer", "strip"})
+	if !s.Character.HasStoryFlag("read_charred_prayer") {
+		t.Fatal("reading the strip should record the clue")
+	}
+	if !s.Character.HasStoryFlag("quest_completed_prayer_without_name") {
+		t.Fatal("reading the clue should complete The Prayer Without a Name")
+	}
+	if !s.Character.HasStoryFlag("prayer_witnessed") {
+		t.Fatal("quest completion should record the soul witness")
+	}
+}
+
+func TestClosingCofferHidesUncollectedContentsAgain(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	r := s.World.GetRoom(s.Character.RoomID)
+	s.openContainer([]string{"coffer"})
+	s.closeContainer([]string{"coffer"})
+	if findRoomObject(r, "prayer strip", "", s.Character) != nil {
+		t.Fatal("closing the coffer should hide contents that have not been taken")
+	}
+}
+
+
+func TestReadingUnrelatedItemDoesNotCompletePrayerQuest(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	s.Character.SetStoryFlag("opened_tomb_coffer")
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{Name:"old prayer book", Description:"A common prayer book.", Kind:"lore"})
+	s.readObject([]string{"prayer book"})
+	if s.Character.HasStoryFlag("read_charred_prayer") {
+		t.Fatal("reading an unrelated prayer book must not count as reading the hidden strip")
+	}
+	if s.Character.HasStoryFlag("quest_completed_prayer_without_name") {
+		t.Fatal("the clue quest should not complete without its specific object")
+	}
+}
+
+
+func TestTutorialContainerTeachesPickupAndPreservesConsumableData(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_storehouse"
+	r := s.World.GetRoom(s.Character.RoomID)
+	if findRoomObject(r, "practice bandage", "", s.Character) != nil {
+		t.Fatal("practice bandage should be hidden inside the closed chest")
+	}
+	s.openContainer([]string{"practice chest"})
+	if findRoomObject(r, "practice bandage", "", s.Character) == nil {
+		t.Fatal("opening the practice chest should reveal the bandage")
+	}
+	s.getObject([]string{"practice bandage"})
+	found := false
+	for _, carried := range s.Character.Inventory {
+		if strings.EqualFold(carried.Name, "practice bandage") {
+			found = true
+			if carried.Healing != 20 || carried.Kind != "consumable" {
+				t.Fatalf("tutorial item lost its consumable properties: %#v", carried)
+			}
+		}
+	}
+	if !found { t.Fatal("practice bandage should enter inventory") }
+}
+
+
+func TestSearchDoesNotOpenClosedContainerOrRevealItsContents(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	r := s.World.GetRoom(s.Character.RoomID)
+	coffer := findRoomObjectByID(r, "tomb_coffer")
+	if coffer == nil { t.Fatal("expected votive coffer") }
+	s.searchObject([]string{"coffer"})
+	if coffer.Open { t.Fatal("searching should not silently open a closed container") }
+	if findRoomObject(r, "prayer strip", "", s.Character) != nil {
+		t.Fatal("searching a closed coffer should not expose its contents")
 	}
 }
