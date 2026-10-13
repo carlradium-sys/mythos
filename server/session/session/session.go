@@ -674,9 +674,9 @@ func (s *Session) currentQuests(args []string) {
 	s.ensureQuests()
 	if len(args) > 0 && args[0] == "track" {
 		if len(args) != 2 { s.WriteLine("Usage: current quests track <ID>"); return }
-		id, err := strconv.Atoi(args[1]); all := quest.All()
-		if err != nil || id < 1 || id > len(all) { s.WriteLine("Invalid quest ID. Use 'current quests' to see IDs."); return }
-		q := all[id-1]
+		id, err := strconv.Atoi(args[1])
+		q, found := quest.GetByNumber(id)
+		if err != nil || !found { s.WriteLine("Invalid quest ID. Use 'current quests' to see IDs."); return }
 		if !s.questUnlocked(q) || s.Character.Quests[q.ID] >= q.Required { s.WriteLine("That quest is not active. Choose one from 'current quests'."); return }
 		s.Character.TrackedQuest = q.ID
 		s.WriteLine("Quest tracker set to [%d] %s.", id, q.Name)
@@ -695,12 +695,12 @@ func (s *Session) currentQuests(args []string) {
 func (s *Session) currentQuestList() {
 	active := 0
 	s.WriteLine("\x1b[1;36mCURRENT QUESTS\x1b[0m")
-	for i, q := range quest.All() {
+	for _, q := range quest.All() {
 		p := s.Character.Quests[q.ID]
 		if !s.questUnlocked(q) || p >= q.Required { continue }
 		active++; marker := " "
 		if s.Character.TrackedQuest == q.ID { marker = "*" }
-		s.WriteLine(" %s[%d] %-28s (%d/%d)", marker, i+1, q.Name, p, q.Required)
+		s.WriteLine(" %s[%d] %-28s (%d/%d)", marker, q.Number, q.Name, p, q.Required)
 		s.WriteLine("     %s", q.Goal)
 	}
 	if active == 0 { s.WriteLine("You have no active quests at the moment. Explore, speak with people, and examine anything that seems out of place."); return }
