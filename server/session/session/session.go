@@ -1451,7 +1451,7 @@ func (s *Session) lookTarget(args []string) {
 		}
 	}
 	for _, container := range r.Objects {
-		if container == nil || !container.Container || !container.Open || !container.VisibleIn(r.Objects) { continue }
+		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !container.VisibleIn(r.Objects) { continue }
 		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
 			if strings.Contains(strings.ToLower(stored.Name), target) {
 				s.WriteLine("\x1b[1;36m%s\x1b[0m", stored.Name)
@@ -1561,6 +1561,30 @@ func containerStorageKey(roomID, containerID string) string {
 	return roomID + "/" + containerID
 }
 
+
+func containerIsOpen(r *world.Room, object *world.Object, character *character.Character) bool {
+	if object == nil {
+		return false
+	}
+	if r == nil || character == nil || character.OpenContainers == nil {
+		return object.Open
+	}
+	if open, exists := character.OpenContainers[containerStorageKey(r.ID, object.ID)]; exists {
+		return open
+	}
+	return object.Open
+}
+
+func setContainerOpen(r *world.Room, object *world.Object, character *character.Character, open bool) {
+	if r == nil || object == nil || character == nil {
+		return
+	}
+	if character.OpenContainers == nil {
+		character.OpenContainers = map[string]bool{}
+	}
+	character.OpenContainers[containerStorageKey(r.ID, object.ID)] = open
+}
+
 func visibleRoomObjects(r *world.Room, character *character.Character) []*world.Object {
 	if r == nil { return nil }
 	var found []*world.Object
@@ -1608,7 +1632,7 @@ func (s *Session) describeObject(object *world.Object, r *world.Room, character 
 		}
 	}
 	if object.Container {
-		if !object.Open {
+		if !containerIsOpen(r, object, s.Character) {
 			s.WriteLine("It is closed. You will need to open it before you can see what lies inside.")
 		} else {
 			var contents []string
@@ -1638,8 +1662,8 @@ func (s *Session) openContainer(args []string) {
 	object := findRoomObject(r, strings.Join(args, " "), "", s.Character)
 	if object == nil { s.WriteLine("You see no such object here."); return }
 	if !object.Container { s.WriteLine("%s is not a container.", object.Name); return }
-	if object.Open { s.WriteLine("%s is already open.", object.Name); return }
-	object.Open = true
+	if containerIsOpen(r, object, s.Character) { s.WriteLine("%s is already open.", object.Name); return }
+	setContainerOpen(r, object, s.Character, true)
 	s.WriteLine("You work the stubborn clasp loose. %s opens with a dry wooden sigh.", object.Name)
 	if object.ID == "tomb_coffer" {
 		s.Character.SetStoryFlag("opened_tomb_coffer")
@@ -1656,7 +1680,7 @@ func (s *Session) closeContainer(args []string) {
 	object := findRoomObject(r, strings.Join(args, " "), "", s.Character)
 	if object == nil { s.WriteLine("You see no such object here."); return }
 	if !object.Container { s.WriteLine("%s is not a container.", object.Name); return }
-	if !object.Open { s.WriteLine("%s is already closed.", object.Name); return }
+	if !containerIsOpen(r, object, s.Character) { s.WriteLine("%s is already closed.", object.Name); return }
 	object.Open = false
 	s.WriteLine("You close %s.", object.Name)
 	s.persist()
@@ -1674,7 +1698,7 @@ func (s *Session) searchObject(args []string) {
 	}
 	s.WriteLine("You search %s carefully.", object.Name)
 	if object.Container {
-		if !object.Open {
+		if !containerIsOpen(r, object, s.Character) {
 			s.WriteLine("The container is closed. Open it before searching inside.")
 			return
 		}
@@ -1790,7 +1814,7 @@ func (s *Session) getObject(args []string) {
 	object := findRoomObject(r, target, source, s.Character)
 	if object == nil && source != "" {
 		container := findRoomObject(r, source, "", s.Character)
-		if container != nil && container.Container && container.Open {
+		if container != nil && container.Container && containerIsOpen(r, container, s.Character) {
 			key := containerStorageKey(r.ID, container.ID)
 			storedItems := s.Character.ContainerStorage[key]
 			for i, stored := range storedItems {
@@ -1858,7 +1882,7 @@ func (s *Session) putItem(args []string) {
 		s.WriteLine("You cannot find an interactable container matching '%s'.", containerQuery)
 		return
 	}
-	if !container.Open {
+	if !containerIsOpen(r, container, s.Character) {
 		s.WriteLine("The %s is closed. Open it before putting anything inside.", container.Name)
 		return
 	}
@@ -1949,7 +1973,7 @@ func (s *Session) scanItems() {
 	}
 	displayIndex := len(objects) + 1
 	for _, container := range r.Objects {
-		if container == nil || !container.Container || !container.Open || !container.VisibleIn(r.Objects) { continue }
+		if container == nil || !container.Container || !containerIsOpen(r, container, s.Character) || !container.VisibleIn(r.Objects) { continue }
 		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, container.ID)] {
 			found = true
 			s.WriteLine("  %d. %s [stored in %s; takeable]", displayIndex, stored.Name, container.Name)
