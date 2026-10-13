@@ -3230,7 +3230,21 @@ func(s *Session) talk(args []string) {
  if greeting:=s.persistentNPCGreeting(n,topic);greeting!=""{s.WriteLine("%s",greeting);return}
  if topic=="hello"||topic=="greeting"{if greeting:=s.factionGreeting(n);greeting!=""{s.WriteLine("%s",greeting);return}}
  if n.ID=="pythia"&&(topic=="hello"||topic=="greeting"){switch{case s.Character.HasStoryFlag("oracle_trust"):s.WriteLine("\x1b[1;36mPythia smiles faintly. \"You kept the thread I gave you. The river will test that promise when you least expect it.\"\x1b[0m");return;case s.Character.HasStoryFlag("oracle_defied"):s.WriteLine("\x1b[1;36mPythia regards you without anger. \"Still walking your own road, I see. Even the Fates have learned to leave a little room for defiance.\"\x1b[0m");return}}
- if topic=="choice"||topic=="choices"{if n.ID=="pythia"{if s.Character.HasStoryFlag("oracle_choice_made"){s.WriteLine("Pythia studies you. \"The river has recorded your answer. You cannot make that choice unmade.\"");return};s.WriteLine("Pythia's voice falls to a whisper: \"When the Fates offer a thread, will you trust the pattern or cut your own path?\"");s.WriteLine("  choose trust — accept the Oracle's guidance and swear to remember it.");s.WriteLine("  choose defy  — reject prophecy and bear the consequences alone.");if !s.Character.HasStoryFlag("oracle_whisper_heard") { s.WriteLine("Before answering, ask Pythia about the thread or prophecy. She will not ask you to choose without telling you what she has seen.") };return}}
+ if topic == "choice" || topic == "choices" {
+		if n.ID == "pythia" {
+			if s.Character.HasStoryFlag("oracle_choice_made") {
+				s.WriteLine("Pythia studies you. \"The river has recorded your answer. You cannot make that choice unmade.\"")
+				return
+			}
+			s.WriteLine("Pythia's voice falls to a whisper: \"When the Fates offer a thread, will you trust the pattern or cut your own path?\"")
+			s.WriteLine("  choose trust — accept the Oracle's guidance and swear to remember it.")
+			s.WriteLine("  choose defy  — reject prophecy and bear the consequences alone.")
+			if !s.Character.HasStoryFlag("oracle_whisper_heard") {
+				s.WriteLine("Before answering, ask Pythia about the thread or prophecy. She will not ask you to choose without telling you what she has seen.")
+			}
+			return
+		}
+	}
  if n.ID == "village_guide" && s.TutorialStep == 4 &&
 		(topic == "road" || topic == "mountain" || topic == "north") &&
 		!s.Character.HasStoryFlag("tutorial_hint_used") {
