@@ -3261,7 +3261,7 @@ func(s *Session) talk(args []string) {
 	}
  if t:=dialogueText;t!="" {
 		s.WriteLine("\x1b[1;36m%s:\x1b[0m %s",n.Name,t)
-		if n.ID == "pythia" && containsTopicKeyword(topic, "thread", "prophecy", "rebirth", "river", "styx", "fates") && !s.Character.HasStoryFlag("oracle_whisper_heard") {
+		if n.ID == "pythia" && containsTopicKeyword(topic, "thread", "prophecy", "rebirth", "river", "styx", "fate", "fates") && !s.Character.HasStoryFlag("oracle_whisper_heard") {
 			s.Character.SetStoryFlag("oracle_whisper_heard")
 			s.WriteLine("The warning settles into memory. Whatever you decide about the Oracle's path, you have heard what she meant to tell you.")
 		}
