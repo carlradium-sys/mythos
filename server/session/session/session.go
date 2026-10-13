@@ -155,7 +155,7 @@ func (s *Session) handleCommand(input string) bool {
 		s.help(parts[1:])
 	case "tutorial", "guide":
 		s.tutorial()
-	case "look", "l":
+	case "look", "l", "examine", "inspect":
 		if len(parts) > 1 {
 			s.lookTarget(parts[1:])
 			if s.TutorialStep == 2 && s.Character.HasStoryFlag("tutorial_inspected_npc") { s.advanceTutorial(3) }
@@ -184,6 +184,12 @@ func (s *Session) handleCommand(input string) bool {
 		s.WriteLine("You are the first known traveler on this shard.")
 	case "score","stats":
 		s.score()
+	case "get", "take":
+		s.getItem(parts[1:])
+	case "iscan", "itemscan":
+		s.scanItems()
+	case "scan":
+		s.scanTargets()
 	case "inventory", "inv", "i":
 		s.inventory()
 		if s.TutorialStep == 12 { s.advanceTutorial(13) }
@@ -961,6 +967,11 @@ func (s *Session) look() {
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", r.Name)
 	s.WriteLine("%s", r.Description)
+	if len(r.Items) > 0 {
+		s.WriteLine("")
+		s.WriteLine("\x1b[1;33mOBJECTS\x1b[0m")
+		for i, object := range r.Items { s.WriteLine("  [ITEM %d] %s", i+1, object.Name) }
+	}
 	npcs := s.World.NPCs[s.Character.RoomID]
 	if len(npcs) > 0 {
 		s.WriteLine("")
@@ -998,6 +1009,15 @@ func (s *Session) lookTarget(args []string) {
 		} else { s.WriteLine("There is no visible path %s from here.", direction) }
 		return
 	}
+	for i, object := range r.Items {
+		name := strings.ToLower(object.Name)
+		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
+			s.WriteLine("\x1b[1;33m%s\x1b[0m", object.Name)
+			s.WriteLine("%s", describeRoomItem(object))
+			s.WriteLine("This object can be picked up. Use 'get %s' to take it.", object.Name)
+			return
+		}
+	}
 	for i, n := range s.World.NPCs[s.Character.RoomID] {
 		name := strings.ToLower(n.Name)
 		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
@@ -1023,6 +1043,67 @@ func (s *Session) lookTarget(args []string) {
 		}
 	}
 	s.WriteLine("You see no person, creature, or path matching '%s'. Try 'look' for the room summary.", target)
+}
+
+func describeRoomItem(object item.Item) string {
+	switch strings.ToLower(object.Kind) {
+	case "clue":
+		return "A small piece of evidence. Its significance is not obvious yet, but it has been left where someone might find it."
+	case "tool":
+		return "A practical object, worn from use. It may be useful on the road or worth examining more closely."
+	case "consumable":
+		if object.Healing > 0 { return fmt.Sprintf("A supply that can restore up to %d health when used.", object.Healing) }
+		if object.ManaRestore > 0 { return fmt.Sprintf("A supply that can restore up to %d mana when used.", object.ManaRestore) }
+	}
+	return "It has the look of an ordinary object, though ordinary things can still carry a story."
+}
+
+func (s *Session) getItem(args []string) {
+	if len(args) == 0 { s.WriteLine("Take what? Use 'iscan' to see objects you can pick up."); return }
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil || len(r.Items) == 0 { s.WriteLine("There is nothing here that you can pick up."); return }
+	target := strings.ToLower(strings.Join(args, " "))
+	match := -1
+	for i, object := range r.Items {
+		name := strings.ToLower(object.Name)
+		if target == strconv.Itoa(i+1) || strings.Contains(name, target) || strings.Contains(target, name) {
+			if match >= 0 { s.WriteLine("More than one object matches. Use 'iscan' and try a more specific name."); return }
+			match = i
+		}
+	}
+	if match < 0 { s.WriteLine("You cannot find an object matching '%s' here. Use 'iscan' to check what's available.", strings.Join(args, " ")); return }
+	object := r.Items[match]
+	r.Items = append(r.Items[:match], r.Items[match+1:]...)
+	s.Character.Inventory = append(s.Character.Inventory, object)
+	s.WriteLine("You pick up %s.", object.Name)
+	if object.Kind == "clue" { s.Character.SetStoryFlag("found_"+strings.ReplaceAll(strings.ToLower(object.Name), " ", "_")) }
+}
+
+func (s *Session) scanItems() {
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil || len(r.Items) == 0 { s.WriteLine("You find no loose, interactable objects here."); return }
+	s.WriteLine("\x1b[1;33mINTERACTABLE OBJECTS\x1b[0m")
+	for i, object := range r.Items { s.WriteLine("  %d. %s — %s", i+1, object.Name, describeRoomItem(object)) }
+	s.WriteLine("Use 'examine <name>' to inspect one, or 'get <name>' to pick it up.")
+}
+
+func (s *Session) scanTargets() {
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("You cannot get a clear sense of your surroundings."); return }
+	found := false
+	s.WriteLine("\x1b[1;33mVISIBLE TARGETS\x1b[0m")
+	for i, n := range s.World.NPCs[s.Character.RoomID] {
+		label := "person"
+		if n.HasShop() { label = "merchant" }
+		s.WriteLine("  [NPC %d] %s (%s)", i+1, n.Name, label)
+		found = true
+	}
+	if s.Enemy != nil && s.Enemy.HP > 0 {
+		s.WriteLine("  [ENEMY 1] %s — Health %d/%d", s.Enemy.Name, s.Enemy.HP, s.Enemy.MaxHP)
+		found = true
+	}
+	if !found { s.WriteLine("No people or creatures are immediately visible.") }
+	s.WriteLine("Scanning does not start combat. Use 'examine <name>' to learn more.")
 }
 
 func compactText(value string, limit int) string {
