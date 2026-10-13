@@ -1725,3 +1725,34 @@ func TestHarpyLetterRequiresPickupAndReadingToAdvanceQuest(t *testing.T) {
 		t.Fatal("rereading the letter must not duplicate its permanent memory")
 	}
 }
+
+
+func TestOfferingHarpyLetterToShadeAdvancesUnderworldFollowUp(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.World = world.NewWorld()
+	s.Character.RoomID = "fields_asphodel"
+	s.Character.SetStoryFlag("read_harpy_letter")
+	s.Character.Inventory = append(s.Character.Inventory, item.Item{
+		Name: "feather-folded letter",
+		Description: "A letter found beneath a black feather.",
+		Kind: "lore",
+	})
+
+	s.offerItem("letter", "shade")
+	if !s.Character.HasStoryFlag("offered_harpy_letter_to_shade") {
+		t.Fatal("offering the read letter to the shade should record the witness")
+	}
+	if s.Character.Quests["a_witness_for_the_shade"] < 1 {
+		t.Fatal("offering the letter should complete the Underworld follow-up quest")
+	}
+	for _, carried := range s.Character.Inventory {
+		if strings.Contains(strings.ToLower(carried.Name), "feather-folded letter") {
+			t.Fatal("the shade should keep the offered letter")
+		}
+	}
+	memories := len(s.Character.Memories)
+	s.offerItem("letter", "shade")
+	if len(s.Character.Memories) != memories {
+		t.Fatal("repeating the offer should not duplicate the permanent memory")
+	}
+}
