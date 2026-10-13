@@ -8,39 +8,7 @@ type Topic struct {
 }
 
 var topics = map[string]Topic{
-	"start": {"start", `FATEWALKER: GETTING STARTED
-
-You are not following a linear quest. You are entering a living myth.
-
-Your first life begins in Ancient Greece. Explore, fight, learn, awaken,
-make choices, and uncover why the Fates have marked you for rebirth.
-
-BASIC LOOP
-  look                 Examine the room and discover threats.
-  hint                 Ask a nearby NPC what to ask or do next.
-  north/south/east/west Travel through discovered paths.
-  attack               Fight with your equipped weapon.
-  powers               See divine powers and their unlock levels.
-  awaken <domain>      Choose your first divine resonance at level 3.
-  score                Review your character.
-  inventory             Review carried items and their bonuses.
-  wield / wear <item>  Equip a weapon or armor.
-  use <item>           Consume a healing or mana-restoration item.
-  craft <recipe>       Make gear at Theron's forge from monster materials.
-  map                  Show the local map now.
-  automap on/off       Show or hide the local map after movement.
-  help <topic>         Read a detailed help file (try inventory or powers).
-  journal              See the current story thread without a forced quest path.
-  quests               Review active, completed, and choice-locked quests.
-  soul                 Review memories, oaths, scars, echoes, and faction standing.
-  invoke               Use your once-per-life manifestation.
-  rebirth              At level 10, cross the Styx and begin another life.
-
-First-time visits to places grant exploration XP, so discovery matters as
-much as combat. You can revisit places, but a room's discovery reward is one-time.
-
-There is no single correct way to play. The story gives you mysteries and
-consequences; the sandbox gives you room to decide what they mean.`},
+	"start": {"start", `FATEWALKER: GETTING STARTED\n\nYou have entered a world with its own history, grudges, rituals, and unanswered questions. Your first life begins in Ancient Greece, but the story does not belong to a single age. Choices leave marks on the soul, and rebirth can carry those marks into a changed world.\n\nThere is no required sequence of commands beyond the occasional situation that needs a direct action. Read what a place tells you. Speak to people as people, not as vending machines for quests. Examine unfamiliar things. Follow a rumor if it interests you, and return to an unfinished mystery when you are ready.\n\nWHEN YOU NEED A HAND\n  look                  Read the current room and its visible people or threats.\n  look <name>            Inspect a person, creature, or connected place.\n  talk <name> <question> Ask an NPC about something in natural language.\n  hint                   Request an optional nudge from someone nearby.\n  exits / map            Understand routes and nearby connections.\n  inv / eq               Review carried items and equipped gear.\n  quests / journal       Review objectives and story threads you have found.\n  help <topic>           Read a detailed reference without losing your place.\n\nCOMBAT AND GROWTH\n  attack <target>        Begin a weapon attack when you choose to fight.\n  cast <power>           Use a divine power you have unlocked.\n  ql                     Review your combat quicklist.\n  awaken <domain>        At level 3, choose a divine resonance.\n  rebirth                At level 10, begin another life and enter a new era.\n\nRooms describe what is present; they do not all represent combat encounters. Some creatures attack on sight, others defend themselves, and some may have no interest in you at all. Looking around should not restart a defeated encounter. Discovery, conversation, and exploration can matter as much as victory.\n\nThe help files explain the rules. The world itself tells the story.`},
 	"movement": {"movement", `MOVEMENT & EXPLORATION
 
 Use north, south, east, west, up, down, in, or out. Short forms also
