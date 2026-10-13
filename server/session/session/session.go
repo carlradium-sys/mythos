@@ -210,6 +210,8 @@ func (s *Session) handleCommand(input string) bool {
 		s.closeContainer(parts[1:])
 	case "read":
 		s.readObject(parts[1:])
+	case "search":
+		s.searchObject(parts[1:])
 	case "scan":
 		s.scanTargets()
 	case "iscan", "itemscan", "scanitems":
@@ -1398,6 +1400,34 @@ func (s *Session) closeContainer(args []string) {
 	object.Open = false
 	s.WriteLine("You close %s.", object.Name)
 	s.persist()
+}
+
+func (s *Session) searchObject(args []string) {
+	if len(args) == 0 { s.WriteLine("Search what? Name a container, fixture, or object."); return }
+	r := s.World.GetRoom(s.Character.RoomID)
+	if r == nil { s.WriteLine("There is nowhere here to search."); return }
+	query := strings.Join(args, " ")
+	object := findRoomObject(r, query, "", s.Character)
+	if object == nil {
+		s.WriteLine("You find nothing matching '%s'. Try 'iscan' to list visible objects.", query)
+		return
+	}
+	s.WriteLine("You search %s carefully.", object.Name)
+	if object.Container {
+		if !object.Open {
+			s.WriteLine("The container is closed. Open it before searching inside.")
+			return
+		}
+		found := 0
+		for _, child := range r.Objects {
+			if child == nil || child.ContainerID != object.ID || !child.Visible || s.Character.HasStoryFlag("object_taken_"+child.ID) { continue }
+			found++
+			s.WriteLine("  You find: %s.", child.Name)
+		}
+		if found == 0 { s.WriteLine("There is nothing else inside.") }
+		return
+	}
+	s.describeObject(object, r, s.Character)
 }
 
 func (s *Session) readObject(args []string) {
