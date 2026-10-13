@@ -24,7 +24,7 @@ A young satyr has been asked to keep the player company. He is wary and a little
 
 ### 5. The Storehouse and the Gate
 
-The storehouse contains useful objects and signs of previous travelers. Players can inspect objects, take available items, review inventory and equipment, and consult help. The gate offers a view of Asterion Village and the first open-world choices. Crossing it closes the prologue for that character.
+The storehouse contains useful objects and signs of previous travelers. A practice chest holds a real healing bandage, so players can scan the room, open a container, look inside, pick up an item, and examine its description before reviewing inventory and equipment. The gate offers a view of Asterion Village and the first open-world choices. Crossing it closes the prologue for that character.
 
 ## Interaction commands
 
@@ -34,8 +34,12 @@ The storehouse contains useful objects and signs of previous travelers. Players 
 - `hint`: request an optional nudge. Hints should not repeat automatically.
 - `exits`, `map`, and `worldmap`: understand the nearby routes and wider world.
 - `scan`: list visible people and creatures. Scanning does not start combat.
-- `iscan`: list loose objects that can be interacted with.
-- `get <name>`: pick up an available object; `inv` reviews carried items.
+- `iscan`: list visible objects and distinguish containers, takeable items, and scenery.
+- `open <container>`, `close <container>`, and `look in <container>`: reveal and inspect container contents. Closed containers keep their contents hidden.
+- `get <name>` or `get <item> from <container>`: pick up an available object; `get all` collects visible takeable objects.
+- `examine <name>`, `search <name>`, and `read <name>`: investigate details, search an open container, or read a written clue.
+- `offer <item> to <object>`: make a story offering when the situation calls for one; `offer memory <moment>` records a player-authored memory in Asphodel.
+- `inv` reviews carried items. `drop <name>` leaves ordinary non-quest items in the room.
 - `eq`, `wield <name>`, and `wear <name>`: review and change equipment.
 - `attack <name>`: begin combat when the player chooses to fight.
 - `help <topic>`, `quests`, and `journal`: look up rules and recover the larger story context.
