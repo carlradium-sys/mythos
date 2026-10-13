@@ -16,11 +16,12 @@ type Object struct {
 	Visible     bool
 	Takeable    bool
 	Container   bool
+	Open        bool
 	StoredItem  *item.Item
 }
 
 func NewObject(id, name, description string, keywords ...string) *Object {
-	return &Object{ID:id, Name:name, Description:description, Keywords:keywords, Visible:true}
+	return &Object{ID:id, Name:name, Description:description, Keywords:keywords, Visible:true, Open:true}
 }
 
 func (o *Object) Matches(query string) bool {
@@ -42,7 +43,7 @@ func (o *Object) VisibleIn(objects []*Object) bool {
 	if o.ContainerID == "" { return true }
 	for _, parent := range objects {
 		if parent != nil && parent.ID == o.ContainerID {
-			return parent.Visible && parent.Container
+			return parent.Visible && parent.Container && parent.Open
 		}
 	}
 	return false
