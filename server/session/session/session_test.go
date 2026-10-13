@@ -1827,3 +1827,38 @@ func TestOfferingUnrelatedItemToShadeDoesNotTriggerLetterClue(t *testing.T) {
 		t.Fatal("the unrelated item must remain in inventory")
 	}
 }
+
+
+func TestQuestTrackerChecklistReflectsPersistentStoryFlags(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.SetStoryFlag("found_scratched_coin")
+	steps := questTrackerSteps("coin_in_the_ash")
+	if len(steps) != 2 {
+		t.Fatalf("coin quest checklist has %d steps, want 2", len(steps))
+	}
+	if !s.Character.HasStoryFlag(steps[0].Flag) {
+		t.Fatal("first coin objective should be marked complete after recovering the coin")
+	}
+	if s.Character.HasStoryFlag(steps[1].Flag) {
+		t.Fatal("coin examination should remain incomplete until its story flag is recorded")
+	}
+	if steps[1].Hint == "" {
+		t.Fatal("unfinished objective should have a useful next lead")
+	}
+}
+
+func TestQuestTrackerNextLeadUsesFirstUnfinishedClue(t *testing.T) {
+	s := newChoiceTestSession(t)
+	q, ok := quest.Get("coin_in_the_ash")
+	if !ok {
+		t.Fatal("coin quest missing from catalogue")
+	}
+	steps := questTrackerSteps(q.ID)
+	if got := s.questNextLead(q, steps); got != steps[0].Hint {
+		t.Fatalf("first lead = %q, want %q", got, steps[0].Hint)
+	}
+	s.Character.SetStoryFlag("found_scratched_coin")
+	if got := s.questNextLead(q, steps); got != steps[1].Hint {
+		t.Fatalf("next lead after recovering coin = %q, want %q", got, steps[1].Hint)
+	}
+}
