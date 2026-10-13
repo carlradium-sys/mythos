@@ -2205,3 +2205,18 @@ func TestDroppedItemCanBePickedUpByOnlyOnePlayer(t *testing.T) {
 		t.Fatal("a picked-up dropped item should no longer remain in the shared room")
 	}
 }
+
+
+func TestPythiaWarningRecognizesNaturalStoryTopics(t *testing.T) {
+	for _, topic := range []string{"thread", "fate", "prophecy", "rebirth"} {
+		t.Run(topic, func(t *testing.T) {
+			s := newChoiceTestSession(t)
+			s.Character.RoomID = "oracle_path"
+			s.Character.Quests["black_thread"] = 1
+			s.talk([]string{"pythia", topic})
+			if !s.Character.HasStoryFlag("oracle_whisper_heard") {
+				t.Fatalf("topic %q should surface Pythia's warning and record that it was heard", topic)
+			}
+		})
+	}
+}
