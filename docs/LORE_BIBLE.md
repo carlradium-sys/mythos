@@ -88,3 +88,12 @@ Future lives should change the world's assumptions, not merely its technology. T
 - Is rebirth a gift, a punishment, a repair mechanism, or a system someone has learned to exploit?
 
 Answers should emerge through multiple independent sources, physical clues, and consequences across eras. Avoid resolving an open mystery in a single NPC monologue.
+
+
+## Environmental clues and cross-era continuity
+
+Environmental interactions should reward attention without turning every room into a command checklist. A player may listen, inspect, read, search, or touch a relevant feature; only a meaningful interaction should change story state. Room descriptions establish atmosphere, while an interaction reveals something that could not be known from merely entering.
+
+The old well in Asterion and the hidden river beneath modern Athens share a specific sound: oars dipping at a measured pace, followed by a half-heard name. Listening at the well records the first clue. Listening beneath modern Athens only resolves the echo if the player has already heard its beginning in Asterion. The two places are not magically copying one another; both open onto the same river, which crosses geography and historical eras without respecting either.
+
+Do not explain the whole mechanism in early dialogue. The player should be able to infer a connection before any NPC confirms it. Repeating an interaction may deepen atmosphere, but it must not duplicate permanent memories, repeatedly award quest rewards, or create contradictory versions of the same clue. Story flags and journal progress should remain consistent across logout, reconnect, and rebirth according to the game's established persistence rules.
