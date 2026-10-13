@@ -862,7 +862,8 @@ func TestFirstLifeRouteCompletesCoreQuests(t *testing.T) {
 	s.move("east")
 	if !s.Character.HasStoryFlag("quest_completed_oath_across_the_river") { t.Fatal("trust quest missing") }
 	s.move("down")
-	if !s.Character.HasStoryFlag("styx_memory_recovered") { t.Fatal("Styx quest missing") }
+	s.listen([]string{"water"})
+	if !s.Character.HasStoryFlag("styx_memory_recovered") { t.Fatal("Styx quest missing after listening to the river") }
 	s.rebirth(nil)
 	if s.Character.Life != 2 || s.Character.RoomID != "modern_crossroads" { t.Fatalf("rebirth destination: life %d room %q", s.Character.Life, s.Character.RoomID) }
 }
