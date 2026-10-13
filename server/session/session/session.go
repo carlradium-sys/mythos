@@ -301,6 +301,8 @@ func (s *Session) handleCommand(input string) bool {
 	case "quests":
 		s.questList()
 		if s.TutorialStep == 14 { s.advanceTutorial(15) }
+	case "current":
+		s.currentQuests(parts[1:])
 	case "soul","legacy":
 		s.soul()
 	case "invoke","gift":
@@ -668,6 +670,61 @@ func (s *Session) advanceQuestKill(enemy string) {
   }
  }
 }
+func (s *Session) currentQuests(args []string) {
+	s.ensureQuests()
+	if len(args) > 0 && args[0] == "track" {
+		if len(args) != 2 { s.WriteLine("Usage: current quests track <ID>"); return }
+		id, err := strconv.Atoi(args[1]); all := quest.All()
+		if err != nil || id < 1 || id > len(all) { s.WriteLine("Invalid quest ID. Use 'current quests' to see IDs."); return }
+		q := all[id-1]
+		if !s.questUnlocked(q) || s.Character.Quests[q.ID] >= q.Required { s.WriteLine("That quest is not active. Choose one from 'current quests'."); return }
+		s.Character.TrackedQuest = q.ID
+		s.WriteLine("Quest tracker set to [%d] %s.", id, q.Name)
+		s.showCurrentQuest(q); return
+	}
+	if len(args) > 0 && args[0] == "untrack" { s.Character.TrackedQuest = ""; s.WriteLine("Quest tracker cleared."); return }
+	if len(args) == 0 || (len(args) == 1 && args[0] == "quests") { s.currentQuestList(); return }
+	s.WriteLine("Usage: current quests | current quests track <ID> | current quest | current quests untrack")
+}
+
+func (s *Session) currentQuestList() {
+	active := 0
+	s.WriteLine("\x1b[1;36mCURRENT QUESTS\x1b[0m")
+	for i, q := range quest.All() {
+		p := s.Character.Quests[q.ID]
+		if !s.questUnlocked(q) || p >= q.Required { continue }
+		active++; marker := " "
+		if s.Character.TrackedQuest == q.ID { marker = "*" }
+		s.WriteLine(" %s[%d] %-28s (%d/%d)", marker, i+1, q.Name, p, q.Required)
+		s.WriteLine("     %s", q.Goal)
+	}
+	if active == 0 { s.WriteLine("You have no active quests at the moment. Explore, speak with people, and examine anything that seems out of place."); return }
+	s.WriteLine("Use 'current quests track <ID>' to pin a quest to your tracker.")
+	if q, ok := quest.Get(s.Character.TrackedQuest); ok { s.WriteLine("Tracked: %s. Type 'current quest' for details.", q.Name) }
+}
+
+func (s *Session) showCurrentQuest(q quest.Quest) {
+	p := s.Character.Quests[q.ID]; if p > q.Required { p = q.Required }
+	status := "In progress"; if p >= q.Required { status = "Complete" }
+	s.WriteLine(""); s.WriteLine("\x1b[1;36mCURRENT QUEST — %s\x1b[0m", q.Name)
+	s.WriteLine("Quest ID: %s", q.ID); s.WriteLine("Status: %s (%d/%d)", status, p, q.Required)
+	s.WriteLine(""); s.WriteLine("%s", q.Description); s.WriteLine(""); s.WriteLine("Your task: %s", q.Goal)
+	s.WriteLine("Progress: %d of %d objective(s) complete.", p, q.Required)
+	if p < q.Required {
+		switch {
+		case q.TargetRoom != "" && q.TargetEnemy != "":
+			if s.Character.RoomID == q.TargetRoom { s.WriteLine("Next lead: You are in the right place. Look around and deal with the threat when you are ready.") } else if room := s.World.GetRoom(q.TargetRoom); room != nil { s.WriteLine("Next lead: Find your way to %s.", room.Name) } else { s.WriteLine("Next lead: Follow the clues toward %s.", strings.ReplaceAll(q.TargetRoom, "_", " ")) }
+		case q.TargetRoom != "":
+			if s.Character.RoomID == q.TargetRoom { s.WriteLine("Next lead: You have reached the place tied to this thread. Look around and examine anything unusual.") } else if room := s.World.GetRoom(q.TargetRoom); room != nil { s.WriteLine("Next lead: Travel toward %s and pay attention to what the place reveals.", room.Name) }
+		case q.RequiredFlag != "" && !s.Character.HasStoryFlag(q.RequiredFlag): s.WriteLine("Next lead: %s.", questUnlockHint(q.RequiredFlag))
+		case q.CompletionFlag != "" && !s.Character.HasStoryFlag(q.CompletionFlag): s.WriteLine("Next lead: Examine, read, listen, or offer the relevant object to uncover the next clue.")
+		default: s.WriteLine("Next lead: Revisit the people and places connected to this story, and examine anything that seems significant.")
+		}
+	}
+	if q.RewardXP > 0 { s.WriteLine("Reward: %d XP and %d gold.", q.RewardXP, q.RewardGold) }
+	s.WriteLine(""); s.WriteLine("Tip: use 'look', 'examine <thing>', 'listen', or 'talk <person>' when following a clue.")
+}
+
 func (s *Session) questList() {
 	s.ensureQuests()
 	s.WriteLine("")
@@ -763,7 +820,7 @@ func (s *Session) journal() {
 	if q, ok := s.nextAvailableQuest(); ok {
 		s.WriteLine("\x1b[1;33mSuggested thread: %s\x1b[0m", q.Name)
 		s.WriteLine("%s", q.Goal)
-		s.WriteLine("Use 'quests' to review every active and locked thread.")
+		s.WriteLine("Use 'current quests' to see active quests, or 'current quest' for your tracked quest.")
 	} else {
 		s.WriteLine("No new story thread is calling clearly. Explore, revisit old places, or speak with the people you have met.")
 	}
