@@ -2250,3 +2250,74 @@ func TestEncounterVictoryPersistsAcrossReconnectButResetsForNewLife(t *testing.T
 		t.Fatal("a new life should be able to encounter the Manticore again")
 	}
 }
+
+
+func TestHuntingGroundEncountersRespawnAndAwardRepeatableRewards(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "fields_asphodel"
+
+	s.spawnEnemy()
+	if s.Enemy == nil || s.Enemy.Name != "Restless Shade" {
+		t.Fatalf("expected a Restless Shade in the Fields of Asphodel, got %#v", s.Enemy)
+	}
+	firstXP := s.Enemy.XP
+	s.defeatEnemy(false)
+	if s.Character.Experience != firstXP {
+		t.Fatalf("first hunting victory should award %d XP, got %d", firstXP, s.Character.Experience)
+	}
+	if s.Character.HasStoryFlag(encounterDefeatedFlag("fields_asphodel", s.Character.Life)) {
+		t.Fatal("repeatable hunting ground must not permanently mark its encounter defeated")
+	}
+	hasMaterial := false
+	for _, owned := range s.Character.Inventory {
+		if owned.Name == "asphodel dust" {
+			hasMaterial = true
+			break
+		}
+	}
+	if !hasMaterial {
+		t.Fatal("Restless Shade should yield its regional crafting material")
+	}
+
+	// Leaving clears the session's room-local victory marker; a return creates
+	// another ordinary encounter without reopening a one-time story boss.
+	s.EncounterClearedRoom = ""
+	s.spawnEnemy()
+	if s.Enemy == nil || s.Enemy.Name != "Restless Shade" {
+		t.Fatalf("expected the hunting-ground creature to return, got %#v", s.Enemy)
+	}
+	s.defeatEnemy(false)
+	if s.Character.Experience != firstXP*2 {
+		t.Fatalf("second hunting victory should award repeatable XP; want %d, got %d", firstXP*2, s.Character.Experience)
+	}
+}
+
+func TestHuntingGroundRosterHasDistinctProgressionTiers(t *testing.T) {
+	s := newChoiceTestSession(t)
+	cases := []struct {
+		room string
+		name string
+		minXP int
+	}{
+		{"ancient_athens", "Bronze Hoplite", 50},
+		{"fields_asphodel", "Restless Shade", 80},
+		{"olympus_garden", "Ambrosia Wisp", 100},
+		{"modern_rooftop", "Storm Crow", 150},
+	}
+	for _, tc := range cases {
+		s.Character.RoomID = tc.room
+		s.Enemy = nil
+		s.EncounterClearedRoom = ""
+		s.spawnEnemy()
+		if s.Enemy == nil || s.Enemy.Name != tc.name {
+			t.Errorf("room %s: expected %s, got %#v", tc.room, tc.name, s.Enemy)
+			continue
+		}
+		if s.Enemy.XP < tc.minXP {
+			t.Errorf("%s XP = %d, want at least %d", tc.name, s.Enemy.XP, tc.minXP)
+		}
+		if !repeatableHuntingGround(tc.room) {
+			t.Errorf("%s should be registered as a repeatable hunting ground", tc.room)
+		}
+	}
+}
