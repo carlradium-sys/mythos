@@ -27,6 +27,17 @@ func NewWorld() *World {
 	coin.Takeable = true
 	foothills.Objects = append(foothills.Objects, ashBed, coin)
 
+	// A sealed coffer rewards players who inspect, open, search, and read rather
+	// than treating every room description as a checklist.
+	coffer := NewObject("tomb_coffer", "sealed votive coffer", "A squat cedar coffer is bound with blackened bronze. The lock has no keyhole; three shallow marks are pressed into its lid: a straight line, a broken line, and an unfinished one.", "coffer", "chest", "box", "votive chest")
+	coffer.Container = true
+	coffer.Open = false
+	coffer.Takeable = false
+	prayer := NewObject("charred_prayer_strip", "charred prayer strip", "The surviving words are written in an older hand: 'I did not ask to be remembered. I asked that someone remember why I stayed.' Beneath the sentence, the same three-line mark has been drawn with a trembling hand.", "prayer", "strip", "prayer strip", "writing", "parchment")
+	prayer.ContainerID = coffer.ID
+	prayer.Takeable = true
+	den.Objects = append(den.Objects, coffer, prayer)
+
 	offeringBowl := NewObject("offering_bowl", "empty offering bowl", "A shallow clay bowl rests beside the old well. A thumbprint remains in the dust inside it, though no one admits to having touched it.", "bowl", "clay bowl", "offering")
 	offeringBowl.Takeable = false
 	village.Objects = append(village.Objects, offeringBowl)
