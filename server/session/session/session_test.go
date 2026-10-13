@@ -1638,3 +1638,17 @@ func TestTutorialContainerTeachesPickupAndPreservesConsumableData(t *testing.T) 
 	}
 	if !found { t.Fatal("practice bandage should enter inventory") }
 }
+
+
+func TestSearchDoesNotOpenClosedContainerOrRevealItsContents(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	r := s.World.GetRoom(s.Character.RoomID)
+	coffer := findRoomObjectByID(r, "tomb_coffer")
+	if coffer == nil { t.Fatal("expected votive coffer") }
+	s.searchObject([]string{"coffer"})
+	if coffer.Open { t.Fatal("searching should not silently open a closed container") }
+	if findRoomObject(r, "prayer strip", "", s.Character) != nil {
+		t.Fatal("searching a closed coffer should not expose its contents")
+	}
+}
