@@ -7,6 +7,7 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 ## Current playable foundation
 
 - TCP MUD server on port 4000
+- Live online player roster and room/world/private communication
 - Ancient Greece starter route
 - Room-to-room movement
 - Active ANSI-color map
@@ -23,6 +24,10 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Persistent soul relics with once-per-encounter defensive and offensive effects
 - Choice-linked relic rewards and a Delphi exploration reward
 - Inventory and equipment foundation
+- Real room objects with descriptions, keywords, containers, and takeable state
+- Object inspection and pickup: `look coin`, `examine coin`, `get coin from ash`
+- Separate `scan` (people/creatures/objects) and `iscan` (interactable objects) commands
+- Creature behavior states: wary and passive creatures do not attack just because you enter
 - Consumable items with health and mana restoration
 - Merchant supplies: ambrosia draughts, blue lotus tonics, and laurel poultices
 - Tactical item use: aggressive enemies take their turn after you consume a supply
@@ -81,7 +86,7 @@ to inspect logs.
 
 ### First-life progression
 
-Use `help`, `look`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
+Use `help`, `look`, `scan`, `iscan`, `examine`, `get`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. For example, in the Olympus foothills, try `look coin`, `get coin from ash`, then `examine coin` to uncover a small piece of the larger mystery. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
 
 ### Suggested first-life route
 
@@ -97,7 +102,7 @@ requirements, and XP rewards. First-time room visits also grant exploration XP.
 
 ## Commands
 
-`look`, `map`, movement commands, `attack`, `cast <power>`, `ql`, `ql set <slot> <power>`, `ql <slot> <target>`, `ql clear <slot>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help <topic>`, `quit`. Spell-specific help works too, e.g. `help Stormspark` or `help Judgment of the Sky`.
+`look`, `examine`/`inspect`, `get`/`take`, `get all`, `drop`, `offer`, `scan`, `iscan`, `who`, `say`, `chat`, `tell`, `emote`, `map`, movement commands, `attack`, `cast <power>`, `ql`, `ql set <slot> <power>`, `ql <slot> <target>`, `ql clear <slot>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help <topic>`, `quit`. Spell-specific help works too, e.g. `help Stormspark` or `help Judgment of the Sky`.
 
 ## World vision
 
