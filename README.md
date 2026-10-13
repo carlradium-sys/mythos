@@ -8,6 +8,7 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 
 - TCP MUD server on port 4000
 - Live online player roster and room/world/private communication
+- Account-session protection to prevent simultaneous stale copies from overwriting character progress
 - Ancient Greece starter route
 - Room-to-room movement
 - Active ANSI-color map
@@ -26,11 +27,13 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Inventory and equipment foundation
 - Real room objects with descriptions, keywords, containers, and takeable state
 - Object inspection, searching, and pickup: `look coin`, `examine coin`, `search ash`, `get coin from ash`, and `get all`
-- Stateful containers: `open`, `close`, `look in`, and `put <item> in <container>` support hiding, storing, and retrieving objects while preserving item properties
+- Stateful containers: `open`, `close`, `look in`, and `put <item> in <container>` support hiding, storing, and retrieving objects while preserving item properties; open/closed state is character-specific even though the room is shared
 - Readable clues and offerings: `read prayer strip` and `offer coin to bowl` advance story quests through discovery and player choice
 - Tutorial practice chest and bandage teach scanning, opening, pickup, and examination safely
+- Story-aware quest tracker: `current quests`, `current quests track <ID>`, `current quest`, and `current quests untrack`
+- Stable numeric quest IDs, persistent discovery checklists, and contextual next-lead hints
 - Separate `scan` (people/creatures/objects) and `iscan` (interactable objects) commands
-- Creature behavior states: wary and passive creatures do not attack just because you enter
+- Creature behavior states: wary and passive creatures do not attack just because you enter; attacking one deliberately provokes it
 - Consumable items with health and mana restoration
 - Merchant supplies: ambrosia draughts, blue lotus tonics, and laurel poultices
 - Tactical item use: aggressive enemies take their turn after you consume a supply
@@ -95,15 +98,15 @@ Use `help`, `look`, `scan`, `iscan`, `examine`, `listen`, `search`, `open`, `clo
 
 ### Suggested first-life route
 
-- Start at the Gates of Olympus and travel north to the foothills.
-- Defeat the Harpy, then continue north to the Oracle Path.
-- Defeat the Satyr before speaking with Pythia. Use `talk choices`, then choose `trust` or `defy`.
-- Continue north to the Delphi Sanctum, then east to the Temple of the First Dawn.
+- A new character begins in the prologue at the Shore Between Heartbeats. Follow the path to the Wayfarer's Shelter, then explore the courtyard, practice grove, and storehouse at your own pace.
+- The tutorial creatures do not attack first. Inspect them before deciding to fight; after the Practice Satyr, return south to the courtyard, go east to the storehouse, then north through the marble gate when ready.
+- The gate returns you to Asterion. Travel north through the village lane to the Olympus foothills. Look around, examine the coin in the ash, and inspect the wary Harpy before deciding how to deal with it.
+- Continue north to the Oracle Path. The Satyr there is passive until challenged, but it guards the road; defeat it when you're ready to proceed to Pythia.
+- Use `talk choices`, then choose `trust` or `defy`. Continue north to the Delphi Sanctum; follow the clues and exits as you explore.
 - Grow stronger and explore the Underworld. The Styx opens at level 7 and Cerberus at level 9.
 - At level 10, use `rebirth` to begin Life II in modern Athens. Your soul flags, memories, and relics persist.
 
-You can use `journal` for a suggested next quest and `quests` for progress,
-requirements, and XP rewards. First-time room visits also grant exploration XP.
+Use `journal` for story context, `quests` for the full quest catalogue, and `current quests` to see active quests. Pin a quest with `current quests track <ID>`; `current quest` then shows its discovery checklist and a gentle next lead. First-time room visits also grant exploration XP.
 
 ## Commands
 
@@ -125,6 +128,6 @@ The repository is currently named `mythos` for continuity, while the game and Go
 
 ## Persistent accounts and characters
 
-Fatewalker now uses server-managed persistence rather than player save commands. Players register or log into an account, then select an existing character or create another. Character state—including level, inventory, rebirth history, soul legacy, and quest progress—is written automatically by the server.
+Fatewalker now uses server-managed persistence rather than player save commands. Players register or log into an account, then select an existing character or create another. Character state—including level, inventory, rebirth history, soul legacy, quest progress, and personal container state—is written automatically by the server. For now, only one session per account may be active at a time; this prevents two stale account copies from overwriting one another.
 
 The account system is the foundation for multiple characters per player and future account-level systems such as character rosters, shared unlocks, reincarnation records, and persistent world consequences.
