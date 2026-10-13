@@ -290,6 +290,15 @@ your first successful weapon strike each encounter. Examining the broken inscrip
 Sanctum completes the Trials of the Seer and grants the Laurel of the Seer,
 which adds 3 damage to your first successful weapon strike each encounter. Defensive relics do not stack; the strongest available ward is used.`},
 	"communication": {"communication", "PLAYER COMMUNICATION\n\nWHO\n  who                 List connected players, their life, level, era, and room.\n\nROOM MESSAGES\n  say <message>       Speak to players in your current room.\n  emote <action>      Describe an action to players in the same room.\n\nPLAYER MESSAGES\n  tell <player> <text> Send a private message to an online player.\n  chat <message>      Send a world-wide message to connected players.\n  gossip <message>    Alias for chat.\n\nNPC dialogue remains separate: use talk <NPC> <topic>, or say <NPC> <topic>\nwhen you want to address someone in the room. Use who to see who is online."},
+	"listen": {"listen", `LISTENING & ENVIRONMENTAL CLUES
+
+Use listen <sound or feature> to pay attention to a place instead of simply passing through it.
+
+Examples:
+  listen well       Hear what the old well in Asterion conceals.
+  listen to water   Follow a sound in the room when the water or river is nearby.
+
+Some clues connect places across eras. If a sound seems incomplete, remember where you first heard it and return when the world has changed. Listening does not start combat; it reveals details only when you are in the right place and pay attention to the right thing.`},
 	"scan": {"scan", `SCANNING & ROOM OBJECTS
 
 Use scan to list visible people, creatures, and objects that stand out.
