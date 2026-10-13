@@ -2123,3 +2123,25 @@ func TestLogoutAtCharacterSelectTransfersAccountReservation(t *testing.T) {
 		t.Fatal("the new account should be reserved by the current session")
 	}
 }
+
+
+func TestPythiaConversationCompletesOracleWhisper(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "oracle_path"
+	s.Character.Quests["black_thread"] = 1
+	s.updateQuests()
+	if got := s.Character.Quests["oracle_whisper"]; got != 0 {
+		t.Fatalf("Oracle quest progress on arrival = %d, want 0 before conversation", got)
+	}
+
+	s.talk([]string{"pythia", "thread"})
+	if !s.Character.HasStoryFlag("oracle_whisper_heard") {
+		t.Fatal("asking Pythia about the thread should record hearing the warning")
+	}
+	if got := s.Character.Quests["oracle_whisper"]; got != 1 {
+		t.Fatalf("Oracle quest progress after conversation = %d, want 1", got)
+	}
+	if !s.Character.HasStoryFlag("quest_completed_oracle_whisper") {
+		t.Fatal("completed Oracle quest should be recorded on the character")
+	}
+}
