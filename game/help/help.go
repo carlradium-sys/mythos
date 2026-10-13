@@ -454,6 +454,7 @@ Use soul (or legacy) to inspect the marks your decisions leave behind.`},
 Offer a physical item to a meaningful recipient when the story calls for it:
   offer coin to bowl       Return the examined scratched coin to Asterion's well.
   offer letter to shade    Give the read feather-folded letter to the Unremembered Shade.
+  give letter to shade     Alias for the same item handoff.
 
 The optional Underworld memory quest also asks you to share a real, specific memory with
 the Unremembered Shade in Asphodel.
@@ -656,6 +657,7 @@ your current story progress.`},
 
 func Get(name string) (Topic, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
+	if name == "give" { name = "offer" }
 	if name == "" { name = "start" }
 	if t, ok := topics[name]; ok {
 		return t, true
@@ -679,5 +681,5 @@ func Get(name string) (Topic, bool) {
 }
 
 func Names() []string {
-	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","put","map","automap","story","journal","quests","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
+	return []string{"start","movement","combat","combatmode","quicklist","guard","progression","economy","world","status","powers","inventory","equipment","items","put","give","map","automap","story","journal","quests","rebirth","talk","offer","hint","soul","invoke","shop","buy","crafting","consumables","tutorial","Stormspark","Thunderfall","Judgment of the Sky","Undertow","Leviathan Surge","Sea of the First Deep","Cinderbrand","Promethean Star","Titanfire","Aegis Pulse","Olympian Bulwark","Sovereign Ward"}
 }
