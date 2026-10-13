@@ -122,7 +122,7 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 	combatTicker := time.NewTicker(2500 * time.Millisecond)
 	defer combatTicker.Stop()
 	s.WriteLine("")
-	s.WriteLine("%s", s.prompt())
+	s.writePrompt()
 	for {
 		select {
 		case line, ok := <-commands:
@@ -139,6 +139,8 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 		}
 	}
 }
+
+func (s *Session) writePrompt() { fmt.Fprint(s.Conn, s.prompt()) }
 
 func (s *Session) prompt() string {
 	return fmt.Sprintf("\x1b[1;36m[%s L%d Life %d HP %d/%d]\x1b[0m > ",s.Character.Era,s.Character.Level,s.Character.Life,s.Character.HP,s.Character.MaxHP)
