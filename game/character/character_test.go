@@ -3,6 +3,8 @@ package character
 import (
 	"encoding/json"
 	"testing"
+
+	"fatewalker/game/item"
 )
 
 func TestStoryFlagsPersistThroughJSON(t *testing.T) {
@@ -104,5 +106,21 @@ func TestCombatPreferencesAndQuicklistPersistThroughJSON(t *testing.T) {
 	}
 	if restored.Quicklist != c.Quicklist {
 		t.Fatalf("quicklist after persistence = %#v, want %#v", restored.Quicklist, c.Quicklist)
+	}
+}
+
+
+func TestContainerStoragePersistsThroughJSON(t *testing.T) {
+	c := New("Keeper")
+	c.ContainerStorage["tutorial_storehouse/tutorial_practice_chest"] = []item.Item{
+		{Name: "practice bandage", Kind: "consumable", Healing: 20},
+	}
+	data, err := json.Marshal(c)
+	if err != nil { t.Fatalf("marshal character: %v", err) }
+	var restored Character
+	if err := json.Unmarshal(data, &restored); err != nil { t.Fatalf("unmarshal character: %v", err) }
+	stored := restored.ContainerStorage["tutorial_storehouse/tutorial_practice_chest"]
+	if len(stored) != 1 || stored[0].Healing != 20 || stored[0].Name != "practice bandage" {
+		t.Fatalf("stored item did not survive persistence: %#v", stored)
 	}
 }
