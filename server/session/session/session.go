@@ -2043,14 +2043,11 @@ func (s *Session) spawnEnemy() {
 	}
 	switch s.Character.RoomID {
 	case "olympus_foothills":
+		// NewHarpy is wary: it guards the ash but does not ambush on arrival.
 		s.Enemy = combat.NewHarpy()
-		// The Harpy guards what it has collected; it should be investigated,
-		// not treated as an automatic ambush.
-		s.Enemy.Behavior = "wary"
 	case "oracle_path":
+		// NewSatyr is passive until the player chooses violence.
 		s.Enemy = combat.NewSatyr()
-		// The Satyr watches the road but only fights once challenged.
-		s.Enemy.Behavior = "wary"
 	case "manticore_den":
 		s.Enemy = combat.NewManticore()
 	case "cerberus_gate":
