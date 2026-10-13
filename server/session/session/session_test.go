@@ -1559,3 +1559,42 @@ func TestCoinOfferingRequiresExaminationAndCompletesOptionalQuest(t *testing.T) 
 	s.offerItem("coin", "bowl")
 	if s.Character.Experience != beforeXP { t.Fatal("repeating the offering should not award the quest twice") }
 }
+
+
+func TestClosedCofferHidesClueUntilOpenedAndRead(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	r := s.World.GetRoom(s.Character.RoomID)
+	if findRoomObject(r, "prayer strip", "", s.Character) != nil {
+		t.Fatal("the prayer strip should not be visible while the coffer is closed")
+	}
+	s.openContainer([]string{"coffer"})
+	if !s.Character.HasStoryFlag("opened_tomb_coffer") {
+		t.Fatal("opening the coffer should record the discovery")
+	}
+	if findRoomObject(r, "prayer strip", "", s.Character) == nil {
+		t.Fatal("the prayer strip should become visible after opening the coffer")
+	}
+	s.getObject([]string{"prayer", "strip"})
+	s.readObject([]string{"prayer", "strip"})
+	if !s.Character.HasStoryFlag("read_charred_prayer") {
+		t.Fatal("reading the strip should record the clue")
+	}
+	if !s.Character.HasStoryFlag("quest_completed_prayer_without_name") {
+		t.Fatal("reading the clue should complete The Prayer Without a Name")
+	}
+	if !s.Character.HasStoryFlag("prayer_witnessed") {
+		t.Fatal("quest completion should record the soul witness")
+	}
+}
+
+func TestClosingCofferHidesUncollectedContentsAgain(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "manticore_den"
+	r := s.World.GetRoom(s.Character.RoomID)
+	s.openContainer([]string{"coffer"})
+	s.closeContainer([]string{"coffer"})
+	if findRoomObject(r, "prayer strip", "", s.Character) != nil {
+		t.Fatal("closing the coffer should hide contents that have not been taken")
+	}
+}
