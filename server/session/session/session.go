@@ -816,7 +816,8 @@ func questTrackerSteps(id string) []questTrackerStep {
 	case "river_of_memory":
 		return []questTrackerStep{
 			{Flag:"quest_completed_oracle_whisper", Text:"Learn what the Oracle knows of the Styx.", Hint:"The Oracle's warning points toward the river."},
-			{Flag:"styx_memory_recovered", Text:"Face the choice waiting at the ancient Styx.", Hint:"Travel to the Shores of the Styx and investigate what the crossing asks of you."},
+			{Flag:"heard_styx_whisper", Text:"Listen to the black water and hear the river's question.", Hint:"At the Shores of the Styx, use 'listen water' and pay attention to what answers."},
+			{Flag:"styx_memory_recovered", Text:"Carry the river's recovered memory into your soul.", Hint:"The memory will settle once you have heard the Styx and answered its call."},
 		}
 	case "oath_across_the_river":
 		return []questTrackerStep{
