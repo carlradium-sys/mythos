@@ -1417,6 +1417,16 @@ func (s *Session) describeObject(object *world.Object, r *world.Room, character 
 			for _, child := range r.Objects {
 				if child != nil && child.ContainerID == object.ID && child.Visible && (character == nil || !character.HasStoryFlag("object_taken_"+child.ID)) { contents = append(contents, child.Name) }
 			}
+			known := map[string]bool{}
+			for _, name := range contents { known[strings.ToLower(name)] = true }
+			if character != nil {
+				for _, stored := range character.ContainerStorage[containerStorageKey(r.ID, object.ID)] {
+					if !known[strings.ToLower(stored.Name)] {
+						contents = append(contents, stored.Name)
+						known[strings.ToLower(stored.Name)] = true
+					}
+				}
+			}
 			if len(contents) > 0 { s.WriteLine("Within it you can make out: %s.", strings.Join(contents, ", ")) } else { s.WriteLine("It appears to be empty.") }
 		}
 	}
@@ -1475,6 +1485,10 @@ func (s *Session) searchObject(args []string) {
 			if child == nil || child.ContainerID != object.ID || !child.Visible || s.Character.HasStoryFlag("object_taken_"+child.ID) { continue }
 			found++
 			s.WriteLine("  You find: %s.", child.Name)
+		}
+		for _, stored := range s.Character.ContainerStorage[containerStorageKey(r.ID, object.ID)] {
+			found++
+			s.WriteLine("  You find: %s.", stored.Name)
 		}
 		if found == 0 { s.WriteLine("There is nothing else inside.") }
 		return
