@@ -20,11 +20,11 @@ func TestQuestNumbersAreUniqueAndResolvable(t *testing.T) {
 }
 
 func TestQuestTrackerNumbersAreNotDerivedFromSlicePosition(t *testing.T) {
-	q, ok := GetByNumber(14)
+	q, ok := GetByNumber(15)
 	if !ok {
 		t.Fatal("expected quest number 14 to resolve")
 	}
 	if q.ID != "letter_among_feathers" {
-		t.Fatalf("quest 14 = %q, want letter_among_feathers", q.ID)
+		t.Fatalf("quest 15 = %q, want letter_among_feathers", q.ID)
 	}
 }
