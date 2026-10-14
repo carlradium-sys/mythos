@@ -15,124 +15,62 @@ type Topic struct {
 var topics = map[string]Topic{
 	"start": {"start", `FATEWALKER: GETTING STARTED
 
-You are not following a linear quest. You are entering a living myth.
+Welcome to Fatewalker. You have returned from a death you cannot remember, and the world seems to know more about you than you know about yourself. There is no need to hurry toward the next mystery. Look around, talk to people, and follow the clues that interest you.
 
-Your first life begins in Ancient Greece. Explore, fight, learn, awaken,
-make choices, and uncover why the Fates have marked you for rebirth.
+A few useful tools:
+  look                 Take in the room and its visible details.
+  look <thing>         Get a closer look at a person, creature, object, or exit.
+  exits                See the paths that leave this room.
+  map / worldmap       Find your bearings nearby or across the wider world.
+  talk <person> <topic> Ask a character about something that matters to you.
+  hint                 Ask someone nearby where to begin.
+  iscan / scan         Find objects, people, and creatures.
+  get <item>           Pick up something you can carry.
+  attack <target>      Start a fight with a creature you can see.
+  inv / eq             Check your pack and your equipped gear.
+  score                Review your health and character progress.
+  quests / journal     See your current objectives and the story around them.
+  help <topic>         Get a fuller explanation whenever you need one.
 
-BASIC LOOP
-  look                 Read the room, its objects, and visible occupants.
-  look <thing>         Inspect a person, creature, object, or exit.
-  get <item> [from <container>]  Pick up a takeable object.
-  get all              Pick up all visible takeable objects in the room.
-  drop <item>          Leave a non-equipped, non-quest item in the current room.
-  iscan                List objects you can inspect or handle.
-  scan                 List people, creatures, and visible objects.
-  who                  List connected players.
-  hint                 Ask a nearby NPC what to ask or do next.
-  north/south/east/west Travel through discovered paths.
-  attack               Fight with your equipped weapon.
-  powers               See divine powers and their unlock levels.
-  awaken <domain>      Choose your first divine resonance at level 3.
-  score                Review your character.
-  inventory             Review carried items and their bonuses.
-  wield / wear <item>  Equip a weapon or armor.
-  use <item>           Consume a healing or mana-restoration item.
-  craft <recipe>       Make gear at Theron's forge from monster materials.
-  map                  Show the local map now.
-  automap on/off       Show or hide the local map after movement.
-  help <topic>         Read a detailed help file (try inventory or powers).
-  journal              See the current story thread without a forced quest path.
-  quests               Review active, completed, and choice-locked quests.
-  current quests       List active quests with IDs and progress.
-  current quest        Show the tracked quest, checklist, and next lead.
-  current quests track <ID>  Track one quest by its displayed ID.
-  soul                 Review memories, oaths, scars, echoes, and faction standing.
-  invoke               Use your once-per-life manifestation.
-  rebirth              At level 10, cross the Styx and begin another life.
+You can use full directions (north, south, east, west) or their short forms (n, s, e, w). NPC numbers shown in the room description work in place of names, too.
 
-First-time visits to places grant exploration XP, so discovery matters as
-much as combat. You can revisit places, but a room's discovery reward is one-time.
+Fatewalker is both a story and a world to explore. Some clues arrive through quests; others are found by listening, examining an object, or asking a question in your own words. You are free to follow the main thread, take side paths, hunt for experience and materials, or return to a mystery later.
 
-There is no single correct way to play. The story gives you mysteries and
-consequences; the sandbox gives you room to decide what they mean.`},
+Your first life is only the beginning. As you grow, you can awaken a divine domain and eventually cross the Styx into another era. Your choices and memories travel with you.`},
 	"movement": {"movement", `MOVEMENT & EXPLORATION
 
-Use north, south, east, west, up, down, in, or out. Short forms also
-work for cardinal and vertical directions: n, s, e, w, u, d.
+Travel by typing a direction: north, south, east, west, up, down, in, or out. The short forms n, s, e, w, u, and d work for the usual directions.
 
-LOOK is important. Rooms can contain enemies, discoveries, NPCs, quests,
-and future story hooks. Automatic mapping is off by default to keep the room view compact. Use automap on to show a map after movement, automap off to hide it, or automap toggle to switch modes. Type map to show it at any time; worldmap shows the wider world.
+When you enter a room, take a moment to read it. The description may mention a landmark, a person, a strange sound, or something that deserves a closer look. If you want the full list of available paths, type exits. If you're curious about one route but aren't ready to take it, try look north (or another direction); you'll see where it leads without moving.
 
-Combat can lock a path until the threat is defeated or escaped.
+Use map to see nearby connections, and worldmap when you want a broader view. If you enjoy having a map after every move, turn automap on; if it makes the screen too busy, use automap off.
 
-EXPLORATION TIP
-If a room feels important, read its description. Fatewalker is designed so
-that the world itself tells part of the story.`},
+Some routes are blocked until a nearby danger is dealt with, or until your story has brought you to the right point. If you cannot leave a room, check whether a creature is still alive and look at the room again.
+
+A small tip: room descriptions are part of the storytelling. If a place feels unusual, pay attention to what it says—and to what it leaves unsaid.`},
 	"combat": {"combat", `COMBAT
 
-ATTACK
-  attack Harpy       Attack by enemy name.
-  attack 1           Number-selector alternative.
+A fight begins when you choose to engage a creature—or when something genuinely hostile attacks you. Not every creature is aggressive. A wary being may watch you from a distance; a passive one, like the practice Satyr, will leave you alone unless you strike first.
 
-Your weapon determines the style of the attack. Combat descriptions can
-target different body locations and may trigger special effects.
+Before you attack, look at the creature. Its description may tell you whether it is wounded, wary, guarding something, or ready to fight. When you're ready, use its name or the number shown in the room:
+  attack Satyr       Attack the creature by name.
+  attack 1           Attack the first listed enemy.
 
-Aggressive creatures can strike as you enter their room. Wary creatures
-watch you without starting a fight; passive creatures do not initiate
-combat unless you challenge them. The Harpy is wary, while the road Satyr and the
-tutorial's practice enemies are passive. Attacking a wary or passive creature
-provokes it. A successful attack, divine cast, or consumable use gives an
-aggressive enemy a chance to retaliate. A consumable is not a free combat turn.
+Your equipped weapon determines your basic attack. The combat text describes the blow and shows damage in parentheses. A successful attack can provoke a response from an enemy that is now fighting you.
 
-AUTOMATIC OR MANUAL COMBAT
-  pc                  Toggle automatic combat on/off instantly.
-  pc on               Enable automatic follow-up weapon attacks.
-  pc off              Disable automatic attacks; type attack each time.
-  combatmode          Display the current setting.
-  combatmode on/off   Set the mode explicitly.
+If automatic combat is on, your character continues making basic weapon attacks every 2.5 seconds after you start the fight. Use pc to toggle that behavior, or pc on / pc off to choose explicitly. Divine powers, items, guard, and fleeing remain available while you fight.
 
 COMBAT QUICKLIST
-  ql                  List your four quick slots.
-  ql set 1 Stormspark Assign a currently unlocked power.
-  ql 1 Harpy          Cast slot 1 at the current target.
-  ql clear 1          Clear a slot.
+  ql                  See your four quick slots.
+  ql set 1 Stormspark Assign an unlocked power to slot 1.
+  ql 1 Satyr           Cast slot 1 at your current target.
+  ql clear 1           Empty slot 1.
 
-Quicklist assignments are saved per character. Slots only contain powers
-unlocked in your current divine domain; casts still cost mana and use normal
-combat retaliation. Basic attacks continue automatically in automatic mode.
+Divine powers cost mana. Use powers to see what your chosen domain offers, and help Stormspark (or another power name) to read about a specific ability.
 
-Automatic combat is on by default. After your first attack, your character
-continues making basic weapon attacks every 2.5 seconds while you are in
-combat. You can still cast powers, use items, guard, or flee. The setting
-is saved separately for each character.
+You can guard to soften the next incoming blow, use an item to recover, or flee when survival matters more than victory. Fleeing may give the enemy one last chance to strike. Rest only when no enemy is actively fighting you.
 
-Every damaging action ends with its damage in parentheses:
-  Your bronze sword slashes the harpy's wing. (14 damage)
-
-CAST
-  cast Stormspark
-  cast Thunderfall
-
-Divine powers cost mana and unlock as you grow.
-
-FLEE
-  flee
-
-Fleeing gives the enemy one final chance to strike before you escape. It
-ends the encounter without victory XP, gold, or loot. If the strike defeats
-you, normal recovery occurs instead. Controlled tutorial practice fights
-cannot be fled; complete the lesson encounter to keep the prologue moving.
-
-REST
-  rest
-
-Rest restores health and mana when no enemy is actively fighting you.
-Some battles are meant to be escaped. Survival is part of the sandbox.
-
-VICTORY
-Defeated enemies grant XP and gold. Use gold in shops for gear.`},
-
+Victories grant experience and drachmae, and some creatures leave materials that a smith can use. Not every encounter is a story boss: hunting grounds offer repeatable fights for practice, resources, and steady progress. When in doubt, check your health, your equipment, and the room's exits before you commit.`},
 	"combatmode": {"combatmode", `COMBAT MODE
 
   pc                 Toggle automatic combat on or off.
