@@ -1159,25 +1159,34 @@ func (s *Session) journal() {
 func (s *Session) tutorial() {
 	if s.Character != nil && s.Character.HasStoryFlag("tutorial_available") {
 		s.prologueHint()
-		s.WriteLine("Your prologue notes are saved. Explore freely, and leave through the one-way gate whenever you feel ready.")
+		s.WriteLine("")
+		s.WriteLine("These notes are here whenever you need them. You can take the suggested step, ask Ianthe a question, or simply look around. The shelter is a place to learn, not a test to pass.")
 		return
 	}
+	s.WriteLine("")
 	s.WriteLine("\x1b[1;33mTHE FIRST THREAD — FIELD GUIDE\x1b[0m")
-	s.WriteLine("LOOK         'look' describes your current room. It does not list paths; use 'exits' for the detailed route list.")
-	s.WriteLine("INSPECT      'look Damon', 'look Harpy', or 'look east' reveals details about a person, creature, or destination.")
-	s.WriteLine("OBJECTS      'iscan' lists interactable objects; 'scan' lists people, creatures, and objects.")
-	s.WriteLine("COLLECT      'look coin' or 'examine coin' inspects an object; 'get coin from ash' picks it up when takeable.")
-	s.WriteLine("MOVE         north/south/east/west (or n/s/e/w) travels along an available path. After moving, type 'look' when you want the room details.")
-	s.WriteLine("NAVIGATION   'exits' names each destination; 'map' shows nearby connections; 'worldmap' shows the wider world.")
-	s.WriteLine("CONVERSATION 'talk 1 hello' greets NPC 1; 'talk 1 <topic>' asks about a subject. NPC numbers come from 'look'.")
-	s.WriteLine("HINTS        'hint' asks the first nearby person for guidance; 'hint 2' selects person 2. Hints are never shown automatically.")
-	s.WriteLine("COMBAT       'attack 1' or 'attack harpy' attacks; 'flee' escapes; 'rest' heals when safe. Inspect enemies first with 'look <name>'.")
-	s.WriteLine("INVENTORY    'inv' lists carried items; 'eq' lists equipped gear; 'wield <name>' / 'wear <name>' equips items.")
-	s.WriteLine("STORY        'quests' tracks objectives; 'journal' gives story context; 'score' shows character progress.")
-	s.WriteLine("MERCHANTS    inspect a merchant, use 'shop 1' to view wares, and 'buy 1' to purchase the first item.")
-	s.WriteLine("DIVINITY     at level 3 choose one: 'awaken storm', 'awaken tide', 'awaken ember', or 'awaken aegis'.")
-	s.WriteLine("REBIRTH      at level 10, use 'rebirth' to cross the Styx into a new era.")
-	s.WriteLine("This field guide remains available at any time; the one-time tutorial location itself cannot be revisited after departure.")
+	s.WriteLine("You don't need to memorize every command. Think of these as tools to reach for when a question comes up.")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36mLooking around\x1b[0m")
+	s.WriteLine("  'look' describes the room. 'look Damon' or 'look at the Harpy' gives you a closer look at someone or something. Use 'exits' when you need to know where the paths lead.")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36mExploring and finding things\x1b[0m")
+	s.WriteLine("  Travel with north, south, east, or west (short forms like n and e work too). 'map' shows nearby rooms; 'worldmap' gives you the wider view. 'iscan' lists objects you can handle, while 'scan' includes people and creatures.")
+	s.WriteLine("  If something catches your eye, try 'examine <thing>'. To pick up an object, use 'get <thing>'—and if it's inside something, try 'get <thing> from <container>'.")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36mTalking to people\x1b[0m")
+	s.WriteLine("  Try 'talk Damon hello' to begin, then ask about whatever interests you: 'talk Damon village' or 'talk Damon road'. You can use an NPC's number instead of their name. If you're unsure what to ask, 'hint' is a good place to start.")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36mWhen danger finds you\x1b[0m")
+	s.WriteLine("  Take a look at a creature before deciding what to do. 'attack satyr' and 'attack 1' both work for a visible target. 'flee' can get you out of a fight; 'rest' helps you recover when you're safe.")
+	s.WriteLine("  'inv' shows what you carry, 'eq' shows what you're using, and 'wield <item>' or 'wear <item>' equips gear.")
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36mKeeping track of your story\x1b[0m")
+	s.WriteLine("  'quests' lists specific objectives, 'journal' gives the wider story context, and 'score' shows your character's progress. When a mechanic is unclear, try 'help combat', 'help inventory', or 'help <topic>'.")
+	s.WriteLine("")
+	s.WriteLine("At level 3, you can awaken a divine domain with 'awaken storm', 'awaken tide', 'awaken ember', or 'awaken aegis'. At level 10, 'rebirth' opens the way into another life.")
+	s.WriteLine("")
+	s.WriteLine("The field guide will stay with you. The shelter itself is a one-time stop, but the world beyond it is yours to explore.")
 }
 
 func (s *Session) storyIntro() {
@@ -1399,25 +1408,25 @@ func (s *Session) hint(args []string) {
 	index, _ := s.parseNPCSelection(args)
 	n := s.currentNPC(index)
 	if n == nil {
-		s.WriteLine("There is no one here to ask. Use 'look' to find nearby people.")
+		s.WriteLine("There is no one nearby to ask just now. Try 'look' to see who is around, or save the question for the next traveler you meet.")
 		return
 	}
 	if s.Enemy != nil && s.Enemy.HP > 0 {
-		s.WriteLine("The %s is still a threat. Defeat it or use 'flee' before speaking.", s.Enemy.Name)
+		s.WriteLine("The %s still has your attention. Deal with the danger—or get away with 'flee'—before trying to hold a conversation.", s.Enemy.Name)
 		return
 	}
 	switch n.ID {
 	case "village_guide":
 		switch s.TutorialStep {
 		case 0:
-			s.WriteLine("Damon's hint: learn to move first. Type 'north' to enter the village lane.")
+			s.WriteLine("Damon glances toward the lane. “Come on, then. The village is just north of here; the path will make more sense once you see it.” Try 'north' when you are ready.")
 		case 1:
-			s.WriteLine("Damon's hint: type 'look' to inspect your surroundings and find the person you can speak with.")
+			s.WriteLine("Damon taps his walking stick against the ground. “Start by taking in your surroundings. It is easier to ask a good question when you know who is standing nearby.” Try 'look'.")
 		case 2:
-			s.WriteLine("Damon's hint: begin a conversation with 'talk Damon hello'. You can also use the number selector: 'talk 1 hello'.")
+			s.WriteLine("Damon gives you a small, patient smile. “You can simply say hello. If names are hard to keep straight, the number beside someone in the room description works just as well.” Try 'talk Damon hello' or 'talk 1 hello'.")
 		case 5, 6:
 			s.Character.SetStoryFlag("tutorial_hint_used")
-			s.WriteLine("Damon's hint: ask about the road with 'talk Damon road', or use the number selector: 'talk 1 road'.")
+			s.WriteLine("Damon looks toward the mountain road. “There is more happening up there than I care to explain in the village square. Ask me about the road and I will tell you what I know.” Try 'talk Damon road'.")
 		default:
 			s.WriteLine("Damon's hint: the northern road leads to the foothills. The guide can answer 'road' or 'village'.")
 		}
