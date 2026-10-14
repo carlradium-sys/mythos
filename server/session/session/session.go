@@ -2468,12 +2468,12 @@ func (s *Session) attack(args []string) {
 		return
 	}
 	if s.Character.HasStoryFlag("tutorial_available") {
-		if (s.Character.RoomID == "tutorial_yard" || s.Character.RoomID == "tutorial_grove") && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
-			if s.Character.RoomID == "tutorial_grove" {
-				s.WriteLine("The satyr has not threatened you. Take a moment to read its posture first with 'look satyr'; then decide whether you want to fight.")
-			} else {
-				s.WriteLine("Before striking, take a closer look with 'look Training Shade'.")
-			}
+		if s.Character.RoomID == "tutorial_yard" && !s.Character.HasStoryFlag("tutorial_shade_inspected") {
+			s.WriteLine("Before striking, take a closer look with 'look Training Shade'.")
+			return
+		}
+		if s.Character.RoomID == "tutorial_grove" && !s.Character.HasStoryFlag("tutorial_satyr_inspected") {
+			s.WriteLine("The satyr has not threatened you. Take a moment to read its posture first with 'look satyr'; then decide whether you want to fight.")
 			return
 		}
 	}
