@@ -1695,11 +1695,13 @@ func (s *Session) lookTarget(args []string) {
 		if strings.Contains(name, target) || strings.Contains(target, name) || target == "enemy" || target == "threat" || target == "mob" {
 			s.WriteLine("\x1b[1;33m%s\x1b[0m", s.Enemy.Name)
 			if s.Enemy.Description != "" { s.WriteLine("%s", s.Enemy.Description) }
-			if (s.Character.HasStoryFlag("tutorial_available") && s.Character.RoomID == "tutorial_grove" && strings.Contains(name, "satyr") {
+			if s.Character.HasStoryFlag("tutorial_available") && s.Character.RoomID == "tutorial_grove" && strings.Contains(name, "satyr") {
 				s.Character.SetStoryFlag("tutorial_enemy_inspected")
+				s.Character.SetStoryFlag("tutorial_satyr_inspected")
 			}
-			if (s.Character.HasStoryFlag("tutorial_available") && s.Character.RoomID == "tutorial_yard" && strings.Contains(name, "training shade") {
+			if s.Character.HasStoryFlag("tutorial_available") && s.Character.RoomID == "tutorial_yard" && strings.Contains(name, "training shade") {
 				s.Character.SetStoryFlag("tutorial_enemy_inspected")
+				s.Character.SetStoryFlag("tutorial_shade_inspected")
 			}
 			if s.Enemy.Name == "Practice Satyr" {
 				s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
