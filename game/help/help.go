@@ -52,6 +52,8 @@ A small tip: room descriptions are part of the storytelling. If a place feels un
 
 A fight begins when you choose to engage a creature—or when something genuinely hostile attacks you. Not every creature is aggressive. A wary being may watch you from a distance; a passive one, like the practice Satyr, will leave you alone unless you strike first.
 
+Wary creatures watch you before deciding whether to engage; passive creatures do not start fights. The Harpy is wary, while the road Satyr and the tutorial's practice enemies are passive. Attacking a wary or passive creature provokes it.
+
 Before you attack, look at the creature. Its description may tell you whether it is wounded, wary, guarding something, or ready to fight. When you're ready, use its name or the number shown in the room:
   attack Satyr       Attack the creature by name.
   attack 1           Attack the first listed enemy.
