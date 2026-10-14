@@ -168,7 +168,12 @@ func (s *Session) Run(scanner *bufio.Scanner) {
 		select {
 		case line, ok := <-commands:
 			if !ok { return }
-			if !s.handleCommand(strings.TrimSpace(line)) { return }
+			line = strings.TrimSpace(line)
+			if line != "" {
+				// Leave a visual gap between the player's command and its response.
+				s.WriteLine("")
+			}
+			if !s.handleCommand(line) { return }
 			// Save after every command so story choices, quest tracking, and
 			// exploration progress survive an abrupt disconnect or server restart.
 			s.persist()
@@ -1231,59 +1236,65 @@ func (s *Session) prepareTutorial() {
 
 func (s *Session) prologueHint() {
 	lessons := []string{
-		"LESSON 1/39 — ORIENTATION: Type 'look'.\nRead the room title, then the description. The title tells you where you are; the prose describes atmosphere, landmarks, and potential points of interest. Room descriptions are not decoration alone: later, clues in the wording may point toward people, exits, dangers, and story discoveries.",
-		"LESSON 2/39 — CHARACTER SHEET: Type 'score'.\nRead each value instead of only looking at your level. HP is your health; if it reaches zero, the game restores you but moves you to a recovery location. Mana fuels divine powers later. Experience drives levels, while Life and Era tell you which chapter of your soul you inhabit.",
-		"LESSON 3/39 — YOUR PACK: Type 'inv'.\nInventory lists the items your character carries. A carried weapon is not automatically the weapon you are using, and armor in the pack does not protect you until equipped. As you play, inspect names, rarity, damage, armor, and any special relic markers rather than judging an item by its name alone.",
-		"LESSON 4/39 — FIRST MOVEMENT: Type 'north' to reach the Wayfarer's Shelter.\nMovement follows exits attached to the current room; it is not free movement across a map. Full directions such as north and east work, and common short forms such as n and e work too. A successful move changes your room, may reveal a new description, and can trigger discovery or story events.",
-		"LESSON 5/39 — INSPECT A PERSON: Type 'look Ianthe'.\nThe room view intentionally stays compact. Looking at a named person reveals their fuller description and tells you how to begin interacting. In later rooms, use the name shown by 'look' rather than guessing who might be important.",
-		"LESSON 6/39 — GREET THE GUIDE: Type 'talk Ianthe hello'.\nNPCs are addressed by name or by the number shown in a room summary. The topic after the name selects the kind of response you want. The dialogue system recognizes meaningful topic words, so natural questions can work; you do not need to memorize one magic sentence.",
-		"LESSON 7/39 — ASK ABOUT MOVEMENT: Type 'talk Ianthe movement'.\nThe world has three related navigation tools: 'look direction' previews a connected room, 'exits' lists exact routes, and 'map' summarizes nearby connections. These tools answer different questions. Previewing a path does not move you, and a map does not grant access to a locked destination.",
-		"LESSON 8/39 — LIST EXITS: Type 'exits'.\nRead the directions and destination names. If you are unsure where to go, compare the exit list with the room description and your current objective. A path that is not listed is not available from this room; later, some visible routes may also have level or story restrictions.",
-		"LESSON 9/39 — READ THE LOCAL MAP: Type 'map'.\nUse the map to understand the shape of nearby rooms, then use 'exits' when you need the exact destination for a direction. Maps are useful for orientation but do not replace reading descriptions. Automatic maps can be enabled or disabled later with 'automap on' and 'automap off'.",
-		"LESSON 10/39 — PREVIEW A DESTINATION: Type 'look east'.\nNotice that the game describes the room to the east while you remain in the shelter. This is a low-risk way to check a route before committing to it. It is especially useful when an exit might lead toward a monster, a merchant, a dead end, or a region you are not yet ready to enter.",
-		"LESSON 11/39 — ENTER THE COURTYARD: Type 'east'.\nYou have practiced observing, asking, and planning; now move into the next room. Read the new room description and the threat list. A threat can be visible before you fight it, and seeing a creature is not the same thing as starting combat.",
-		"LESSON 12/39 — INSPECT THE TRAINING SHADE: Type 'look Training Shade'.\nBefore attacking any creature, learn its name and read its description. Look for clues about posture, weapons, injuries, or intent. In the main world, some monsters are immediately hostile; the tutorial creatures are deliberately passive so you can decide when to engage.",
-		"LESSON 13/39 — FIRST ATTACK: Type 'attack Training Shade'.\nYour attack uses your equipped weapon and character attack values against the enemy's defense. Combat text describes where the blow lands and shows damage in parentheses. The shade will defend itself only after you attack; this is the key difference between a passive creature and an aggressive one.",
-		"LESSON 14/39 — VERIFY YOUR PACK: Type 'inv'.\nAfter the fight, confirm that your inventory command works independently of combat. Defeating a tutorial creature records a persistent character flag. Looking around, checking gear, disconnecting, or reconnecting must not bring that slain tutorial creature back.",
-		"LESSON 15/39 — EQUIPPED GEAR: Type 'eq'.\nEquipment shows the weapon and armor currently in use, while inventory shows everything you carry. A weapon contributes to your strikes; armor improves defense. If you later find several similar items, use the full inventory names and the equip command's numbered choices to avoid selecting the wrong one.",
-		"LESSON 16/39 — SAFE RECOVERY: Type 'rest'.\nRest restores health and mana when no living enemy is actively fighting you. It is a preparation tool, not a way to ignore an active threat. Before a dangerous trip, check your health, rest in safety, and decide whether your current gear is appropriate.",
-		"LESSON 17/39 — AUTOMAP ON: Type 'automap on'.\nThe local map will now appear after successful movement. This can be helpful in branching areas, but it adds output to each move. The setting belongs to this session, so you can adjust it to suit the screen and client you are using.",
-		"LESSON 18/39 — AUTOMAP OFF: Type 'automap off'.\nYou have seen both styles of navigation output. Keep automatic mapping on when exploring an unfamiliar maze, or turn it off when you prefer concise room descriptions. You can always type 'map' manually whenever you need an overview.",
-		"LESSON 19/39 — ENTER THE GROVE: Type 'north'.\nThe next practice encounter is designed to teach intent, not reflex. The creature is visible and wary, but it will not attack you first. Take a moment to notice how the room description communicates that this encounter is under your control.",
-		"LESSON 20/39 — INSPECT THE SATYR: Type 'look Satyr'.\nRead the creature's posture and the detail that its staff is lowered. The game expects you to gather information before deciding what to do. In Fatewalker, not every creature must become an enemy; your choice to attack can be the event that turns a peaceful encounter into combat.",
-		"LESSON 21/39 — CHOOSE TO ENGAGE: Type 'attack Satyr'.\nYou are choosing to initiate the fight. Once attacked, the satyr becomes aggressive and may retaliate if it survives your strike. In later situations, consider your health, armor, available powers, escape routes, and whether a fight is actually necessary before committing.",
-		"LESSON 22/39 — CONFIRM PERSISTENCE: Type 'look'.\nThe room should be quiet after the satyr is slain. Its backend defeat flag belongs to your character, not merely to this connection. That means the tutorial does not force you to repeat the same fight after looking around or reconnecting, and it can safely let you move on.",
-		"LESSON 23/39 — RETURN TO THE COURTYARD: Type 'south'.\nRetracing a route is ordinary exploration. Rooms form a network, and you learn that network by combining directions, exits, maps, and descriptions. The tutorial's creatures remain defeated as you revisit their rooms; this is different from repeatable hunting encounters in some parts of the main world.",
-		"LESSON 24/39 — ENTER THE STOREHOUSE: Type 'east'.\nThis room brings the practical systems together. You have moved, inspected, spoken, navigated, and fought; now you will review the help system and the tools used to follow a larger story. Read the labels and consider which command you would use if you forgot a mechanic later.",
-		"LESSON 25/39 — INTERACTABLE OBJECTS: Type 'iscan', then 'open practice chest' and 'look in practice chest'.\nThe room contains real objects, not only descriptive text. 'iscan' lists things you can handle, containers, and scenery. A closed container hides its contents until you open it; 'look in' lets you inspect what is inside. Type 'inv' when you are ready to continue.",
-		"LESSON 26/39 — PICK UP AND EXAMINE: Type 'get practice bandage', then 'examine practice bandage', then 'eq'.\n'get' moves a takeable room object into your inventory; 'examine' gives a closer description. The bandage is a real consumable, and its note explains how to use it. Inventory shows what you carry; equipment shows what you have actively equipped. To change gear later, use 'wield <item>', 'wear <item>', or 'equip <item>'.",
-		"LESSON 27/39 — READ COMBAT HELP: Type 'help combat'.\nHelp files explain rules, command syntax, examples, and common mistakes. Use 'help list' to discover topics. Important guides include movement, combat, guard, consumables, crafting, progression, quests, rebirth, and soul legacy. You do not need to memorize every mechanic; learn how to find the correct guide when you need it.",
-		"LESSON 28/39 — WIDER NAVIGATION: Type 'worldmap'.\nThe local map focuses on your immediate neighborhood; the world map helps you think about the larger setting. Future regions may be locked until you reach a required life, level, or story condition. A visible destination is not necessarily one you can enter right now.",
-		"LESSON 29/39 — RETURN TO THE COURTYARD: Type 'west'.\nUse the exit network to return. In a larger area, you may need to check 'exits' or 'map' again rather than assuming every room connects in the same pattern. Exploration is deliberate: paths, room descriptions, and quest clues work together.",
-		"LESSON 30/39 — RETURN TO THE SHELTER: Type 'west'.\nIanthe remains available for questions. The room summary gives NPC names and numbers; you can use either when talking or asking for a hint. Later, merchants and story characters may offer different interactions, so inspect them and read their prompts.",
-		"LESSON 31/39 — ASK ABOUT COMBAT: Type 'talk Ianthe combat'.\nNPCs can provide lore, directions, hints, and quest context. Ask about the subject you need rather than repeating hello forever. Dialogue is not a universal AI: it matches known topics and aliases, so try a related keyword if the character does not recognize your first question.",
-		"LESSON 32/39 — QUEST TRACKING: Type 'quests'.\nQuests show active, completed, and locked objectives. Some advance when you reach a room; others require a specific enemy, discovery, or choice. A locked quest is not broken simply because it cannot progress yet—read its unlock hint and explore the story conditions.",
-		"LESSON 33/39 — STORY CONTEXT: Type 'journal'.\nThe journal summarizes the larger thread of your story, while quests provide more specific objectives. Neither is meant to remove your freedom. You can follow the suggested path, wander to find secrets, talk to other characters, or return to a mystery when you are stronger.",
-		"LESSON 34/39 — CHECK PROGRESS: Type 'score'.\nRead HP, mana, XP, attack, defense, armor, gold, life, and era. Level-ups strengthen your character. At level 3, choose one domain with 'awaken storm', 'awaken tide', 'awaken ember', or 'awaken aegis'; powers then unlock at their listed levels. At level 10, rebirth opens. It resets level and XP, but the soul carries its history and relics.",
-		"LESSON 35/39 — SURVIVAL AND COMBAT CHOICES: Type 'east'.\nIn a real fight, 'attack' deals weapon damage, 'cast <power>' spends mana for a divine attack, 'use <item>' consumes a healing or mana supply, 'guard' reduces the next incoming hit, and 'flee' abandons the encounter. These choices trade damage, resources, and safety; read 'help combat' and 'help guard' before a difficult battle.",
-		"LESSON 36/39 — ECONOMY AND CRAFTING: Type 'east'.\nVictories and discoveries can earn XP and gold. Merchants sell equipment and supplies; use 'shop' then 'buy <item>'. Some enemies leave crafting materials marked [MATERIAL]. Carry the named ingredient and enough gold to Theron's Forge, then type 'craft' to see recipes. Crafted gear goes into your inventory and must be equipped. Read 'help economy' and 'help crafting' for details.",
-		"LESSON 37/39 — APPROACH THE GATE: Type 'north'.\nThe marble gate is open whenever you feel ready to leave. There is no penalty for skipping a lesson or taking a detour; the notes and help files will remain available after you leave.",
-		"LESSON 38/39 — PREVIEW THE REAL WORLD: Type 'look north'.\nThe destination preview describes Asterion Village without moving you there. Read the description and imagine the first choices you might make: talk to the village guide, investigate the road, explore the forge, or follow the main story. The gate is the boundary between safe practice and the open game.",
-		"LESSON 39/39 — DEPART: Type 'north'.\nThis is the threshold between a safe shelter and a living world. When you leave, the game records the prologue as complete and places you in Asterion Village. The shelter will close behind you, but the wider world will not demand that you follow one prescribed route.",
+        "LESSON 1/39 — ORIENTATION: look.\nThe shore is quiet, but not peaceful. Black water withdraws from your feet without leaving a ripple, and a thin dark thread circles your wrist. You have no memory of arriving here. Take a moment to look around; the place may offer a clue before anyone can explain it.\n\nWhen you're ready, try: look",
+        "LESSON 2/39 — YOUR CONDITION: score.\nThe cold has begun to settle into your bones. Before you wander, it is worth finding out how badly this strange return has left you. Your character sheet shows your health, experience, and the life you are living now.\n\nWhen you're ready, try: score",
+        "LESSON 3/39 — WHAT YOU CARRY: inv.\nThere is little in your pack, but it is still worth knowing what you have. Later, a weapon you carry may not be the one in your hand, and armor does no good until you put it on. For now, just take stock.\n\nWhen you're ready, try: inv",
+        "LESSON 4/39 — A LIGHT IN THE DISTANCE: north.\nA lamp burns beyond the rocks. Someone has made a shelter here, and the sound of a cup being set on a table carries across the shore. Follow the path north when you're ready; whoever waits there may know how you came to be here.\n\nWhen you're ready, try: north",
+        "LESSON 5/39 — MEET IANTHE: look Ianthe.\nA traveler in a faded blue cloak looks up as you approach. She does not seem frightened by the thread around your wrist—only concerned. Take a closer look at her. People in this world have stories of their own, and sometimes the smallest detail tells you how to begin.\n\nWhen you're ready, try: look Ianthe",
+        "LESSON 6/39 — A FIRST WORD: talk Ianthe hello.\nIanthe sets a cup of warm water within reach. “You needn't explain anything yet,” she says. “Most people begin with a greeting. We can take the mysteries one at a time.” Speak to her when you're ready; you can use her name or the number beside it in the room description.\n\nWhen you're ready, try: talk Ianthe hello",
+        "LESSON 7/39 — ASK WHAT YOU NEED: talk Ianthe movement.\nThe shelter feels less strange now that someone has spoken to you like a person rather than an omen. If you are unsure how to get around, ask Ianthe about movement. You don't need to guess a secret phrase—ordinary questions with a clear subject are usually enough.\n\nWhen you're ready, try: talk Ianthe movement",
+        "LESSON 8/39 — FIND YOUR BEARINGS: exits.\nIanthe gestures toward the paths leading away from the shelter. “When you need to choose, look at the exits. A road is easier to trust when you know where it goes.” The exits command lists the available routes and their destinations.\n\nWhen you're ready, try: exits",
+        "LESSON 9/39 — SEE HOW THE PATHS CONNECT: map.\nThe shelter is only one point in a much larger place. A local map can help you understand how nearby rooms fit together. It won't make a hidden road appear, but it can keep you from wandering in circles.\n\nWhen you're ready, try: map",
+        "LESSON 10/39 — LOOK BEFORE YOU LEAVE: look east.\nOne of the paths leads east. You can inspect a direction before taking it; doing so lets you read about the next place without leaving the shelter. It is a useful habit when a road looks inviting but the far end is unknown.\n\nWhen you're ready, try: look east",
+        "LESSON 11/39 — STEP INTO THE COURTYARD: east.\nThe courtyard is open to the sky. Something moves near the far wall, but it hasn't rushed toward you. In Fatewalker, seeing a creature does not always mean a fight has begun. Take a step east and see what is waiting there.\n\nWhen you're ready, try: east",
+        "LESSON 12/39 — THE TRAINING SHADE: look Training Shade.\nA small figure of dusk stands in the yard, its hands lowered. It is here to teach you, not to trap you. Look at the shade and read its description; the same habit will help you tell the difference between a warning, a wary creature, and a genuine threat in the wider world.\n\nWhen you're ready, try: look Training Shade",
+        "LESSON 13/39 — YOUR FIRST FIGHT: attack Training Shade.\nThe shade waits without raising its hands. If you choose to strike, it will defend itself, but it will not attack you first. You can name your target or use the number shown beside the threat. Take a breath, then try a simple attack.\n\nWhen you're ready, try: attack Training Shade",
+        "LESSON 14/39 — AFTER THE STRUGGLE: inv.\nThe yard is quiet again. A fight is only one part of an adventure, and you should be able to check your pack whether a creature is standing in front of you or not. Have a look at your inventory before moving on.\n\nWhen you're ready, try: inv",
+        "LESSON 15/39 — YOUR EQUIPMENT: eq.\nYour pack and your equipment are two different things. One tells you what you own; the other shows what you are actually using. A good blade or a sturdy piece of armor can make the next encounter much easier, so get used to checking both.\n\nWhen you're ready, try: eq",
+        "LESSON 16/39 — CATCH YOUR BREATH: rest.\nThere is no need to rush toward the next danger. When no enemy is fighting you, resting can restore your health and mana. It is a small habit that can save you from a much longer walk back after a bad fight.\n\nWhen you're ready, try: rest",
+        "LESSON 17/39 — A MAP WHEN YOU NEED ONE: automap on.\nSome travelers like a map after every move; others prefer to keep the view uncluttered. Turn the automatic map on and notice how it changes your travel messages. You can choose the style that suits you.\n\nWhen you're ready, try: automap on",
+        "LESSON 18/39 — KEEP THE VIEW CLEAR: automap off.\nNow turn the automatic map off again. You can still call up the map whenever you need it. The idea isn't to make you follow a rigid routine—it's to give you a few tools and let you decide when they're useful.\n\nWhen you're ready, try: automap off",
+        "LESSON 19/39 — THE GROVE PATH: north.\nA narrow path leads north into a patch of trees. The air smells of crushed leaves and wild thyme. Ianthe mentioned a creature here, but not every meeting has to end in violence. Go north and see for yourself.\n\nWhen you're ready, try: north",
+        "LESSON 20/39 — A SATYR AT EASE: look Satyr.\nThe satyr stands among the trees with its staff resting loosely against one shoulder. It watches you, curious rather than angry. Look at it closely. The lowered staff is a choice: this creature has not made an enemy of you, and you can decide whether that changes.\n\nWhen you're ready, try: look Satyr",
+        "LESSON 21/39 — CHOOSE WHETHER TO FIGHT: attack satyr.\nThe satyr hasn't attacked you. If you decide to fight, you're the one starting it; if you leave it alone, the encounter need not become a battle. For this lesson, try attacking it. Both 'attack satyr' and 'attack 1' should work.\n\nWhen you're ready, try: attack satyr",
+        "LESSON 22/39 — LET THE QUIET RETURN: look.\nThe grove has fallen quiet. The satyr will not rise again just because you look around, and you should not have to repeat a victory to satisfy the lesson. Look at the room once more and notice that the path is clear.\n\nWhen you're ready, try: look",
+        "LESSON 23/39 — BACK TO THE COURTYARD: south.\nThe path south leads back to the yard. Retracing your steps is part of learning a place, not a mistake. Once you return, you'll be able to explore the storehouse and try a few things that don't involve fighting.\n\nWhen you're ready, try: south",
+        "LESSON 24/39 — THE STOREHOUSE: east.\nThe storehouse holds the practical things a traveler needs: a chest, a few supplies, and the kind of details that are easy to overlook when you're watching for monsters. Head east and take a look around.\n\nWhen you're ready, try: east",
+        "LESSON 25/39 — THINGS YOU CAN HANDLE: iscan; open practice chest; look in practice chest.\nSome details are just part of the scenery. Others are real objects you can open, take, move, or read. Use the object scan to see what's within reach, then open the practice chest and look inside. There's no trick to it—just the sort of curiosity that often pays off in the world beyond this shelter.\n\nWhen you're ready, try: iscan; open practice chest; look in practice chest",
+        "LESSON 26/39 — A SMALL SUPPLY: get practice bandage; examine practice bandage; inv.\nInside the chest is a bandage. Pick it up, then examine it; the description will tell you what it is for. Items in Fatewalker are more than decoration, and the same commands will help you investigate clues, collect useful materials, and manage your equipment later.\n\nWhen you're ready, try: get practice bandage; examine practice bandage; inv",
+        "LESSON 27/39 — HELP WHEN YOU NEED IT: help combat.\nNo one expects you to memorize every rule. The help files are there for the moments when a command slips your mind or a system needs explaining. Open the combat guide now; later, you can use 'help <topic>' for almost any part of the game.\n\nWhen you're ready, try: help combat",
+        "LESSON 28/39 — THE WIDER WORLD: worldmap.\nThe map in front of you only shows the neighborhood. Beyond the gate are villages, roads, old shrines, and places that do not appear on any ordinary map. Take a look at the world map; some destinations will open only when your story or experience makes them reachable.\n\nWhen you're ready, try: worldmap",
+        "LESSON 29/39 — RETURN THROUGH THE YARD: west.\nHead west to return to the courtyard. You have learned enough to find your way back without being led by the hand. In the world beyond this place, room descriptions, exits, and the map will all be available when you need them.\n\nWhen you're ready, try: west",
+        "LESSON 30/39 — BACK TO IANTHE: west.\nReturn west to the shelter. Ianthe is still here, and she won't mind another question. You can ask about combat, your equipment, or anything else that worries you. A useful question is often better than another guess.\n\nWhen you're ready, try: west",
+        "LESSON 31/39 — ASK ABOUT DANGER: talk Ianthe combat.\nIanthe listens without interrupting. “A fight is a choice, even when a creature makes that choice for you,” she says. “Learn what you're facing, keep an eye on your health, and remember that leaving alive is sometimes the cleverest victory.” Ask her about combat to hear more.\n\nWhen you're ready, try: talk Ianthe combat",
+        "LESSON 32/39 — WHAT THE JOURNAL REMEMBERS: quests.\nYour journey will gather more threads than you can hold in your head. The quest list tracks specific things to do; the journal gives those tasks a place in the larger story. Check your quests and see what the game has recorded so far.\n\nWhen you're ready, try: quests",
+        "LESSON 33/39 — THE STORY BEHIND THE TASKS: journal.\nA journal is not a commandment. It offers context and leads, but it cannot decide what matters to you. Read it now, and use it later whenever the story begins to feel tangled.\n\nWhen you're ready, try: journal",
+        "LESSON 34/39 — TAKE STOCK AGAIN: score.\nYou've moved, spoken, explored, and fought. Check your character sheet again and notice what has changed. As you grow stronger, new powers and eventually new lives will become available; rebirth is a new chapter, not the end of the journey.\n\nWhen you're ready, try: score",
+        "LESSON 35/39 — PREPARE FOR THE WORLD: east.\nThe next room is the courtyard. In a real fight, you can attack with your weapon, use a divine power once you have awakened one, guard against a blow, use a supply, or flee. Each choice has a cost. For now, head east and remember that you can always pause to think.\n\nWhen you're ready, try: east",
+        "LESSON 36/39 — A TRAVELER'S CRAFT: east.\nBeyond this shelter, defeated creatures may leave materials that a smith can turn into useful gear. Merchants sell supplies, and crafted equipment still needs to be equipped before it helps you. Head east to see the storehouse again; these systems will make more sense once you have a few discoveries of your own.\n\nWhen you're ready, try: east",
+        "LESSON 37/39 — THE MARBLE GATE: north.\nThe gate stands open. No one will judge you for taking your time, and you can review the field notes whenever you need them. Go north when you're ready to leave the shelter behind.\n\nWhen you're ready, try: north",
+        "LESSON 38/39 — ONE LAST LOOK: look north.\nBefore you go, look north through the gate. Beyond it lies Asterion Village, with its ordinary worries and its very extraordinary well. The road will be yours to choose; this preview is only a chance to see what waits on the other side.\n\nWhen you're ready, try: look north",
+        "LESSON 39/39 — YOUR STORY BEGINS: north.\nThe shelter has given you room to learn, but it cannot explain the thread around your wrist. That answer lies in the wider world—in the people who remember you, the places that seem to know your name, and the choices you make when the path divides. When you're ready, go north and begin.\n\nWhen you're ready, try: north",
 	}
-	if s.PrologueStep >= len(lessons) { s.WriteLine("The prologue is complete. Continue into Fatewalker proper."); return }
-	s.WriteLine("\x1b[1;36mTHE FIRST THREAD — WAYFARER FIELD NOTES\x1b[0m")
-	parts := strings.SplitN(lessons[s.PrologueStep], "\n", 2)
+	if s.PrologueStep >= len(lessons) {
+		s.WriteLine("\x1b[1;32mTHE FIRST THREAD — COMPLETE\x1b[0m")
+		s.WriteLine("You have learned enough to begin. The wider world is waiting; take it at your own pace.")
+		return
+	}
+	s.WriteLine("")
+	s.WriteLine("\x1b[1;36mTHE FIRST THREAD — A NOTE FROM THE SHELTER\x1b[0m")
+	parts := strings.SplitN(lessons[s.PrologueStep], "\\n", 2)
 	heading := strings.TrimSpace(parts[0])
 	if divider := strings.Index(heading, " — "); divider >= 0 {
 		heading = strings.TrimSpace(heading[divider+len(" — "):])
 	}
 	s.WriteLine("\x1b[1;33m%s\x1b[0m", heading)
-	if len(parts) > 1 { s.WriteLine("%s", parts[1]) }
-	s.WriteLine("This is a suggestion, not a test. Explore, talk, inspect, and experiment in any order; the gate is available when you feel ready.")
-	s.WriteLine("Progress is saved automatically. Type 'tutorial' for these notes, or 'help <topic>' for practical details.")
+	if len(parts) > 1 {
+		s.WriteLine("%s", parts[1])
+	}
+	s.WriteLine("")
+	s.WriteLine("\x1b[90mYou can try this suggestion, ask someone for help, or take a moment to explore. Progress is saved as you go. Type 'tutorial' to revisit these notes.\x1b[0m")
 }
-
 func (s *Session) advancePrologueForCommand(p []string) {
 	if len(p)==0 || s.Character==nil || !s.Character.HasStoryFlag("tutorial_available") { return }
 	cmd, args, room := p[0], strings.Join(p[1:], " "), s.Character.RoomID
@@ -1566,6 +1577,7 @@ func (s *Session) look() {
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36m╭─ %s ─╮\x1b[0m", r.Name)
 	s.WriteLine("%s", r.Description)
+	s.WriteLine("")
 	if visible := visibleRoomObjects(r, s.Character); len(visible) > 0 {
 		s.WriteLine("")
 		s.WriteLine("\x1b[1;37mOBJECTS & DETAILS\x1b[0m")
@@ -1674,9 +1686,19 @@ func (s *Session) lookTarget(args []string) {
 		if strings.Contains(name, target) || strings.Contains(target, name) || target == "enemy" || target == "threat" || target == "mob" {
 			s.WriteLine("\x1b[1;33m%s\x1b[0m", s.Enemy.Name)
 			if s.Enemy.Description != "" { s.WriteLine("%s", s.Enemy.Description) }
-			if (s.TutorialStep == 10 || s.TutorialStep == 11) && s.Enemy.Name == "Harpy" { s.Character.SetStoryFlag("tutorial_enemy_inspected") }
-			s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
-			s.WriteLine("It is hostile. Use 'attack 1' or 'attack %s' to engage.", strings.ToLower(s.Enemy.Name))
+			if (s.Character.HasStoryFlag("tutorial_available") && s.Character.RoomID == "tutorial_grove" && strings.Contains(name, "satyr") {
+				s.Character.SetStoryFlag("tutorial_enemy_inspected")
+			}
+			if (s.Character.HasStoryFlag("tutorial_available") && s.Character.RoomID == "tutorial_yard" && strings.Contains(name, "training shade") {
+				s.Character.SetStoryFlag("tutorial_enemy_inspected")
+			}
+			if (s.Enemy.Name == "Practice Satyr" {
+				s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
+				s.WriteLine("It is watching you, not attacking. If you choose to fight, try 'attack satyr' or 'attack 1'.")
+			} else {
+				s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
+				s.WriteLine("Use 'attack 1' or 'attack %s' to engage.", strings.ToLower(s.Enemy.Name))
+			}
 			return
 		}
 	}
@@ -2437,12 +2459,12 @@ func (s *Session) attack(args []string) {
 		return
 	}
 	if s.Character.HasStoryFlag("tutorial_available") {
-		if s.Character.RoomID == "tutorial_yard" && s.PrologueStep < 12 {
-			s.WriteLine("Inspect the Training Shade first with 'look Training Shade'.")
-			return
-		}
-		if s.Character.RoomID == "tutorial_grove" && s.PrologueStep < 20 {
-			s.WriteLine("Inspect the Practice Satyr first with 'look Satyr'.")
+		if (s.Character.RoomID == "tutorial_yard" || s.Character.RoomID == "tutorial_grove") && !s.Character.HasStoryFlag("tutorial_enemy_inspected") {
+			if s.Character.RoomID == "tutorial_grove" {
+				s.WriteLine("The satyr has not threatened you. Take a moment to read its posture first with 'look satyr'; then decide whether you want to fight.")
+			} else {
+				s.WriteLine("Before striking, take a closer look with 'look Training Shade'.")
+			}
 			return
 		}
 	}
@@ -2450,7 +2472,17 @@ func (s *Session) attack(args []string) {
 		s.WriteLine("Before striking, inspect the creature with 'look Harpy'. Learn what you are facing.")
 		return
 	}
-	if len(args)>0{target:=strings.Join(args," ");if target!="1"&&!strings.Contains(strings.ToLower(s.Enemy.Name),target){s.WriteLine("Your current target is %s. Use 'attack 1' or 'attack %s'.",s.Enemy.Name,strings.ToLower(s.Enemy.Name));return}}
+	if len(args) > 0 {
+		target := strings.ToLower(strings.TrimSpace(strings.Join(args, " ")))
+		enemyName := strings.ToLower(s.Enemy.Name)
+		matches := target == "1" || strings.Contains(enemyName, target)
+		if strings.Contains(enemyName, "satyr") && strings.Contains(target, "satyr") { matches = true }
+		if strings.Contains(enemyName, "training shade") && strings.Contains(target, "shade") { matches = true }
+		if !matches {
+			s.WriteLine("You're facing the %s. Try 'attack 1' or 'attack %s'.", s.Enemy.Name, strings.ToLower(s.Enemy.Name))
+			return
+		}
+	}
 	s.EnemyAggressive = true
 	s.basicAttackRound()
 }
@@ -2748,8 +2780,14 @@ func (s *Session) defeatEnemy(divine bool) {
 		s.advanceTutorial(12)
 	}
 	if s.Character.RoomID == "tutorial_grove" && enemy.Name == "Practice Satyr" {
-		s.WriteLine("The satyr lowers its staff and steps aside. There is no road north through the grove; the familiar courtyard lies south.")
-		s.WriteLine("From the courtyard, the storehouse is east, and the marble gate beyond it leads back into the wider world. You can take that route whenever you are ready.")
+		s.WriteLine("")
+		s.WriteLine("The satyr's staff slips from its hand. It sinks to the moss, and the grove grows still. You chose to fight, and the encounter is over; the satyr will not return when you look around or reconnect.")
+		s.WriteLine("The path south leads back to the courtyard. From there, the storehouse is east. You can keep exploring the shelter before you leave through the marble gate.")
+		if s.Character.HasStoryFlag("tutorial_available") && s.PrologueStep < 21 {
+			s.PrologueStep = 21
+			s.Character.SetStoryFlag("tutorial_lesson_21")
+			s.prologueHint()
+		}
 	}
 }
 
