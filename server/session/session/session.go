@@ -1283,7 +1283,7 @@ func (s *Session) prologueHint() {
 	}
 	s.WriteLine("")
 	s.WriteLine("\x1b[1;36mTHE FIRST THREAD — A NOTE FROM THE SHELTER\x1b[0m")
-	parts := strings.SplitN(lessons[s.PrologueStep], "\\n", 2)
+	parts := strings.SplitN(lessons[s.PrologueStep], "\n", 2)
 	heading := strings.TrimSpace(parts[0])
 	if divider := strings.Index(heading, " — "); divider >= 0 {
 		heading = strings.TrimSpace(heading[divider+len(" — "):])
@@ -1692,7 +1692,7 @@ func (s *Session) lookTarget(args []string) {
 			if (s.Character.HasStoryFlag("tutorial_available") && s.Character.RoomID == "tutorial_yard" && strings.Contains(name, "training shade") {
 				s.Character.SetStoryFlag("tutorial_enemy_inspected")
 			}
-			if (s.Enemy.Name == "Practice Satyr" {
+			if s.Enemy.Name == "Practice Satyr" {
 				s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
 				s.WriteLine("It is watching you, not attacking. If you choose to fight, try 'attack satyr' or 'attack 1'.")
 			} else {
