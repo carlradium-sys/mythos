@@ -1703,6 +1703,9 @@ func (s *Session) lookTarget(args []string) {
 				s.Character.SetStoryFlag("tutorial_enemy_inspected")
 				s.Character.SetStoryFlag("tutorial_shade_inspected")
 			}
+			if (s.TutorialStep == 10 || s.TutorialStep == 11) && s.Enemy.Name == "Harpy" {
+				s.Character.SetStoryFlag("tutorial_enemy_inspected")
+			}
 			if s.Enemy.Name == "Practice Satyr" {
 				s.WriteLine("Health: %d / %d", s.Enemy.HP, s.Enemy.MaxHP)
 				s.WriteLine("It is watching you, not attacking. If you choose to fight, try 'attack satyr' or 'attack 1'.")
