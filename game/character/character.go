@@ -27,6 +27,8 @@ type Character struct {
 	Weapon     string
 	Armor      string
 	Inventory  []item.Item
+	ContainerStorage map[string][]item.Item
+	OpenContainers map[string]bool
 	Memories   []string
 	Scars      []string
 	Oaths      []string
@@ -34,23 +36,28 @@ type Character struct {
 	Curses     []string
 	Echoes     []string
 	Quests     map[string]int
+	TrackedQuest string
 	StoryFlags map[string]bool
 	LifeGift string
 	LifeGiftUsed bool
+	AutoCombat bool
+	CombatModeSet bool
+	Quicklist [4]string
 }
 
 func New(name string) *Character {
 	return &Character{
 		Name: name, Level: 1, HP: 100, MaxHP: 100,
-		Mana: 30, MaxMana: 30, RoomID: "olympus_gates",
+		Mana: 30, MaxMana: 30, RoomID: "village_square",
 		Life: 1, Era: "ancient", Attack: 12, Defense: 3,
 		Weapon: "bronze sword", Armor: "linen cuirass",
 		Quests: map[string]int{},
 		StoryFlags: map[string]bool{},
 		Reputation: map[string]int{"olympians":0,"delphi":0,"underworld":0},
 		Gold: 50,
-		LifeGift: "Thread Sense",
+		LifeGift: "Thread Sense", AutoCombat: true, CombatModeSet: true,
 		Inventory: []item.Item{{Name: "bronze sword", Tier: item.Common, Damage: 10, Kind: "sword"}, item.StarterArmor()},
+		ContainerStorage: map[string][]item.Item{}, OpenContainers: map[string]bool{},
 	}
 }
 

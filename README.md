@@ -7,6 +7,8 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 ## Current playable foundation
 
 - TCP MUD server on port 4000
+- Live online player roster and room/world/private communication
+- Account-session protection to prevent simultaneous stale copies from overwriting character progress
 - Ancient Greece starter route
 - Room-to-room movement
 - Active ANSI-color map
@@ -23,6 +25,27 @@ Your first life begins in Ancient Greece. You grow stronger, awaken a divine dom
 - Persistent soul relics with once-per-encounter defensive and offensive effects
 - Choice-linked relic rewards and a Delphi exploration reward
 - Inventory and equipment foundation
+- Real room objects with descriptions, keywords, containers, and takeable state
+- Object inspection, searching, and pickup: `look coin`, `examine coin`, `search ash`, `get coin from ash`, and `get all`
+- Stateful containers: `open`, `close`, `look in`, and `put <item> in <container>` support hiding, storing, and retrieving objects while preserving item properties; open/closed state is character-specific even though the room is shared
+- Readable clues and offerings: `read prayer strip` and `offer coin to bowl` advance story quests through discovery and player choice
+- Tutorial practice chest and bandage teach scanning, opening, pickup, and examination safely
+- Story-aware quest tracker: `current quests`, `current quests track <ID>`, `current quest`, and `current quests untrack`
+- Stable numeric quest IDs, persistent discovery checklists, and contextual next-lead hints
+- Separate `scan` (people/creatures/objects) and `iscan` (interactable objects) commands
+- Creature behavior states: wary and passive creatures do not attack just because you enter; attacking one deliberately provokes it
+- Consumable items with health and mana restoration
+- Merchant supplies: ambrosia draughts, blue lotus tonics, and laurel poultices
+- Tactical item use: aggressive enemies take their turn after you consume a supply
+- Consumable use is bounded by maximum health/mana and ineffective use does not waste the item
+- Monster materials and a forge crafting loop with three equipment recipes
+- Story conversations with Charon, an Asphodel shade, a modern museum curator, and the Lunar Oracle
+- Expanded lore across Ancient Greece, the Underworld, modern Athens, and future eras
+- Character-specific dialogue with clues, conflicting testimony, recurring symbols, and long-form story exchanges
+- Narrative continuity bible documenting the black thread, the first shore, the Styx, Cerberus, and open mysteries
+- Optional Underworld side quest linking Charon's memory lesson to the Unremembered Shade, requiring a player-authored memory recorded in the soul legacy
+- Optional village offering quest, a hidden prayer-strip quest in the Manticore Den, a letter quest in the Olympus foothills, and a follow-up that lets you carry the letter to the Unremembered Shade in Asphodel; each advances through physical objects rather than room entry alone
+- Cross-era listening quest: hear the oars beneath Asterion's well, then recognize the same river beneath modern Athens with `listen well` and `listen water`
 
 ## Run a local demo (Termux or Linux)
 
@@ -71,23 +94,23 @@ to inspect logs.
 
 ### First-life progression
 
-Use `help`, `look`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
+Use `help`, `look`, `scan`, `iscan`, `examine`, `listen`, `search`, `open`, `close`, `read`, `get`, `put`, `offer`, `map`, `quests`, `journal`, `score`, `inventory`, `talk choices`, and `soul` as you explore. For example, in the Olympus foothills, try `look coin`, `get coin from ash`, then `examine coin` to uncover a small piece of the larger mystery. You can also `get letter from ash` and `read letter` to learn why the Harpy carries keepsakes but leaves coins behind; later, `offer letter to shade` in Asphodel lets the letter become testimony for someone who has lost their own past. You can return to the village and `offer coin to bowl` if you want to see what the well remembers; later, `open` the sealed coffer in the Manticore Den and `read` the prayer strip inside. First-time room discoveries grant exploration XP alongside combat and quest rewards. At level 3, awaken one domain; at level 10, use `rebirth` to enter modern Athens. Your choices and soul relics persist across lives.
 
 ### Suggested first-life route
 
-- Start at the Gates of Olympus and travel north to the foothills.
-- Defeat the Harpy, then continue north to the Oracle Path.
-- Defeat the Satyr before speaking with Pythia. Use `talk choices`, then choose `trust` or `defy`.
-- Continue north to the Delphi Sanctum, then east to the Temple of the First Dawn.
+- A new character begins in the prologue at the Shore Between Heartbeats. Follow the path to the Wayfarer's Shelter, then explore the courtyard, practice grove, and storehouse at your own pace.
+- The tutorial creatures do not attack first. Inspect them before deciding to fight; after the Practice Satyr, return south to the courtyard, go east to the storehouse, then north through the marble gate when ready.
+- The gate returns you to Asterion. Travel north through the village lane to the Olympus foothills. Look around, examine the coin in the ash, and inspect the wary Harpy before deciding how to deal with it.
+- Continue north to the Oracle Path. The Satyr there is passive until challenged, but it guards the road; defeat it when you're ready to proceed to Pythia.
+- Ask Pythia about the thread or prophecy to hear her warning. Then use `talk choices` and choose `trust` or `defy`. Continue north to the Delphi Sanctum, where the broken inscription rewards close examination.
 - Grow stronger and explore the Underworld. The Styx opens at level 7 and Cerberus at level 9.
 - At level 10, use `rebirth` to begin Life II in modern Athens. Your soul flags, memories, and relics persist.
 
-You can use `journal` for a suggested next quest and `quests` for progress,
-requirements, and XP rewards. First-time room visits also grant exploration XP.
+Use `journal` for story context, `quests` for the full quest catalogue, and `current quests` to see active quests. Pin a quest with `current quests track <ID>`; `current quest` then shows its discovery checklist and a gentle next lead. First-time room visits also grant exploration XP.
 
 ## Commands
 
-`look`, `map`, movement commands, `attack`, `cast <power>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help`, `quit`.
+`look`, `examine`/`inspect`, `get`/`take`, `get all`, `drop`, `offer`, `scan`, `iscan`, `who`, `say`, `chat`, `tell`, `emote`, `map`, movement commands, `attack`, `cast <power>`, `ql`, `ql set <slot> <power>`, `ql <slot> <target>`, `ql clear <slot>`, `powers`, `awaken <domain>`, `inventory`, `score`, `flee`, `rebirth`, `help <topic>`, `quit`. Spell-specific help works too, e.g. `help Stormspark` or `help Judgment of the Sky`.
 
 ## World vision
 
@@ -105,6 +128,6 @@ The repository is currently named `mythos` for continuity, while the game and Go
 
 ## Persistent accounts and characters
 
-Fatewalker now uses server-managed persistence rather than player save commands. Players register or log into an account, then select an existing character or create another. Character state—including level, inventory, rebirth history, soul legacy, and quest progress—is written automatically by the server.
+Fatewalker now uses server-managed persistence rather than player save commands. Players register or log into an account, then select an existing character or create another. Character state—including level, inventory, rebirth history, soul legacy, quest progress, and personal container state—is written automatically by the server. For now, only one session per account may be active at a time; this prevents two stale account copies from overwriting one another.
 
 The account system is the foundation for multiple characters per player and future account-level systems such as character rosters, shared unlocks, reincarnation records, and persistent world consequences.

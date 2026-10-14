@@ -13,12 +13,15 @@ const (
 
 type Item struct {
 	Name   string
+	Description string
 	Tier   Tier
 	Damage int
 	Armor  int
 	Kind   string
 	Price  int
 	Relic  bool
+	Healing int
+	ManaRestore int
 }
 
 func (i Item) TierName() string {

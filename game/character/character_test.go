@@ -3,6 +3,8 @@ package character
 import (
 	"encoding/json"
 	"testing"
+
+	"fatewalker/game/item"
 )
 
 func TestStoryFlagsPersistThroughJSON(t *testing.T) {
@@ -85,5 +87,40 @@ func TestEnsureLifeGiftMigratesOlderCharacter(t *testing.T) {
 	}
 	if c.LifeGiftUsed {
 		t.Fatal("newly migrated life-gift should be available")
+	}
+}
+
+
+func TestCombatPreferencesAndQuicklistPersistThroughJSON(t *testing.T) {
+	c := New("Quickcaster")
+	c.AutoCombat = false
+	c.CombatModeSet = true
+	c.Quicklist = [4]string{"Stormspark", "Thunderfall", "", "Judgment of the Sky"}
+
+	data, err := json.Marshal(c)
+	if err != nil { t.Fatalf("marshal character: %v", err) }
+	var restored Character
+	if err := json.Unmarshal(data, &restored); err != nil { t.Fatalf("unmarshal character: %v", err) }
+	if restored.AutoCombat || !restored.CombatModeSet {
+		t.Fatal("manual combat preference was not persisted")
+	}
+	if restored.Quicklist != c.Quicklist {
+		t.Fatalf("quicklist after persistence = %#v, want %#v", restored.Quicklist, c.Quicklist)
+	}
+}
+
+
+func TestContainerStoragePersistsThroughJSON(t *testing.T) {
+	c := New("Keeper")
+	c.ContainerStorage["tutorial_storehouse/tutorial_practice_chest"] = []item.Item{
+		{Name: "practice bandage", Kind: "consumable", Healing: 20},
+	}
+	data, err := json.Marshal(c)
+	if err != nil { t.Fatalf("marshal character: %v", err) }
+	var restored Character
+	if err := json.Unmarshal(data, &restored); err != nil { t.Fatalf("unmarshal character: %v", err) }
+	stored := restored.ContainerStorage["tutorial_storehouse/tutorial_practice_chest"]
+	if len(stored) != 1 || stored[0].Healing != 20 || stored[0].Name != "practice bandage" {
+		t.Fatalf("stored item did not survive persistence: %#v", stored)
 	}
 }
