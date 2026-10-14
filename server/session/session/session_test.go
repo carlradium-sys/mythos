@@ -1923,6 +1923,39 @@ func TestEveryQuestHasUsableStoryTrackerGuidance(t *testing.T) {
 	}
 }
 
+// TestTutorialSatyrInspectionAndAliasesCannotTrapThePrologue verifies that
+// inspecting the Satyr unlocks combat, common target names are accepted, and
+// victory advances the tutorial even if the saved lesson counter is behind.
+func TestTutorialSatyrInspectionAndAliasesCannotTrapThePrologue(t *testing.T) {
+	s := newChoiceTestSession(t)
+	s.Character.RoomID = "tutorial_grove"
+	s.Character.SetStoryFlag("tutorial_available")
+	s.PrologueStep = 19
+	s.spawnEnemy()
+	if s.Enemy == nil || s.Enemy.Name != "Practice Satyr" {
+		t.Fatal("tutorial grove should contain the Practice Satyr")
+	}
+
+	s.lookTarget([]string{"satyr"})
+	if !s.Character.HasStoryFlag("tutorial_satyr_inspected") {
+		t.Fatal("looking at the Satyr should record its inspection")
+	}
+
+	// Make the next accepted attack decisive so this test also verifies the
+	// victory transition without relying on random combat damage.
+	s.Enemy.HP = 1
+	s.attack([]string{"training", "satyr"})
+	if s.Enemy != nil {
+		t.Fatal("the alias 'training satyr' should target the Practice Satyr")
+	}
+	if !s.Character.HasStoryFlag("tutorial_enemy_slain_tutorial_grove") {
+		t.Fatal("Satyr victory should be persisted")
+	}
+	if s.PrologueStep != 21 {
+		t.Fatalf("prologue step after Satyr victory = %d, want 21", s.PrologueStep)
+	}
+}
+
 func TestTutorialSatyrDoesNotRespawnWhenPlayerLooksAfterDefeat(t *testing.T) {
 	s := newChoiceTestSession(t)
 	s.Character.RoomID = "tutorial_grove"
